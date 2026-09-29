@@ -21,6 +21,8 @@ describe('GameHud and overlays', () => {
     expect(screen.getByText('5단계')).toBeInTheDocument()
     expect(screen.getByText('남은 시간: 02:05')).toBeInTheDocument()
     expect(screen.getByText('구출: 1/2')).toBeInTheDocument()
+    expect(screen.getByRole('timer')).toHaveAttribute('aria-live', 'polite')
+    expect(screen.getByRole('status')).toHaveTextContent('구출: 1/2')
     expect(screen.getByText('이동: 34회')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '일시정지' }))
     expect(onPause).toHaveBeenCalledTimes(1)
@@ -41,6 +43,7 @@ describe('GameHud and overlays', () => {
     )
 
     expect(screen.getByText('남은 시간: 00:10')).toHaveAttribute('data-urgent', 'true')
+    expect(screen.getByText('⚠️ 시간 부족')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '일시정지' })).toBeDisabled()
   })
 

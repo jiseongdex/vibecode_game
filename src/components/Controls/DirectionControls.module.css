@@ -55,3 +55,18 @@
   grid-column: 3;
   grid-row: 2;
 }
+
+@media (max-width: 600px) {
+  .controls {
+    grid-template-columns: repeat(3, 52px);
+    grid-template-rows: repeat(2, 52px);
+    gap: 6px;
+    margin-top: 10px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .controls {
+    margin-top: 6px;
+  }
+}

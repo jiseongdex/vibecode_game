@@ -1,0 +1,150 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+
+import { App } from '../App'
+import { completeStage, createCampaignProgress } from './campaignProgress'
+import { createGameState, gameReducer } from './gameState'
+import type { GameState } from './gameState'
+import { createSeededRandom, generateMaze } from './mazeGenerator'
+import { loadSave, mergeSaveData, saveSave } from '../persistence/saveStore'
+import { SAVE_VERSION } from '../persistence/saveSchema'
+import type { Direction, Maze, Position } from './types'
+
+const steps: Array<[Direction, number, number]> = [
+  ['up', -1, 0],
+  ['right', 0, 1],
+  ['down', 1, 0],
+  ['left', 0, -1],
+]
+const wallForDirection = { up: 'top', right: 'right', down: 'bottom', left: 'left' } as const
+
+function key(position: Position): string {
+  return `${position.row}:${position.col}`
+}
+
+function route(maze: Maze, start: Position, destination: Position): Direction[] {
+  const queue: Position[] = [start]
+  const previous = new Map<string, { from: string; direction: Direction }>()
+  const seen = new Set([key(start)])
+
+  for (let index = 0; index < queue.length; index += 1) {
+    const current = queue[index]
+    if (key(current) === key(destination)) break
+    for (const [direction, rowDelta, colDelta] of steps) {
+      if (maze.cells[current.row][current.col].walls[wallForDirection[direction]]) continue
+      const next = { row: current.row + rowDelta, col: current.col + colDelta }
+      if (next.row < 0 || next.col < 0 || next.row >= maze.size || next.col >= maze.size) continue
+      if (seen.has(key(next))) continue
+      seen.add(key(next))
+      previous.set(key(next), { from: key(current), direction })
+      queue.push(next)
+    }
+  }
+
+  const directions: Direction[] = []
+  let cursor = key(destination)
+  while (cursor !== key(start)) {
+    const step = previous.get(cursor)
+    if (!step) throw new Error('Destination is unreachable.')
+    directions.unshift(step.direction)
+    cursor = step.from
+  }
+  return directions
+}
+
+function walkTo(state: GameState, destination: Position): GameState {
+  for (const direction of route(state.maze, state.player, destination)) {
+    state = gameReducer(state, { type: 'MOVE', direction })
+  }
+  return state
+}
+
+describe('gameplay integration', () => {
+  beforeEach(() => window.localStorage.clear())
+  afterEach(() => window.localStorage.clear())
+
+  it('starts, rescues everyone, exits, and unlocks the next stage', () => {
+    const maze = generateMaze(15, createSeededRandom(42))
+    let state = gameReducer(createGameState(1, maze), { type: 'START', now: 1000 })
+    for (const target of [...state.rescues]) state = walkTo(state, target)
+    expect(state.rescues.every((target) => target.rescued)).toBe(true)
+    state = walkTo(state, state.exit)
+
+    expect(state.status).toBe('won')
+    const progress = completeStage(createCampaignProgress(), 1, 65, state.moveCount)
+    expect(progress.unlockedStage).toBe(2)
+    expect(progress.stageRecords[1]).toEqual({ bestTimeSeconds: 65, bestMoveCount: state.moveCount })
+  })
+
+  it('times out, retries the same maze, and restarts with a different maze', () => {
+    const maze = generateMaze(15, createSeededRandom(42))
+    let state = gameReducer(createGameState(1, maze), { type: 'START', now: 0 })
+    for (let second = 0; second < state.stageConfig.timeLimitSeconds; second += 1) {
+      state = gameReducer(state, { type: 'TICK' })
+    }
+    expect(state.status).toBe('lost')
+    expect(state.remainingSeconds).toBe(0)
+
+    const retry = gameReducer(state, { type: 'RETRY_SAME_MAZE' })
+    expect(retry.status).toBe('ready')
+    expect(retry.maze).toBe(maze)
+    expect(retry.remainingSeconds).toBe(retry.stageConfig.timeLimitSeconds)
+
+    const freshMaze = generateMaze(15, createSeededRandom(99))
+    const fresh = gameReducer(state, { type: 'RESTART_NEW_MAZE', maze: freshMaze })
+    expect(fresh.maze).toBe(freshMaze)
+    expect(fresh.maze.seed).not.toBe(maze.seed)
+    expect(fresh.status).toBe('ready')
+  })
+
+  it('saves a moving game, restores it paused, and resumes explicitly', () => {
+    const { unmount } = render(<App />)
+    expect(screen.getByRole('button', { name: '20단계 잠김' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
+    fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+
+    const startCell = document.querySelector('[data-row="0"][data-col="0"]')
+    fireEvent.click(screen.getByRole('button', {
+      name: startCell?.className.includes('wallRight') ? '아래로 이동' : '오른쪽으로 이동',
+    }))
+    expect(screen.getByText('이동: 1회')).toBeInTheDocument()
+    fireEvent(window, new Event('pagehide'))
+    const saved = loadSave().currentSession
+    expect(saved?.state.status).toBe('paused')
+    expect(saved?.state.moveCount).toBe(1)
+    unmount()
+
+    render(<App />)
+    expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
+    expect(screen.getByText('이동: 1회')).toBeInTheDocument()
+    expect(loadSave().currentSession?.state.maze).toEqual(saved?.state.maze)
+    fireEvent.click(screen.getByRole('button', { name: '이어하기' }))
+    expect(screen.queryByRole('dialog', { name: '일시정지' })).not.toBeInTheDocument()
+  })
+
+  it('rescues five animals on stage 20 and keeps the best merged records', () => {
+    const maze = generateMaze(33, createSeededRandom(20))
+    let state = gameReducer(createGameState(20, maze), { type: 'START', now: 0 })
+    expect(state.rescues).toHaveLength(5)
+    for (const target of [...state.rescues]) state = walkTo(state, target)
+    state = walkTo(state, state.exit)
+    expect(state.status).toBe('won')
+    expect(state.followers).toHaveLength(5)
+
+    const initial = {
+      unlockedStage: 20,
+      stageRecords: { 20: { bestTimeSeconds: 300, bestMoveCount: 900 } },
+    }
+    const improved = completeStage(initial, 20, 280, 950)
+    expect(improved.unlockedStage).toBe(20)
+    expect(improved.stageRecords[20]).toEqual({ bestTimeSeconds: 280, bestMoveCount: 900 })
+
+    saveSave({ version: SAVE_VERSION, ...improved, currentSession: null })
+    const merged = mergeSaveData(loadSave(), {
+      version: SAVE_VERSION,
+      unlockedStage: 20,
+      stageRecords: { 20: { bestTimeSeconds: 320, bestMoveCount: 850 } },
+      currentSession: null,
+    })
+    expect(merged.stageRecords[20]).toEqual({ bestTimeSeconds: 280, bestMoveCount: 850 })
+  })
+})

@@ -37,3 +37,19 @@
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
+
+@media (max-width: 600px) {
+  .screen {
+    padding: 8px;
+  }
+
+  .actions {
+    margin-top: 6px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .screen {
+    padding-top: 4px;
+  }
+}

@@ -28,15 +28,19 @@ export function GameHud({
 }: GameHudProps) {
   return (
     <header className={styles.hud}>
-      <div className={styles.stats} aria-live="polite">
+      <div className={styles.stats}>
         <span>{stage}단계</span>
         <span
           className={remainingSeconds <= 10 ? styles.urgent : undefined}
           data-urgent={remainingSeconds <= 10}
+          role="timer"
+          aria-live="polite"
+          aria-atomic="true"
         >
           남은 시간: {formatTime(remainingSeconds)}
         </span>
-        <span>
+        {remainingSeconds <= 10 && <span role="status">⚠️ 시간 부족</span>}
+        <span role="status" aria-live="polite" aria-atomic="true">
           구출: {rescuedCount}/{rescueCount}
         </span>
         <span>이동: {moveCount}회</span>

@@ -107,6 +107,21 @@
   box-shadow: 0 0 9px #44804a;
 }
 
+@media (max-width: 600px) {
+  .viewport {
+    height: min(52vh, 450px);
+    min-height: 220px;
+    border-width: 3px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .viewport {
+    height: min(48vh, 300px);
+    min-height: 150px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .board {
     transition: none;
