@@ -1,0 +1,37 @@
+.picker {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px auto 16px;
+  padding: 0 16px;
+}
+
+.picker button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px 12px 4px 4px;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: 0 3px 0 #44563f66;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.picker button[aria-pressed='true'] {
+  border-color: var(--color-success);
+  background: #d8edc4;
+}
+
+.picker img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.picker img[hidden] { display: none; }

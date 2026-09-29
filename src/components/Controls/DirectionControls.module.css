@@ -10,12 +10,12 @@
 .button {
   min-width: 44px;
   min-height: 44px;
-  border: 2px solid #5e4938;
+  border: 2px solid var(--color-border);
   border-radius: 14px;
-  background: #f4dfaa;
-  color: #3d352e;
+  background: var(--color-panel);
+  color: var(--color-ink);
   font: 700 30px/1 system-ui, sans-serif;
-  box-shadow: 0 3px 0 #5e4938;
+  box-shadow: 0 3px 0 var(--color-border);
   cursor: pointer;
   touch-action: none;
   user-select: none;
@@ -23,11 +23,11 @@
 
 .button:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 #5e4938;
+  box-shadow: 0 1px 0 var(--color-border);
 }
 
 .button:focus-visible {
-  outline: 3px solid #267c90;
+  outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 

@@ -157,6 +157,22 @@ describe('gameReducer', () => {
     expect(state.followers).toHaveLength(2)
   })
 
+  it('keeps rescued targets in pickup order for their matching follower sprites', () => {
+    const maze = generateMaze(19, createSeededRandom(123))
+    let state = gameReducer(createGameState(5, maze), { type: 'START', now: 0 })
+    const targets = [...state.rescues].reverse()
+    for (const target of targets) {
+      const route = pathTo(state.player, target, state.maze)
+      for (let index = 1; index < route.length; index += 1) {
+        state = gameReducer(state, {
+          type: 'MOVE', direction: directionBetween(route[index - 1], route[index]),
+        })
+      }
+    }
+    expect(state.rescues.filter((target) => target.rescued).map((target) => target.id))
+      .toEqual(targets.map((target) => target.id))
+  })
+
   it('pauses time, resumes, and loses exactly at zero', () => {
     const playing = gameReducer(setup(), { type: 'START', now: 1000 })
     const paused = gameReducer(playing, { type: 'PAUSE', now: 2000 })

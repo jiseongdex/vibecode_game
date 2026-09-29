@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
+import type { PlayerAppearance } from '../../assets/assetManifest'
 import type { GameState } from '../../game/gameState'
 import type { Direction, Position } from '../../game/types'
 import { ExitSprite } from '../Exit/ExitSprite'
@@ -12,6 +13,7 @@ import styles from './MazeBoard.module.css'
 export interface MazeBoardProps {
   state: GameState
   onMove: (direction: Direction) => void
+  appearance?: PlayerAppearance
 }
 
 interface ViewportSize {
@@ -36,7 +38,7 @@ function samePosition(first: Position, second: Position): boolean {
   return first.row === second.row && first.col === second.col
 }
 
-export function MazeBoard({ state }: MazeBoardProps) {
+export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [viewport, setViewport] = useState<ViewportSize>({
     width: 640,
@@ -89,6 +91,7 @@ export function MazeBoard({ state }: MazeBoardProps) {
     transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
   } as CSSProperties
   const unlockedExit = state.rescues.every((target) => target.rescued)
+  const rescuedTargets = state.rescues.filter((target) => target.rescued)
 
   return (
     <div
@@ -124,12 +127,17 @@ export function MazeBoard({ state }: MazeBoardProps) {
               <MazeCell key={`${cell.row}:${cell.col}`} cell={cell} type={type}>
                 {isExit && <ExitSprite unlocked={unlockedExit} />}
                 {waiting.map((target) => (
-                  <RescueSprite key={target.id} />
+                  <RescueSprite key={target.id} animalId={target.id} />
                 ))}
                 {followers.map(({ index }) => (
-                  <RescueSprite key={`follower-${index}`} following order={index + 1} />
+                  <RescueSprite
+                    key={`follower-${index}`}
+                    animalId={rescuedTargets[index]?.id ?? 'rescue-1'}
+                    following
+                    order={index + 1}
+                  />
                 ))}
-                {isPlayer && <PlayerSprite />}
+                {isPlayer && <PlayerSprite appearance={appearance} />}
               </MazeCell>
             )
           }),

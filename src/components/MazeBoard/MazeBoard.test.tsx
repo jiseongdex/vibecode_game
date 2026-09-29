@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import { createGameState } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
@@ -72,5 +72,33 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).toBe('translate3d(-140px, -300px, 0)')
+  })
+
+  it('uses five distinct local animal images and keeps the animal in the follower line', () => {
+    const state = stateFor(20, 33)
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const waiting = Array.from(container.querySelectorAll('[data-asset-slot="rescue-target"]'))
+    expect(waiting.map((element) => element.getAttribute('data-animal'))).toEqual([
+      '토끼', '여우', '곰', '흰 고양이', '강아지',
+    ])
+    expect(new Set(waiting.map((element) => element.querySelector('img')?.getAttribute('src'))).size).toBe(5)
+
+    const rescued = state.rescues[4]
+    rerender(<MazeBoard state={{
+      ...state,
+      rescues: [{ ...rescued, rescued: true }, ...state.rescues.slice(0, 4)],
+      followers: [{ row: 0, col: 0 }],
+    }} onMove={vi.fn()} />)
+    const follower = container.querySelector('[data-asset-slot="follower"]')
+    expect(follower).toHaveAttribute('data-animal', '강아지')
+    expect(follower?.querySelector('img')).toHaveAttribute('src', '/assets/rescue-dog.png')
+  })
+
+  it('keeps emoji fallback visible when a local image fails to load', () => {
+    const { container } = render(<MazeBoard state={stateFor(1, 15)} onMove={vi.fn()} />)
+    const image = container.querySelector('[data-asset-slot="player"] img')!
+    fireEvent.error(image)
+    expect(image).toHaveAttribute('hidden')
+    expect(container.querySelector('[data-asset-slot="player"]')).toHaveTextContent('🧙‍♀️')
   })
 })

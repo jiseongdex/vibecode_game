@@ -7,8 +7,10 @@
   margin-bottom: 12px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: #f4dfaa;
-  color: #3b332a;
+  border: 2px solid var(--color-border);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-panel);
   font-weight: 700;
 }
 
@@ -19,14 +21,14 @@
 }
 
 .urgent {
-  color: #a32c27;
+  color: var(--color-danger);
   animation: pulse 700ms ease-in-out infinite alternate;
 }
 
 .hud button {
   min-height: 44px;
   padding: 6px 12px;
-  border: 2px solid #5e4938;
+  border: 2px solid var(--color-border);
   border-radius: 10px;
   background: #fff5d9;
   color: inherit;
@@ -40,7 +42,7 @@
 }
 
 .hud button:focus-visible {
-  outline: 3px solid #267c90;
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 
+import type { PlayerAppearance } from '../../assets/assetManifest'
 import { createGameState, gameReducer } from '../../game/gameState'
 import type { GameState } from '../../game/gameState'
 import { generateMaze } from '../../game/mazeGenerator'
@@ -14,6 +15,7 @@ import { ResultOverlay } from '../Overlays/ResultOverlay'
 import styles from './GameScreen.module.css'
 
 interface GameScreenProps {
+  appearance?: PlayerAppearance
   initialState?: GameState
   onStageComplete?: (stage: number, clearTimeSeconds: number, moveCount: number) => void
   onNextStage?: (stage: number) => void
@@ -24,6 +26,7 @@ interface GameScreenProps {
 }
 
 export function GameScreen({
+  appearance = 'girl',
   initialState,
   onStageComplete,
   onNextStage,
@@ -94,7 +97,7 @@ export function GameScreen({
       />
 
       <div className={styles.playfield}>
-        <MazeBoard state={state} onMove={handleMove} />
+        <MazeBoard state={state} onMove={handleMove} appearance={appearance} />
         {state.status === 'paused' && (
           <PauseOverlay
             onResume={() => dispatch({ type: 'RESUME', now: Date.now() })}

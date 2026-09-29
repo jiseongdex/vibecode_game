@@ -4,10 +4,10 @@
   height: min(70vh, 650px);
   min-height: 300px;
   overflow: hidden;
-  border: 5px solid #71563e;
+  border: 5px solid var(--color-border);
   border-radius: 18px;
   background: #d2c6a3;
-  box-shadow: inset 0 0 30px #63462e33;
+  box-shadow: var(--shadow-panel), inset 0 0 30px #254f4133;
   box-sizing: border-box;
   touch-action: none;
 }
@@ -27,27 +27,30 @@
   width: var(--cell-size);
   height: var(--cell-size);
   box-sizing: border-box;
-  background: #f4edcf;
+  background: #f4edcf url('/assets/maze-floor.png') center / 96px 96px repeat;
+  border-image-source: url('/assets/maze-wall.png');
+  border-image-slice: 96;
+  border-image-repeat: round;
 }
 
 .cell:nth-child(odd) {
-  background: #f8f0d7;
+  background-color: #f8f0d7;
 }
 
 .wallTop {
-  border-top: 4px solid #806342;
+  border-top: 4px solid var(--color-wall);
 }
 
 .wallRight {
-  border-right: 4px solid #806342;
+  border-right: 4px solid var(--color-wall);
 }
 
 .wallBottom {
-  border-bottom: 4px solid #806342;
+  border-bottom: 4px solid var(--color-wall);
 }
 
 .wallLeft {
-  border-left: 4px solid #806342;
+  border-left: 4px solid var(--color-wall);
 }
 
 .sprite {
@@ -61,34 +64,47 @@
   user-select: none;
 }
 
+.sprite img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sprite img[hidden] { display: none; }
+
 .playerSprite {
   z-index: 4;
-  background: #7fc4b8;
+  background: #d8f0de;
   box-shadow: 0 2px 6px #173b3a77;
 }
 
 .rescueSprite {
   z-index: 2;
-  background: #f7c879;
+  background: #fff3c8;
   box-shadow: 0 2px 6px #65431166;
 }
 
 .followerSprite {
   z-index: 3;
   inset: 7px;
-  background: #a7ddbd;
+  background: #d6f2ce;
   font-size: calc(var(--cell-size) * 0.48);
 }
 
 .exitSprite {
   z-index: 1;
   border-radius: 8px;
-  background: #a59d91;
+  background: #b9b6ac;
+  filter: grayscale(0.75);
 }
 
 .exitUnlocked {
-  background: #a9d5a3;
-  box-shadow: 0 0 8px #4fa875;
+  background: #d5f0bb;
+  filter: none;
+  box-shadow: 0 0 9px #44804a;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -3,8 +3,7 @@
   margin: 0 auto;
   padding: 16px;
   box-sizing: border-box;
-  color: #3b332a;
-  font-family: system-ui, sans-serif;
+  color: var(--color-ink);
 }
 
 .playfield {
@@ -24,15 +23,17 @@
 .actions button {
   min-height: 44px;
   padding: 8px 16px;
-  border: 2px solid #5e4938;
+  border: 2px solid var(--color-border);
   border-radius: 10px;
-  background: #e8d394;
-  color: #3b332a;
-  font: 700 16px system-ui, sans-serif;
+  background: var(--color-gold);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .actions button:focus-visible {
-  outline: 3px solid #267c90;
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }

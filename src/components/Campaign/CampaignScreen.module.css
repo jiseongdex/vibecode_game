@@ -3,8 +3,7 @@
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
-  color: #3b332a;
-  font-family: system-ui, sans-serif;
+  color: var(--color-ink);
 }
 
 .campaign h2 {
@@ -19,6 +18,7 @@
   padding: 12px;
   border-radius: 10px;
   background: #d8edc4;
+  color: var(--color-success);
   font-weight: 700;
 }
 
@@ -36,9 +36,10 @@
   justify-content: center;
   gap: 5px;
   padding: 12px;
-  border: 2px solid #806342;
+  border: 2px solid var(--color-border);
   border-radius: 12px;
-  background: #f4dfaa;
+  background: var(--color-panel);
+  box-shadow: var(--shadow-panel);
   color: inherit;
   text-align: left;
   cursor: pointer;
@@ -53,7 +54,7 @@
 }
 
 .stage.completed {
-  border-color: #4f8a63;
+  border-color: var(--color-success);
   background: #ddedca;
 }
 
@@ -65,6 +66,6 @@
 }
 
 .stage:focus-visible {
-  outline: 3px solid #267c90;
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }

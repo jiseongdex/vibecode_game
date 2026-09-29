@@ -1,3 +1,4 @@
+import { gameAssets } from '../../assets/assetManifest'
 import styles from '../MazeBoard/MazeBoard.module.css'
 
 interface ExitSpriteProps {
@@ -12,7 +13,8 @@ export function ExitSprite({ unlocked }: ExitSpriteProps) {
       aria-label={unlocked ? '열린 탈출구' : '잠긴 탈출구'}
       data-asset-slot="exit"
     >
-      🚪
+      <span aria-hidden="true">🚪</span>
+      <img src={gameAssets.exit} alt="" aria-hidden="true" onError={(event) => { event.currentTarget.hidden = true }} />
     </span>
   )
 }

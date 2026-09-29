@@ -106,11 +106,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         (target) => !target.rescued && samePosition(target, nextPlayer),
       )
       const rescues = newlyRescued
-        ? state.rescues.map((target) =>
-            !target.rescued && samePosition(target, nextPlayer)
-              ? { ...target, rescued: true }
-              : target,
-          )
+        ? [
+            ...state.rescues.filter((target) => target.rescued),
+            ...state.rescues
+              .filter((target) => !target.rescued && samePosition(target, nextPlayer))
+              .map((target) => ({ ...target, rescued: true })),
+            ...state.rescues.filter(
+              (target) => !target.rescued && !samePosition(target, nextPlayer),
+            ),
+          ]
         : state.rescues
       const followers = moveFollowers(state.followers, state.player)
 

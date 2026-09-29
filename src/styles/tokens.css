@@ -1,0 +1,16 @@
+:root {
+  color-scheme: light;
+  --color-ink: #292b28;
+  --color-muted: #46544c;
+  --color-paper: #fff9e9;
+  --color-panel: #fff3d4;
+  --color-gold: #eed28d;
+  --color-border: #44563f;
+  --color-wall: #254f41;
+  --color-success: #246344;
+  --color-warning: #a44616;
+  --color-danger: #a0232a;
+  --color-focus: #075f83;
+  --shadow-panel: 0 12px 30px rgb(35 47 31 / 17%);
+  --radius-panel: 18px;
+}
