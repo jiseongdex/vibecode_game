@@ -1,0 +1,54 @@
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #f4dfaa;
+  color: #3b332a;
+  font-weight: 700;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.urgent {
+  color: #a32c27;
+  animation: pulse 700ms ease-in-out infinite alternate;
+}
+
+.hud button {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 2px solid #5e4938;
+  border-radius: 10px;
+  background: #fff5d9;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hud button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hud button:focus-visible {
+  outline: 3px solid #267c90;
+  outline-offset: 2px;
+}
+
+@keyframes pulse {
+  from { opacity: 1; }
+  to { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .urgent { animation: none; }
+}

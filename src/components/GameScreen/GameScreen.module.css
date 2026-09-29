@@ -7,13 +7,8 @@
   font-family: system-ui, sans-serif;
 }
 
-.summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  font-weight: 700;
+.playfield {
+  position: relative;
 }
 
 .actions {
@@ -40,9 +35,4 @@
 .actions button:focus-visible {
   outline: 3px solid #267c90;
   outline-offset: 2px;
-}
-
-.actions p {
-  margin: 0;
-  font-weight: 700;
 }

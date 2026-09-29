@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { createGameState } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
 import type { Direction } from '../../game/types'
+import { formatTime } from '../Hud/GameHud'
 import { GameScreen } from './GameScreen'
 
 describe('GameScreen', () => {
@@ -33,13 +34,13 @@ describe('GameScreen', () => {
 
     act(() => vi.advanceTimersByTime(1000))
     expect(
-      screen.getByText(`남은 시간: ${initialState.remainingSeconds - 1}초`),
+      screen.getByText(`남은 시간: ${formatTime(initialState.remainingSeconds - 1)}`),
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '일시정지' }))
     act(() => vi.advanceTimersByTime(2000))
     expect(
-      screen.getByText(`남은 시간: ${initialState.remainingSeconds - 1}초`),
+      screen.getByText(`남은 시간: ${formatTime(initialState.remainingSeconds - 1)}`),
     ).toBeInTheDocument()
     fireEvent.keyDown(window, { key: arrow })
     expect(screen.getByText('이동: 2회')).toBeInTheDocument()
@@ -47,7 +48,7 @@ describe('GameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: '이어하기' }))
     act(() => vi.advanceTimersByTime(1000))
     expect(
-      screen.getByText(`남은 시간: ${initialState.remainingSeconds - 2}초`),
+      screen.getByText(`남은 시간: ${formatTime(initialState.remainingSeconds - 2)}`),
     ).toBeInTheDocument()
   })
 
@@ -67,4 +68,50 @@ describe('GameScreen', () => {
       expect(screen.getByText('이동: 0회')).toBeInTheDocument()
     },
   )
+
+  it('reports a win once and offers the next stage', () => {
+    const onStageComplete = vi.fn()
+    const onNextStage = vi.fn()
+    const base = createGameState(1, generateMaze(15, createSeededRandom(88)))
+    const won = {
+      ...base,
+      status: 'won' as const,
+      remainingSeconds: base.remainingSeconds - 45,
+      moveCount: 61,
+      rescues: base.rescues.map((target) => ({ ...target, rescued: true })),
+    }
+    const { rerender } = render(
+      <GameScreen
+        initialState={won}
+        onStageComplete={onStageComplete}
+        onNextStage={onNextStage}
+      />,
+    )
+
+    expect(onStageComplete).toHaveBeenCalledTimes(1)
+    expect(onStageComplete).toHaveBeenCalledWith(1, 45, 61)
+    rerender(
+      <GameScreen
+        initialState={won}
+        onStageComplete={onStageComplete}
+        onNextStage={onNextStage}
+      />,
+    )
+    expect(onStageComplete).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: '다음 단계' }))
+    expect(onNextStage).toHaveBeenCalledWith(2)
+  })
+
+  it('returns to the ready state after choosing a timeout retry', () => {
+    const base = createGameState(1, generateMaze(15, createSeededRandom(89)))
+    render(
+      <GameScreen initialState={{ ...base, status: 'lost', remainingSeconds: 0 }} />,
+    )
+
+    expect(screen.getByRole('dialog', { name: '시간 초과!' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '같은 미로 재도전' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: '시작하기' })).toBeInTheDocument()
+    expect(screen.getByText(`남은 시간: ${formatTime(base.remainingSeconds)}`)).toBeInTheDocument()
+  })
 })
