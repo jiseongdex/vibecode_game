@@ -5,6 +5,7 @@ import type { GameState } from '../../game/gameState'
 import { generateMaze } from '../../game/mazeGenerator'
 import type { Direction } from '../../game/types'
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement'
+import { usePageVisibilityPause } from '../../hooks/usePageVisibilityPause'
 import { DirectionControls } from '../Controls/DirectionControls'
 import { GameHud } from '../Hud/GameHud'
 import { MazeBoard } from '../MazeBoard/MazeBoard'
@@ -17,6 +18,9 @@ interface GameScreenProps {
   onStageComplete?: (stage: number, clearTimeSeconds: number, moveCount: number) => void
   onNextStage?: (stage: number) => void
   onCampaign?: () => void
+  onStateChange?: (state: GameState) => void
+  onPersistNow?: () => void
+  onDiscardSession?: () => void
 }
 
 export function GameScreen({
@@ -24,6 +28,9 @@ export function GameScreen({
   onStageComplete,
   onNextStage,
   onCampaign,
+  onStateChange,
+  onPersistNow,
+  onDiscardSession,
 }: GameScreenProps) {
   const [state, dispatch] = useReducer(
     gameReducer,
@@ -39,11 +46,26 @@ export function GameScreen({
 
   useKeyboardMovement({ enabled: playing, onMove: handleMove })
 
+  const pauseAndSave = useCallback(() => {
+    if (state.status !== 'playing') return
+    const now = Date.now()
+    const paused = gameReducer(state, { type: 'PAUSE', now })
+    dispatch({ type: 'PAUSE', now })
+    onStateChange?.(paused)
+    onPersistNow?.()
+  }, [state, onStateChange, onPersistNow])
+
+  usePageVisibilityPause({ enabled: playing, onPause: pauseAndSave })
+
   useEffect(() => {
     if (!playing) return
     const timer = window.setInterval(() => dispatch({ type: 'TICK' }), 1000)
     return () => window.clearInterval(timer)
   }, [playing])
+
+  useEffect(() => {
+    onStateChange?.(state)
+  }, [state, onStateChange])
 
   useEffect(() => {
     if (state.status === 'ready') reportedWin.current = false
@@ -68,13 +90,16 @@ export function GameScreen({
         rescueCount={state.stageConfig.rescueCount}
         moveCount={state.moveCount}
         canPause={playing}
-        onPause={() => dispatch({ type: 'PAUSE', now: Date.now() })}
+        onPause={pauseAndSave}
       />
 
       <div className={styles.playfield}>
         <MazeBoard state={state} onMove={handleMove} />
         {state.status === 'paused' && (
-          <PauseOverlay onResume={() => dispatch({ type: 'RESUME', now: Date.now() })} />
+          <PauseOverlay
+            onResume={() => dispatch({ type: 'RESUME', now: Date.now() })}
+            onDiscard={onDiscardSession}
+          />
         )}
         {(state.status === 'won' || state.status === 'lost') && (
           <ResultOverlay

@@ -1,32 +1,34 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 
 import { CampaignScreen } from './components/Campaign/CampaignScreen'
 import { GameScreen } from './components/GameScreen/GameScreen'
-import { completeStage, createCampaignProgress } from './game/campaignProgress'
-import type { CampaignProgress } from './game/campaignProgress'
 import { createGameState } from './game/gameState'
 import type { GameState } from './game/gameState'
 import { generateMaze } from './game/mazeGenerator'
 import { getMazeSize, MAX_STAGE } from './game/stageConfig'
+import { usePersistedGame } from './hooks/usePersistedGame'
 
 export function App() {
-  const [progress, setProgress] = useState<CampaignProgress>(createCampaignProgress)
-  const [session, setSession] = useState<{ id: number; state: GameState } | null>(null)
-
-  const startSession = useCallback((state: GameState) => {
-    setSession((current) => ({ id: (current?.id ?? 0) + 1, state }))
-  }, [])
+  const {
+    progress,
+    session,
+    startSession,
+    captureSession,
+    recordStageResult,
+    discardSession,
+    persistNow,
+  } = usePersistedGame()
 
   const startStage = useCallback((stage: number) => {
     if (stage > MAX_STAGE) return
     startSession(createGameState(stage, generateMaze(getMazeSize(stage))))
   }, [startSession])
 
-  const handleStageComplete = useCallback(
-    (stage: number, clearTimeSeconds: number, moveCount: number) => {
-      setProgress((current) => completeStage(current, stage, clearTimeSeconds, moveCount))
+  const handleSessionChange = useCallback(
+    (state: GameState) => {
+      if (session) captureSession(session.id, state)
     },
-    [],
+    [session?.id, captureSession],
   )
 
   return (
@@ -41,9 +43,12 @@ export function App() {
           <GameScreen
             key={session.id}
             initialState={session.state}
-            onStageComplete={handleStageComplete}
+            onStageComplete={recordStageResult}
             onNextStage={startStage}
-            onCampaign={() => setSession(null)}
+            onCampaign={discardSession}
+            onStateChange={handleSessionChange}
+            onPersistNow={persistNow}
+            onDiscardSession={discardSession}
           />
         ) : (
           <CampaignScreen progress={progress} onStartSession={startSession} />
