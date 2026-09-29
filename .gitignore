@@ -65,5 +65,4 @@ skills-lock.json
 /apps/worker/tests/fixtures/a3/panel-input/*.normalized.parquet
 # Local project-memory worktree control
 /.memory/
-
-/project-memory-starter(학습노트+코드번+비주얼라이즈) 3
+/.codeburn/
