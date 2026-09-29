@@ -1,0 +1,48 @@
+.screen {
+  width: min(100%, 960px);
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+  color: #3b332a;
+  font-family: system-ui, sans-serif;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 12px;
+}
+
+.actions button {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 2px solid #5e4938;
+  border-radius: 10px;
+  background: #e8d394;
+  color: #3b332a;
+  font: 700 16px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.actions button:focus-visible {
+  outline: 3px solid #267c90;
+  outline-offset: 2px;
+}
+
+.actions p {
+  margin: 0;
+  font-weight: 700;
+}

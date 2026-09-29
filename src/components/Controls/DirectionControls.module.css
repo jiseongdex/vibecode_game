@@ -1,0 +1,57 @@
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(2, 56px);
+  gap: 8px;
+  justify-content: center;
+  margin: 16px auto 0;
+}
+
+.button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid #5e4938;
+  border-radius: 14px;
+  background: #f4dfaa;
+  color: #3d352e;
+  font: 700 30px/1 system-ui, sans-serif;
+  box-shadow: 0 3px 0 #5e4938;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #5e4938;
+}
+
+.button:focus-visible {
+  outline: 3px solid #267c90;
+  outline-offset: 3px;
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.down {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.right {
+  grid-column: 3;
+  grid-row: 2;
+}
