@@ -23,6 +23,7 @@ skills-lock.json
 
 # Node / Next.js workspace artifacts
 **/node_modules/
+**/dist/
 **/.next/
 **/out/
 **/coverage/
