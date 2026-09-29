@@ -1,0 +1,69 @@
+
+# Local project-memory workspace config
+/.project-memory.*
+data/
+!docs/**/data/
+!docs/**/data/**
+
+# Serena local workspace state
+/.serena/
+
+# macOS / editor local files
+/.DS_Store
+/.vscode/
+
+# Local workflow documents
+.github
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/apim-deploy/
+!.agents/skills/apim-deploy/**
+skills-lock.json
+
+# Node / Next.js workspace artifacts
+**/node_modules/
+**/.next/
+**/out/
+**/coverage/
+**/*.tsbuildinfo
+**/.pnpm-debug.log*
+
+**/.env*
+!**/.env.development
+!**/.env.production
+!**/.env.template
+
+**/.vercel/
+
+# Python / Worker artifacts
+**/__pycache__/
+**/*.py[cod]
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.venv/
+
+# Local document/export artifacts
+/tmp/
+/outputs/
+/exports/
+/.artifacts/
+
+# Bruno developer workspaces and local collections
+/bruno/task-runner-runtime-workspace/
+/bruno/task-runner-decomposition/
+/bruno/.DS_Store
+# Local project-memory workspace config
+/.project-memory.local.json
+
+# Jupyter Notebook ipynb files
+**/*.ipynb
+
+# Panel input validator writes normalized Parquet next to its source CSV.
+# Worker tests own these local byproducts next to their A3 fixture inputs.
+/apps/worker/tests/fixtures/a3/panel-input/*.normalized.parquet
+# Local project-memory worktree control
+/.memory/
+
+/project-memory-starter(학습노트+코드번+비주얼라이즈) 3
