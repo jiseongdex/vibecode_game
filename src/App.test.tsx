@@ -35,7 +35,7 @@ describe('App', () => {
     fireEvent.click(boy)
     expect(boy).toHaveAttribute('aria-pressed', 'true')
     expect(document.querySelector('[data-asset-slot="player"] img'))
-      .toHaveAttribute('src', '/assets/player-boy.png')
+      .toHaveAttribute('src', '/assets/players/player-boy.png')
     expect(window.localStorage.getItem('maze-rescue-game.appearance.v1')).toBe('boy')
 
     unmount()

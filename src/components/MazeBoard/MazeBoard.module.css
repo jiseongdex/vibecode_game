@@ -27,8 +27,8 @@
   width: var(--cell-size);
   height: var(--cell-size);
   box-sizing: border-box;
-  background: #f4edcf url('/assets/maze-floor.png') center / 96px 96px repeat;
-  border-image-source: url('/assets/maze-wall.png');
+  background: #f4edcf url('/assets/maps/maze-floor.png') center / 96px 96px repeat;
+  border-image-source: url('/assets/maps/maze-wall.png');
   border-image-slice: 96;
   border-image-repeat: round;
 }

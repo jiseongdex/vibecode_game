@@ -19,6 +19,10 @@ npm run lint
 npm run build
 ```
 
+## 이미지 파일
+
+게임 이미지는 `public/assets/maps/`(맵 바닥·벽·출구), `public/assets/players/`(탐험가), `public/assets/animals/`(구조 동물)에 로컬 PNG로 저장합니다.
+
 ## 게임 규칙과 조작
 
 - 단계 선택 화면에서 열린 단계를 고르고 `시작하기`를 누릅니다. 이미 완료한 단계도 다시 플레이할 수 있습니다.
