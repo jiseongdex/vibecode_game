@@ -9,7 +9,9 @@ import type { Direction, Position } from '../../game/types'
 import { ExitSprite } from '../Exit/ExitSprite'
 import { PlayerSprite } from '../Player/PlayerSprite'
 import { RescueSprite } from '../Rescue/RescueSprite'
+import { visualCell, visualSize } from './boardGeometry'
 import { MazeCell } from './MazeCell'
+import { WallLayer } from './MazeWall'
 import styles from './MazeBoard.module.css'
 
 export interface MazeBoardProps {
@@ -39,15 +41,15 @@ interface MotionState {
 }
 
 function cameraOffset(
-  playerCoordinate: number,
-  mazeSize: number,
+  visualCoordinate: number,
+  boardTiles: number,
   cellSize: number,
   viewportSize: number,
 ): number {
-  const boardSize = mazeSize * cellSize
+  const boardSize = boardTiles * cellSize
   if (boardSize <= viewportSize) return (viewportSize - boardSize) / 2
 
-  const centered = viewportSize / 2 - (playerCoordinate + 0.5) * cellSize
+  const centered = viewportSize / 2 - (visualCoordinate + 0.5) * cellSize
   return Math.max(viewportSize - boardSize, Math.min(0, centered))
 }
 
@@ -129,28 +131,32 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
     }
   })
 
-  const cellSize = Math.max(36, Math.min(52, Math.floor(viewport.width / 9)))
+  const cellSize = Math.max(28, Math.min(42, Math.floor(viewport.width / 13)))
+  const boardTiles = visualSize(state.maze.size)
+  const playerTile = visualCell(state.player)
   const offsetX = cameraOffset(
-    state.player.col,
-    state.maze.size,
+    playerTile.col,
+    boardTiles,
     cellSize,
     viewport.width,
   )
   const offsetY = cameraOffset(
-    state.player.row,
-    state.maze.size,
+    playerTile.row,
+    boardTiles,
     cellSize,
     viewport.height,
   )
+  const themeId = getMazeTheme(state.maze.seed)
+  const theme = mazeThemes[themeId]
   const boardStyle = {
     '--cell-size': `${cellSize}px`,
-    '--maze-size': state.maze.size,
+    '--visual-size': boardTiles,
+    backgroundColor: theme.floorColor,
+    backgroundImage: `url("${theme.floor[0]}")`,
     transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
   } as CSSProperties
   const unlockedExit = state.rescues.every((target) => target.rescued)
   const rescuedTargets = state.rescues.filter((target) => target.rescued)
-  const themeId = getMazeTheme(state.maze.seed)
-  const theme = mazeThemes[themeId]
   const currentMotion = motion?.moveCount === state.moveCount ? motion : null
 
   return (
@@ -194,7 +200,6 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
                 cell={cell}
                 type={type}
                 seed={state.maze.seed}
-                mazeSize={state.maze.size}
                 theme={theme}
               >
                 {isExit && <ExitSprite unlocked={unlockedExit} />}
@@ -231,6 +236,7 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
             )
           }),
         )}
+        <WallLayer maze={state.maze} theme={theme} />
       </div>
     </div>
   )

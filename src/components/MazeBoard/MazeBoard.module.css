@@ -14,10 +14,12 @@
 
 .board {
   display: grid;
-  grid-template-columns: repeat(var(--maze-size), var(--cell-size));
-  grid-template-rows: repeat(var(--maze-size), var(--cell-size));
-  width: calc(var(--maze-size) * var(--cell-size));
-  height: calc(var(--maze-size) * var(--cell-size));
+  grid-template-columns: repeat(var(--visual-size), var(--cell-size));
+  grid-template-rows: repeat(var(--visual-size), var(--cell-size));
+  width: calc(var(--visual-size) * var(--cell-size));
+  height: calc(var(--visual-size) * var(--cell-size));
+  background-size: var(--cell-size) var(--cell-size);
+  background-repeat: repeat;
   transition: transform 160ms ease-out;
   will-change: transform;
 }
@@ -31,26 +33,23 @@
   background-size: cover;
 }
 
-.wallSegment {
-  position: absolute;
+.obstacleTile {
+  position: relative;
   z-index: 5;
-  width: 0;
-  height: 0;
+  display: grid;
+  place-items: center;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  overflow: hidden;
   pointer-events: none;
 }
 
-.wallSegmentup { top: 0; left: 50%; }
-.wallSegmentdown { bottom: 0; left: 50%; }
-.wallSegmentleft { left: 0; top: 50%; }
-.wallSegmentright { right: 0; top: 50%; }
-
 .wallBlock {
   position: absolute;
-  width: calc(var(--cell-size) * 1.5);
-  height: calc(var(--cell-size) * 1.5);
-  max-width: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  transform: translate(-50%, -50%);
   filter: drop-shadow(0 2px 2px #24331e55);
 }
 
@@ -59,6 +58,8 @@
 .wallFallback {
   display: none;
   position: absolute;
+  top: 50%;
+  left: 50%;
   width: calc(var(--cell-size) * 0.8);
   height: calc(var(--cell-size) * 0.8);
   transform: translate(-50%, -50%);
@@ -71,7 +72,7 @@
 
 .sprite {
   position: absolute;
-  inset: 4px;
+  inset: 1px;
   display: grid;
   place-items: center;
   z-index: 2;
@@ -119,7 +120,7 @@
 
 .followerSprite {
   z-index: 6;
-  inset: 6px;
+  inset: 2px;
   font-size: calc(var(--cell-size) * 0.5);
   filter: drop-shadow(0 2px 2px #31542377);
 }

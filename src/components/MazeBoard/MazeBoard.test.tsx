@@ -76,7 +76,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-70px, -150px, 0)')
+    expect(board.style.transform).toBe('translate3d(-331px, -411px, 0)')
 
     rerender(
       <MazeBoard
@@ -84,7 +84,7 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-140px, -300px, 0)')
+    expect(board.style.transform).toBe('translate3d(-662px, -822px, 0)')
   })
 
   it('keeps the minimum cell size on a narrow viewport', () => {
@@ -94,7 +94,7 @@ describe('MazeBoard', () => {
     })
     try {
       render(<MazeBoard state={stateFor(1, 15)} onMove={vi.fn()} />)
-      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('36px')
+      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('28px')
     } finally {
       measure.mockRestore()
     }
@@ -216,7 +216,7 @@ describe('MazeBoard', () => {
     expect(board).toHaveAttribute('data-theme', getMazeTheme(state.maze.seed))
     const cells = Array.from(container.querySelectorAll<HTMLElement>('[data-row][data-col]'))
     const firstFloor = cells[0].style.backgroundImage
-    const firstWalls = Array.from(cells[0].querySelectorAll('[data-wall-side]')).map((wall) => [wall.getAttribute('data-wall-side'), wall.getAttribute('data-wall-variant')])
+    const firstWalls = Array.from(container.querySelectorAll('[data-wall-side]')).map((wall) => [wall.getAttribute('data-visual-row'), wall.getAttribute('data-visual-col'), wall.getAttribute('data-wall-variant')])
     const boundaryCount = state.maze.cells.flat().reduce((count, cell) =>
       count + Number(cell.walls.top) + Number(cell.walls.left)
         + Number(cell.col === state.maze.size - 1 && cell.walls.right)
@@ -226,19 +226,57 @@ describe('MazeBoard', () => {
     const theme = getMazeTheme(state.maze.seed)
     expect(obstacles.every((image) => image.getAttribute('src')?.startsWith(`/assets/maps/maze-${theme}-wall-`))).toBe(true)
     expect(new Set(obstacles.map((image) => image.getAttribute('src'))).size).toBe(3)
-    expect(firstWalls.map(([side]) => side)).toContain('up')
-    expect(firstWalls.map(([side]) => side)).toContain('left')
+    expect(container.querySelector('[data-wall-side="up"][data-visual-row="0"][data-visual-col="1"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-wall-side="left"][data-visual-row="1"][data-visual-col="0"]')).toBeInTheDocument()
     expect(cells[0].style.backgroundColor).not.toBe('')
 
     rerender(<MazeBoard state={{ ...state }} onMove={vi.fn()} />)
     expect(board).toHaveAttribute('data-theme', getMazeTheme(state.maze.seed))
     expect(cells[0].style.backgroundImage).toBe(firstFloor)
-    expect(Array.from(cells[0].querySelectorAll('[data-wall-side]')).map((wall) => [wall.getAttribute('data-wall-side'), wall.getAttribute('data-wall-variant')])).toEqual(firstWalls)
+    expect(Array.from(container.querySelectorAll('[data-wall-side]')).map((wall) => [wall.getAttribute('data-visual-row'), wall.getAttribute('data-visual-col'), wall.getAttribute('data-wall-variant')])).toEqual(firstWalls)
 
     const obstacle = container.querySelector('[data-wall-side] img')!
     fireEvent.error(obstacle)
     expect(obstacle).toHaveAttribute('hidden')
     expect(obstacle.nextElementSibling?.className).toContain('wallFallback')
+  })
+
+  it('places obstacles only in blocked tiles between reachable player cells', () => {
+    const state = { ...stateFor(1, 15), status: 'playing' as const }
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const board = screen.getByTestId('maze-board')
+    expect(board.style.getPropertyValue('--visual-size')).toBe('31')
+    const occupied = new Set(
+      Array.from(container.querySelectorAll('[data-wall-side]')).map((wall) =>
+        `${wall.getAttribute('data-visual-row')}:${wall.getAttribute('data-visual-col')}`,
+      ),
+    )
+    expect(occupied.size).toBe(container.querySelectorAll('[data-wall-side]').length)
+
+    for (const cell of state.maze.cells.flat()) {
+      const centerRow = cell.row * 2 + 1
+      const centerCol = cell.col * 2 + 1
+      const center = container.querySelector<HTMLElement>(`[data-row="${cell.row}"][data-col="${cell.col}"]`)!
+      expect(center.style.gridRow).toBe(String(centerRow + 1))
+      expect(center.style.gridColumn).toBe(String(centerCol + 1))
+      expect(occupied.has(`${centerRow}:${centerCol}`)).toBe(false)
+      if (cell.col < state.maze.size - 1) {
+        expect(occupied.has(`${centerRow}:${centerCol + 1}`)).toBe(cell.walls.right)
+      }
+      if (cell.row < state.maze.size - 1) {
+        expect(occupied.has(`${centerRow + 1}:${centerCol}`)).toBe(cell.walls.bottom)
+      }
+    }
+
+    const direction = openDirection(state)
+    const blocked = gameReducer(state, { type: 'MOVE', direction: 'up' })
+    expect(blocked.player).toEqual(state.player)
+    expect(occupied.has('0:1')).toBe(true)
+    const moved = gameReducer(state, { type: 'MOVE', direction })
+    rerender(<MazeBoard state={moved} onMove={vi.fn()} />)
+    const playerCell = container.querySelector('[data-asset-slot="player"]')!.parentElement!
+    expect(playerCell).toHaveAttribute('data-visual-row', String(moved.player.row * 2 + 1))
+    expect(playerCell).toHaveAttribute('data-visual-col', String(moved.player.col * 2 + 1))
   })
 
   it('keeps neutral images when reduced motion is requested', () => {

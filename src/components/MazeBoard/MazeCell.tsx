@@ -1,15 +1,15 @@
 import type { CSSProperties, ReactNode } from 'react'
 
 import type { MazeThemeAssets } from '../../assets/assetManifest'
-import { getFloorVariant, getWallVariant } from '../../assets/mazeTheme'
-import type { Cell, Direction } from '../../game/types'
+import { getFloorVariant } from '../../assets/mazeTheme'
+import type { Cell } from '../../game/types'
+import { visualCell } from './boardGeometry'
 import styles from './MazeBoard.module.css'
 
 interface MazeCellProps {
   cell: Cell
   type: 'floor' | 'player' | 'rescue' | 'follower' | 'exit'
   seed: number
-  mazeSize: number
   theme: MazeThemeAssets
   children?: ReactNode
 }
@@ -18,7 +18,6 @@ export function MazeCell({
   cell,
   type,
   seed,
-  mazeSize,
   theme,
   children,
 }: MazeCellProps) {
@@ -31,16 +30,13 @@ export function MazeCell({
     .filter(Boolean)
     .join(' ')
   const floorVariant = getFloorVariant(seed, cell.row, cell.col)
+  const position = visualCell(cell)
   const style = {
+    gridRow: position.row + 1,
+    gridColumn: position.col + 1,
     backgroundColor: theme.floorColor,
     backgroundImage: `url("${theme.floor[floorVariant]}")`,
-    '--wall-color': theme.wallColor,
   } as CSSProperties
-  const sides: Direction[] = []
-  if (cell.walls.top) sides.push('up')
-  if (cell.walls.left) sides.push('left')
-  if (cell.col === mazeSize - 1 && cell.walls.right) sides.push('right')
-  if (cell.row === mazeSize - 1 && cell.walls.bottom) sides.push('down')
 
   return (
     <div
@@ -50,29 +46,9 @@ export function MazeCell({
       data-col={cell.col}
       data-cell-type={type}
       data-floor-variant={floorVariant}
+      data-visual-row={position.row}
+      data-visual-col={position.col}
     >
-      {sides.map((side) => {
-        const variant = getWallVariant(seed, cell.row, cell.col, side)
-        const src = theme.wall[variant]
-        return (
-          <span
-            key={side}
-            className={`${styles.wallSegment} ${styles[`wallSegment${side}`]}`}
-            data-wall-side={side}
-            data-wall-variant={variant}
-            aria-hidden="true"
-          >
-            <img
-              key={src}
-              className={styles.wallBlock}
-              src={src}
-              alt=""
-              onError={(event) => { event.currentTarget.hidden = true }}
-            />
-            <span className={styles.wallFallback} />
-          </span>
-        )
-      })}
       {children}
     </div>
   )
