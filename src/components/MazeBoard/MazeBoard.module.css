@@ -107,6 +107,13 @@
 }
 
 .playerSprite {
+  inset: auto;
+  top: 0;
+  left: 0;
+  width: calc(var(--cell-size) * 1.9);
+  height: calc(var(--cell-size) * 1.9);
+  transition: translate 160ms ease-out;
+  will-change: translate;
   z-index: 6;
   filter: drop-shadow(0 2px 2px #173b3a88);
 }

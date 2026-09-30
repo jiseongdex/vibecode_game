@@ -142,11 +142,15 @@ describe('MazeBoard', () => {
       const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} appearance="boy" />)
       const player = () => container.querySelector('[data-asset-slot="player"]')!
       const image = () => player().querySelector('img')!
+      const playerNode = player()
+      const imageNode = image()
       expect(player()).toHaveAttribute('data-motion', 'none')
       expect(image()).toHaveAttribute('src', '/assets/players/player-boy-front.png')
 
       const blocked = gameReducer(state, { type: 'MOVE', direction: 'up' })
       rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={1} />)
+      expect(player()).toBe(playerNode)
+      expect(image()).toBe(imageNode)
       expect(player()).toHaveAttribute('data-facing', 'up')
       expect(player()).toHaveAttribute('data-motion', 'walk')
       expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back-walk-a.png')
@@ -158,6 +162,8 @@ describe('MazeBoard', () => {
       const moved = gameReducer(blocked, { type: 'MOVE', direction })
       const assetSide = { up: 'back', right: 'right', down: 'front', left: 'left' }[direction]
       rerender(<MazeBoard state={moved} onMove={vi.fn()} appearance="boy" movementAttempt={2} />)
+      expect(player()).toBe(playerNode)
+      expect(image()).toBe(imageNode)
       expect(player()).toHaveAttribute('data-motion', 'walk')
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-b.png`)
       act(() => vi.advanceTimersByTime(80))
@@ -178,6 +184,27 @@ describe('MazeBoard', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('keeps one player sprite and image while interpolating between cell centers', () => {
+    const state = { ...stateFor(1, 15), status: 'playing' as const }
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    const image = player.querySelector('img')!
+    const direction = openDirection(state)
+    const moved = gameReducer(state, { type: 'MOVE', direction })
+    const visualPosition = { row: moved.player.row * 2 + 1, col: moved.player.col * 2 + 1 }
+
+    expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
+    expect(player.parentElement).toBe(screen.getByTestId('maze-board'))
+    expect(player.style.translate).toBe('39px 39px')
+
+    rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
+
+    expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
+    expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
+    expect(player.querySelector('img')).toBe(image)
+    expect(player.style.translate).toBe(`${(visualPosition.col + 0.5) * 26}px ${(visualPosition.row + 0.5) * 26}px`)
   })
 
   it('restarts the directional walk animation on consecutive blocked attempts without moving', () => {
@@ -320,9 +347,9 @@ describe('MazeBoard', () => {
     expect(occupied.has('0:1')).toBe(true)
     const moved = gameReducer(state, { type: 'MOVE', direction })
     rerender(<MazeBoard state={moved} onMove={vi.fn()} />)
-    const playerCell = container.querySelector('[data-asset-slot="player"]')!.parentElement!
-    expect(playerCell).toHaveAttribute('data-visual-row', String(moved.player.row * 2 + 1))
-    expect(playerCell).toHaveAttribute('data-visual-col', String(moved.player.col * 2 + 1))
+    const player = container.querySelector('[data-asset-slot="player"]')!
+    expect(player.parentElement).toBe(board)
+    expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
   })
 
   it('keeps neutral images when reduced motion is requested', () => {

@@ -27,19 +27,15 @@ describe('GameScreen', () => {
     }
     fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
     fireEvent.keyDown(window, { key: arrow })
-    const playerCell = document.querySelector('[data-asset-slot="player"]')!.parentElement!
-    expect(playerCell).toHaveAttribute('data-row', opening === 'down' ? '1' : '0')
-    expect(playerCell).toHaveAttribute('data-col', opening === 'right' ? '1' : '0')
-    expect(playerCell).toHaveAttribute('data-visual-row', opening === 'down' ? '3' : '1')
-    expect(playerCell).toHaveAttribute('data-visual-col', opening === 'right' ? '3' : '1')
+    const playerSprite = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    expect(playerSprite.style.translate).toBe(opening === 'down' ? '39px 91px' : '91px 39px')
     fireEvent.keyDown(window, { key: arrow, repeat: true })
     expect(document.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-motion', 'walk')
-    const afterRepeatCell = document.querySelector('[data-asset-slot="player"]')!.parentElement!
-    const repeatedPosition = afterRepeatCell.getAttribute('data-row') + ':' + afterRepeatCell.getAttribute('data-col')
+    const repeatedPosition = playerSprite.style.translate
     fireEvent.keyUp(window, { key: arrow })
     act(() => vi.advanceTimersByTime(200))
-    const playerAfterRelease = document.querySelector('[data-asset-slot="player"]')!.parentElement!
-    expect(playerAfterRelease.getAttribute('data-row') + ':' + playerAfterRelease.getAttribute('data-col')).toBe(repeatedPosition)
+    const playerAfterRelease = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    expect(playerAfterRelease.style.translate).toBe(repeatedPosition)
 
     fireEvent.click(screen.getByRole('button', { name: returnButton }))
 

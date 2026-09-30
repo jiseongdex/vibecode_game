@@ -230,21 +230,21 @@ export function MazeBoard({
                     animateMove={currentMotion?.followerMoved[index] ?? false}
                   />
                 ))}
-                {isPlayer && (
-                  <PlayerSprite
-                    appearance={appearance}
-                    facing={state.playerFacing}
-                    movementAttempt={movementAttempt}
-                    animateMove={Boolean(
-                      currentMotion &&
-                      currentMotion.playerFacing === state.playerFacing,
-                    )}
-                  />
-                )}
               </MazeCell>
             )
           }),
         )}
+        <PlayerSprite
+          appearance={appearance}
+          facing={state.playerFacing}
+          position={state.player}
+          cellSize={cellSize}
+          movementAttempt={movementAttempt}
+          animateMove={Boolean(
+            currentMotion &&
+            currentMotion.playerFacing === state.playerFacing,
+          )}
+        />
         <WallLayer maze={state.maze} theme={theme} />
       </div>
     </div>
