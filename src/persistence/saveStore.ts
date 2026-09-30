@@ -1,8 +1,14 @@
 import { createCampaignProgress } from '../game/campaignProgress'
 import type { GameState } from '../game/gameState'
 import { gameReducer } from '../game/gameState'
-import { isSaveData, SAVE_KEY, SAVE_VERSION } from './saveSchema'
-import type { SaveData, SavedSession } from './saveSchema'
+import {
+  isSaveData,
+  isSaveDataV1,
+  LEGACY_SAVE_KEY,
+  SAVE_KEY,
+  SAVE_VERSION,
+} from './saveSchema'
+import type { SaveData, SaveDataV1, SavedSession } from './saveSchema'
 
 export function createEmptySave(): SaveData {
   const progress = createCampaignProgress()
@@ -27,13 +33,50 @@ export function makeSavedSession(state: GameState, now = Date.now()): SavedSessi
   return { state: paused as SavedSession['state'], updatedAt: now }
 }
 
+export function migrateV1Save(save: SaveDataV1): SaveData {
+  return {
+    version: SAVE_VERSION,
+    unlockedStage: save.unlockedStage,
+    stageRecords: save.stageRecords,
+    currentSession: save.currentSession === null
+      ? null
+      : {
+          ...save.currentSession,
+          state: {
+            ...save.currentSession.state,
+            playerFacing: 'down',
+            followerFacings: save.currentSession.state.followers.map(() => 'down'),
+          },
+        },
+  }
+}
+
+function parseStoredSave(raw: string | null): unknown {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
 export function loadSave(): SaveData {
   try {
     if (typeof window === 'undefined') return createEmptySave()
-    const raw = window.localStorage.getItem(SAVE_KEY)
-    if (!raw) return createEmptySave()
-    const parsed: unknown = JSON.parse(raw)
-    return isSaveData(parsed) ? parsed : createEmptySave()
+    const current = parseStoredSave(window.localStorage.getItem(SAVE_KEY))
+    if (isSaveData(current)) return current
+
+    const legacy = parseStoredSave(window.localStorage.getItem(LEGACY_SAVE_KEY))
+    if (!isSaveDataV1(legacy)) return createEmptySave()
+
+    const migrated = migrateV1Save(legacy)
+    try {
+      window.localStorage.setItem(SAVE_KEY, JSON.stringify(migrated))
+      window.localStorage.removeItem(LEGACY_SAVE_KEY)
+    } catch {
+      // Preserve the v1 save when storage cannot complete migration.
+    }
+    return migrated
   } catch {
     return createEmptySave()
   }
@@ -50,10 +93,13 @@ export function saveSave(data: SaveData): void {
 }
 
 export function clearSave(): void {
-  try {
-    if (typeof window !== 'undefined') window.localStorage.removeItem(SAVE_KEY)
-  } catch {
-    // Storage can be disabled; do not interrupt gameplay.
+  if (typeof window === 'undefined') return
+  for (const key of [SAVE_KEY, LEGACY_SAVE_KEY]) {
+    try {
+      window.localStorage.removeItem(key)
+    } catch {
+      // Storage can be disabled; do not interrupt gameplay.
+    }
   }
 }
 

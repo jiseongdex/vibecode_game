@@ -57,6 +57,8 @@ describe('gameReducer', () => {
     const reachable = getReachablePositions(ready.maze, ready.player)
     expect(ready.exit).toEqual(reachable.at(-1))
     expect(ready.rescues).toHaveLength(1)
+    expect(ready.playerFacing).toBe('down')
+    expect(ready.followerFacings).toEqual([])
     expect(ready.rescues[0]).not.toMatchObject(ready.player)
     expect(ready.rescues[0]).not.toMatchObject(ready.exit)
     expect(gameReducer(ready, { type: 'MOVE', direction: 'right' })).toBe(ready)
@@ -69,7 +71,16 @@ describe('gameReducer', () => {
 
   it('ignores wall, boundary, and unknown directions; counts valid moves', () => {
     const state = gameReducer(setup(), { type: 'START', now: 0 })
-    expect(gameReducer(state, { type: 'MOVE', direction: 'up' })).toBe(state)
+    const facingWall = gameReducer(state, { type: 'MOVE', direction: 'up' })
+    expect(facingWall).toMatchObject({
+      player: state.player,
+      playerFacing: 'up',
+      followers: state.followers,
+      followerFacings: state.followerFacings,
+      moveCount: 0,
+    })
+    expect(facingWall.rescues).toBe(state.rescues)
+    expect(gameReducer(facingWall, { type: 'MOVE', direction: 'up' })).toBe(facingWall)
     expect(gameReducer(state, { type: 'MOVE', direction: 'diagonal' as Direction })).toBe(state)
     const open = (Object.keys(deltas) as Direction[]).find(
       (direction) => !state.maze.cells[0][0].walls[wallByDirection[direction]],
@@ -77,12 +88,19 @@ describe('gameReducer', () => {
     const moved = gameReducer(state, { type: 'MOVE', direction: open })
     expect(moved.moveCount).toBe(1)
     expect(moved.player).toEqual(deltas[open])
+    expect(moved.playerFacing).toBe(open)
     expect(state.moveCount).toBe(0)
     const closed = (Object.keys(deltas) as Direction[]).find(
       (direction) =>
         moved.maze.cells[moved.player.row][moved.player.col].walls[wallByDirection[direction]],
     )
-    if (closed) expect(gameReducer(moved, { type: 'MOVE', direction: closed })).toBe(moved)
+    if (closed) {
+      const blocked = gameReducer(moved, { type: 'MOVE', direction: closed })
+      expect(blocked.playerFacing).toBe(closed)
+      expect(blocked.player).toEqual(moved.player)
+      expect(blocked.moveCount).toBe(moved.moveCount)
+      expect(blocked.followers).toBe(moved.followers)
+    }
   })
 
   it('requires rescue before escape and moves followers along previous positions', () => {
@@ -119,16 +137,24 @@ describe('gameReducer', () => {
         if (index === route.length - 1) {
           expect(state.rescues[0].rescued).toBe(true)
           expect(state.followers).toEqual([previous])
+          expect(state.followerFacings).toEqual(['down'])
         }
       }
     }
     const nextRoute = pathTo(state.player, state.exit, state.maze)
     for (let index = 1; index < nextRoute.length; index += 1) {
       const previous = state.player
+      const previousFollower = state.followers[0]
+      const previousFacing = state.followerFacings[0]
       state = gameReducer(state, {
         type: 'MOVE', direction: directionBetween(nextRoute[index - 1], nextRoute[index]),
       })
       expect(state.followers[0]).toEqual(previous)
+      expect(state.followerFacings[0]).toBe(
+        previousFollower.row === previous.row && previousFollower.col === previous.col
+          ? previousFacing
+          : directionBetween(previousFollower, previous),
+      )
     }
     expect(state.status).toBe('won')
     expect(gameReducer(state, { type: 'MOVE', direction: 'left' })).toBe(state)
@@ -142,6 +168,7 @@ describe('gameReducer', () => {
       for (let index = 1; index < route.length; index += 1) {
         const oldPlayer = state.player
         const oldFollowers = state.followers
+        const oldFacings = state.followerFacings
         state = gameReducer(state, {
           type: 'MOVE', direction: directionBetween(route[index - 1], route[index]),
         })
@@ -150,6 +177,18 @@ describe('gameReducer', () => {
         }
         if (oldFollowers.length === 2) {
           expect(state.followers[1]).toEqual(oldFollowers[0])
+        }
+        expect(state.followerFacings).toHaveLength(state.followers.length)
+        oldFollowers.forEach((position, followerIndex) => {
+          const next = state.followers[followerIndex]
+          expect(state.followerFacings[followerIndex]).toBe(
+            position.row === next.row && position.col === next.col
+              ? oldFacings[followerIndex]
+              : directionBetween(position, next),
+          )
+        })
+        if (state.followers.length > oldFollowers.length) {
+          expect(state.followerFacings.at(-1)).toBe('down')
         }
       }
       expect(state.rescues.find((item) => item.id === target.id)?.rescued).toBe(true)
@@ -199,12 +238,16 @@ describe('gameReducer', () => {
     expect(retry.moveCount).toBe(0)
     expect(retry.remainingSeconds).toBe(original.stageConfig.timeLimitSeconds)
     expect(retry.status).toBe('ready')
+    expect(retry.playerFacing).toBe('down')
+    expect(retry.followerFacings).toEqual([])
 
     const freshMaze = generateMaze(15, createSeededRandom(99))
     const restarted = gameReducer(lost, { type: 'RESTART_NEW_MAZE', maze: freshMaze })
     expect(restarted.maze).toBe(freshMaze)
     expect(restarted.seed).toBe(freshMaze.seed)
     expect(restarted.status).toBe('ready')
+    expect(restarted.playerFacing).toBe('down')
+    expect(restarted.followerFacings).toEqual([])
     expect(gameReducer(original, { type: 'RETRY_SAME_MAZE' })).toBe(original)
   })
 })

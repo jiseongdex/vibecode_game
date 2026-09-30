@@ -20,6 +20,8 @@ export interface GameState {
   exit: Position
   rescues: RescueTarget[]
   followers: Position[]
+  playerFacing: Direction
+  followerFacings: Direction[]
   moveCount: number
   remainingSeconds: number
   status: GameStatus
@@ -48,6 +50,16 @@ function samePosition(first: Position, second: Position): boolean {
   return first.row === second.row && first.col === second.col
 }
 
+function directionFromStep(from: Position, to: Position): Direction | null {
+  const rowChange = to.row - from.row
+  const colChange = to.col - from.col
+  if (rowChange === -1 && colChange === 0) return 'up'
+  if (rowChange === 1 && colChange === 0) return 'down'
+  if (rowChange === 0 && colChange === -1) return 'left'
+  if (rowChange === 0 && colChange === 1) return 'right'
+  return null
+}
+
 export function createGameState(stage: number, maze?: Maze): GameState {
   const stageConfig = getStageConfig(stage)
   const selectedMaze = maze ?? generateMaze(stageConfig.size)
@@ -68,6 +80,8 @@ export function createGameState(stage: number, maze?: Maze): GameState {
     exit,
     rescues,
     followers: [],
+    playerFacing: 'down',
+    followerFacings: [],
     moveCount: 0,
     remainingSeconds: stageConfig.timeLimitSeconds,
     status: 'ready',
@@ -99,7 +113,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         nextPlayer.col >= state.maze.size ||
         state.maze.cells[state.player.row][state.player.col].walls[offset.wall]
       ) {
-        return state
+        return state.playerFacing === action.direction
+          ? state
+          : { ...state, playerFacing: action.direction }
       }
 
       const newlyRescued = state.rescues.some(
@@ -122,6 +138,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         const previousTail = state.followers.at(-1) ?? state.player
         followers.push({ ...previousTail })
       }
+      const followerFacings = followers.map((position, index) =>
+        index < state.followers.length
+          ? directionFromStep(state.followers[index], position) ??
+            state.followerFacings[index] ??
+            'down'
+          : 'down',
+      )
 
       const won =
         samePosition(nextPlayer, state.exit) &&
@@ -132,6 +155,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         player: nextPlayer,
         rescues,
         followers,
+        playerFacing: action.direction,
+        followerFacings,
         moveCount: state.moveCount + 1,
         status: won ? 'won' : 'playing',
       }
