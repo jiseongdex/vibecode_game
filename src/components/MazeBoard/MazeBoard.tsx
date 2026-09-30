@@ -3,13 +3,13 @@ import type { CSSProperties } from 'react'
 
 import { mazeThemes } from '../../assets/assetManifest'
 import type { PlayerAppearance } from '../../assets/assetManifest'
-import { getMazeTheme } from '../../assets/mazeTheme'
+import { getFloorVariant, getMazeTheme } from '../../assets/mazeTheme'
 import type { GameState } from '../../game/gameState'
 import type { Direction, Position } from '../../game/types'
 import { ExitSprite } from '../Exit/ExitSprite'
 import { PlayerSprite } from '../Player/PlayerSprite'
 import { RescueSprite } from '../Rescue/RescueSprite'
-import { visualCell, visualSize } from './boardGeometry'
+import { openPassageSlots, visualCell, visualSize } from './boardGeometry'
 import { MazeCell } from './MazeCell'
 import { WallLayer } from './MazeWall'
 import styles from './MazeBoard.module.css'
@@ -142,7 +142,7 @@ export function MazeBoard({
   const logicalCellSize = Math.max(36, Math.min(52, Math.floor(viewport.width / 9)))
   const cellSize = Math.floor(logicalCellSize / 2)
   const boardTiles = visualSize(state.maze.size)
-  const playerTile = visualCell(state.player)
+  const playerTile = state.player
   const offsetX = cameraOffset(
     playerTile.col,
     boardTiles,
@@ -182,22 +182,38 @@ export function MazeBoard({
         data-testid="maze-board"
         data-theme={themeId}
       >
+        {openPassageSlots(state.maze).map(({ cell, position }) => {
+          const floorVariant = getFloorVariant(state.maze.seed, cell.row, cell.col)
+          return (
+            <span
+              key={`${position.row}:${position.col}`}
+              className={styles.openPassage}
+              style={{
+                gridRow: position.row + 1,
+                gridColumn: position.col + 1,
+                backgroundColor: theme.floorColor,
+                backgroundImage: `url("${theme.floor[floorVariant]}")`,
+              }}
+              data-open-passage="true"
+              data-visual-row={position.row}
+              data-visual-col={position.col}
+            />
+          )
+        })}
         {state.maze.cells.flatMap((row) =>
           row.map((cell) => {
             const position = { row: cell.row, col: cell.col }
-            const isPlayer = samePosition(position, state.player)
-            const isExit = samePosition(position, state.exit)
+            const gridPosition = visualCell(position)
+            const isPlayer = samePosition(gridPosition, state.player)
+            const isExit = samePosition(gridPosition, state.exit)
             const waiting = state.rescues.filter(
-              (target) => !target.rescued && samePosition(position, target),
+              (target) => !target.rescued && samePosition(gridPosition, target),
             )
-            const followers = state.followers
-              .map((follower, index) => ({ follower, index }))
-              .filter(({ follower }) => samePosition(position, follower))
             const type = isPlayer
               ? 'player'
               : waiting.length > 0
                 ? 'rescue'
-                : followers.length > 0
+                : state.followers.some((follower) => samePosition(gridPosition, follower))
                   ? 'follower'
                   : isExit
                     ? 'exit'
@@ -212,28 +228,31 @@ export function MazeBoard({
                 theme={theme}
               >
                 {isExit && <ExitSprite unlocked={unlockedExit} />}
-                {waiting.map((target) => (
-                  <RescueSprite
-                    key={target.id}
-                    animalId={target.id}
-                    facing="down"
-                  />
-                ))}
-                {followers.map(({ index }) => (
-                  <RescueSprite
-                    key={`follower-${index}`}
-                    animalId={rescuedTargets[index]?.id ?? 'rescue-1'}
-                    following
-                    order={index + 1}
-                    facing={state.followerFacings[index] ?? 'down'}
-                    movementAttempt={movementAttempt}
-                    animateMove={currentMotion?.followerMoved[index] ?? false}
-                  />
-                ))}
               </MazeCell>
             )
           }),
         )}
+        {state.rescues.filter((target) => !target.rescued).map((target) => (
+          <RescueSprite
+            key={target.id}
+            animalId={target.id}
+            position={target}
+            cellSize={cellSize}
+          />
+        ))}
+        {state.followers.map((position, index) => (
+          <RescueSprite
+            key={`follower-${index}`}
+            animalId={rescuedTargets[index]?.id ?? 'rescue-1'}
+            position={position}
+            cellSize={cellSize}
+            following
+            order={index + 1}
+            facing={state.followerFacings[index] ?? 'down'}
+            movementAttempt={movementAttempt}
+            animateMove={currentMotion?.followerMoved[index] ?? false}
+          />
+        ))}
         <PlayerSprite
           appearance={appearance}
           facing={state.playerFacing}

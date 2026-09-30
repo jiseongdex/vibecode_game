@@ -3,7 +3,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { getMazeTheme } from '../../assets/mazeTheme'
 import { createGameState, gameReducer } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
-import type { CellWalls, Direction } from '../../game/types'
+import { isWalkableGridPosition } from '../../game/mazeGrid'
+import type { Direction, Position } from '../../game/types'
 import { MazeBoard } from './MazeBoard'
 
 function stateFor(stage: number, size: number) {
@@ -11,12 +12,17 @@ function stateFor(stage: number, size: number) {
 }
 
 function openDirection(state: ReturnType<typeof stateFor>): Direction {
-  const walls = state.maze.cells[state.player.row][state.player.col].walls
-  const wallName: Record<Direction, keyof CellWalls> = {
-    up: 'top', right: 'right', down: 'bottom', left: 'left',
+  const delta: Record<Direction, Position> = {
+    up: { row: -1, col: 0 },
+    right: { row: 0, col: 1 },
+    down: { row: 1, col: 0 },
+    left: { row: 0, col: -1 },
   }
   return (['up', 'right', 'down', 'left'] as const).find((direction) =>
-    !walls[wallName[direction]],
+    isWalkableGridPosition(state.maze, {
+      row: state.player.row + delta[direction].row,
+      col: state.player.col + delta[direction].col,
+    }),
   )!
 }
 
@@ -33,6 +39,8 @@ describe('MazeBoard', () => {
     )
     expect(screen.getByRole('img', { name: '탐험가' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: '잠긴 탈출구' })).toBeInTheDocument()
+    expect((container.querySelector('[data-asset-slot="exit"]') as HTMLElement).style.backgroundColor)
+      .toBe('transparent')
     expect(screen.getAllByRole('img', { name: '구출 대상' })).toHaveLength(
       state.stageConfig.rescueCount,
     )
@@ -53,7 +61,7 @@ describe('MazeBoard', () => {
     const rescuedState = {
       ...state,
       rescues: state.rescues.map((target) => ({ ...target, rescued: true })),
-      followers: [{ row: 0, col: 0 }],
+      followers: [{ row: 1, col: 1 }],
       followerFacings: ['down' as const],
     }
     rerender(<MazeBoard state={rescuedState} onMove={vi.fn()} />)
@@ -61,6 +69,52 @@ describe('MazeBoard', () => {
     expect(screen.queryByRole('img', { name: '구출 대상' })).toBeNull()
     expect(screen.getByRole('img', { name: '구출한 동료 1' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: '열린 탈출구' })).toBeInTheDocument()
+    expect((container.querySelector('[data-asset-slot="exit"]') as HTMLElement).style.backgroundColor)
+      .toBe('transparent')
+  })
+
+  it('renders open connectors as floor and positions followers directly on them', () => {
+    const state = stateFor(1, 15)
+    const direction = openDirection(state)
+    const delta: Record<Direction, Position> = {
+      up: { row: -1, col: 0 },
+      right: { row: 0, col: 1 },
+      down: { row: 1, col: 0 },
+      left: { row: 0, col: -1 },
+    }
+    const connector = {
+      row: state.player.row + delta[direction].row,
+      col: state.player.col + delta[direction].col,
+    }
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const tile = container.querySelector<HTMLElement>(
+      `[data-open-passage="true"][data-visual-row="${connector.row}"][data-visual-col="${connector.col}"]`,
+    )
+    expect(tile).toBeInTheDocument()
+    expect(tile?.style.backgroundColor).not.toBe('')
+    expect(tile?.style.backgroundImage).not.toBe('')
+    expect(container.querySelector(
+      `[data-wall-side][data-visual-row="${connector.row}"][data-visual-col="${connector.col}"]`,
+    )).toBeNull()
+    expect(Array.from(container.querySelectorAll<HTMLElement>('[data-asset-slot="rescue-target"]'))
+      .every((target) => Number(target.dataset.gridRow) % 2 === 1 && Number(target.dataset.gridCol) % 2 === 1),
+    ).toBe(true)
+
+    rerender(<MazeBoard
+      state={{
+        ...state,
+        rescues: state.rescues.map((target) => ({ ...target, rescued: true })),
+        followers: [connector],
+        followerFacings: ['down'],
+      }}
+      onMove={vi.fn()}
+    />)
+    const follower = container.querySelector<HTMLElement>('[data-asset-slot="follower"]')!
+    expect(follower.dataset.gridRow).toBe(String(connector.row))
+    expect(follower.dataset.gridCol).toBe(String(connector.col))
+    expect(follower.style.top).toBe(`${Math.round((connector.row - 0.7) * 26 * 100) / 100}px`)
+    expect(follower.style.left).toBe(`${Math.round((connector.col - 0.7) * 26 * 100) / 100}px`)
+    expect(follower.parentElement).toBe(screen.getByTestId('maze-board'))
   })
 
   it('uses the same 70-percent logical-cell sprite box for players and rescue animals', () => {
@@ -72,7 +126,7 @@ describe('MazeBoard', () => {
         state={{
           ...state,
           rescues: [{ ...rescued, rescued: true }, ...state.rescues.slice(1)],
-          followers: [{ row: 0, col: 0 }],
+          followers: [{ row: 1, col: 1 }],
           followerFacings: ['down'],
         }}
         onMove={vi.fn()}
@@ -102,20 +156,20 @@ describe('MazeBoard', () => {
 
     rerender(
       <MazeBoard
-        state={{ ...state, player: { row: 7, col: 7 } }}
+        state={{ ...state, player: { row: 12, col: 12 } }}
         onMove={vi.fn()}
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-83px, -163px, 0)')
+    expect(board.style.transform).toBe('translate3d(-5px, -85px, 0)')
 
     rerender(
       <MazeBoard
-        state={{ ...state, player: { row: 14, col: 14 } }}
+        state={{ ...state, player: { row: 13, col: 13 } }}
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-166px, -326px, 0)')
+    expect(board.style.transform).toBe('translate3d(-31px, -111px, 0)')
   })
 
   it('keeps the minimum cell size on a narrow viewport', () => {
@@ -144,7 +198,7 @@ describe('MazeBoard', () => {
     rerender(<MazeBoard state={{
       ...state,
       rescues: [{ ...rescued, rescued: true }, ...state.rescues.slice(0, 4)],
-      followers: [{ row: 0, col: 0 }],
+          followers: [{ row: 1, col: 1 }],
       followerFacings: ['down'],
     }} onMove={vi.fn()} />)
     const follower = container.querySelector('[data-asset-slot="follower"]')
@@ -224,18 +278,20 @@ describe('MazeBoard', () => {
     const image = player.querySelector('img')!
     const direction = openDirection(state)
     const moved = gameReducer(state, { type: 'MOVE', direction })
-    const visualPosition = { row: moved.player.row * 2 + 1, col: moved.player.col * 2 + 1 }
+    const visualPosition = moved.player
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(player.parentElement).toBe(screen.getByTestId('maze-board'))
-    expect(player.style.translate).toBe('20.8px 20.8px')
+    expect(player.style.translate).toBe('7.8px 7.8px')
 
     rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
     expect(player.querySelector('img')).toBe(image)
-    expect(player.style.translate).toBe(`${(visualPosition.col - 0.2) * 26}px ${(visualPosition.row - 0.2) * 26}px`)
+    const left = Math.round((visualPosition.col - 0.7) * 26 * 100) / 100
+    const top = Math.round((visualPosition.row - 0.7) * 26 * 100) / 100
+    expect(player.style.translate).toBe(`${left}px ${top}px`)
   })
 
   it('restarts the directional walk animation on consecutive blocked attempts without moving', () => {
@@ -268,7 +324,7 @@ describe('MazeBoard', () => {
       const state = {
         ...stateFor(1, 15),
         rescues: [{ ...stateFor(1, 15).rescues[0], rescued: true }],
-        followers: [{ row: 0, col: 0 }],
+        followers: [{ row: 1, col: 1 }],
         followerFacings: ['down' as const],
       }
       const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
@@ -276,8 +332,8 @@ describe('MazeBoard', () => {
 
       const moved = {
         ...state,
-        player: { row: 0, col: 1 },
-        followers: [{ row: 0, col: 1 }, { row: 0, col: 2 }],
+        player: { row: 1, col: 2 },
+        followers: [{ row: 1, col: 2 }, { row: 1, col: 3 }],
         followerFacings: ['right' as const, 'down' as const],
       }
       rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)

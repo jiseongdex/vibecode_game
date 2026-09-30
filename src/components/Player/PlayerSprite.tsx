@@ -73,18 +73,22 @@ export function PlayerSprite({
   const src = walk && frameIndex !== null
     ? playerWalkSprites[appearance][facing][frameIndex]
     : playerSprites[appearance][facing]
+  const spriteLeft = Math.round((position.col - 0.7) * cellSize * 100) / 100
+  const spriteTop = Math.round((position.row - 0.7) * cellSize * 100) / 100
 
   return (
     <span
       className={`${styles.sprite} ${styles.playerSprite}`}
       style={{
         '--sprite-size': 'calc(var(--cell-size) * 1.4)',
-        translate: `${(position.col * 2 + 0.8) * cellSize}px ${(position.row * 2 + 0.8) * cellSize}px`,
+        translate: `${spriteLeft}px ${spriteTop}px`,
       } as CSSProperties}
       role="img"
       aria-label="탐험가"
       data-asset-slot="player"
       data-facing={facing}
+      data-grid-row={position.row}
+      data-grid-col={position.col}
       data-motion={walk ? 'walk' : 'none'}
     >
       <img

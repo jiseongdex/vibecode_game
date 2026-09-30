@@ -6,6 +6,11 @@ export interface WallSlot {
   position: Position
 }
 
+export interface PassageSlot {
+  cell: Cell
+  position: Position
+}
+
 export function visualSize(mazeSize: number): number {
   return mazeSize * 2 + 1
 }
@@ -33,6 +38,28 @@ export function closedWallSlots(maze: Maze): WallSlot[] {
       if (cell.row === maze.size - 1 && cell.walls.bottom) sides.push('down')
       for (const side of sides) {
         slots.push({ cell, side, position: visualWall(cell, side) })
+      }
+    }
+  }
+  return slots
+}
+
+export function openPassageSlots(maze: Maze): PassageSlot[] {
+  const slots: PassageSlot[] = []
+  for (const row of maze.cells) {
+    for (const cell of row) {
+      const center = visualCell(cell)
+      if (cell.col < maze.size - 1 && !cell.walls.right) {
+        slots.push({
+          cell,
+          position: { row: center.row, col: center.col + 1 },
+        })
+      }
+      if (cell.row < maze.size - 1 && !cell.walls.bottom) {
+        slots.push({
+          cell,
+          position: { row: center.row + 1, col: center.col },
+        })
       }
     }
   }

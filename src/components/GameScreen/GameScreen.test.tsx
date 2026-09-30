@@ -28,7 +28,9 @@ describe('GameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
     fireEvent.keyDown(window, { key: arrow })
     const playerSprite = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
-    expect(playerSprite.style.translate).toBe(opening === 'down' ? '20.8px 72.8px' : '72.8px 20.8px')
+    expect(playerSprite).toHaveAttribute('data-grid-row', opening === 'down' ? '2' : '1')
+    expect(playerSprite).toHaveAttribute('data-grid-col', opening === 'down' ? '1' : '2')
+    expect(playerSprite.style.translate).toBe(opening === 'down' ? '7.8px 33.8px' : '33.8px 7.8px')
     fireEvent.keyDown(window, { key: arrow, repeat: true })
     expect(document.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-motion', 'walk')
     const repeatedPosition = playerSprite.style.translate

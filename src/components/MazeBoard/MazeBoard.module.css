@@ -33,6 +33,15 @@
   background-size: cover;
 }
 
+.openPassage {
+  position: relative;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  background-position: center;
+  background-size: cover;
+  pointer-events: none;
+}
+
 .obstacleTile {
   position: relative;
   z-index: 7;
@@ -147,14 +156,12 @@
   z-index: 1;
   inset: 0;
   border-radius: 8px;
-  background: #b9b6ac;
   filter: grayscale(0.75);
 }
 
 .exitUnlocked {
-  background: #d5f0bb;
   filter: none;
-  box-shadow: 0 0 9px #44804a;
+  filter: drop-shadow(0 0 9px #44804a);
 }
 
 @keyframes walkLift {
