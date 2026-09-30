@@ -74,7 +74,12 @@
 
 .sprite {
   position: absolute;
-  inset: -45%;
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  width: var(--sprite-size, calc(var(--cell-size) * 1.4));
+  height: var(--sprite-size, calc(var(--cell-size) * 1.4));
+  transform: translate(-50%, -50%);
   display: grid;
   place-items: center;
   z-index: 2;
@@ -110,8 +115,9 @@
   inset: auto;
   top: 0;
   left: 0;
-  width: calc(var(--cell-size) * 1.9);
-  height: calc(var(--cell-size) * 1.9);
+  width: var(--sprite-size, calc(var(--cell-size) * 1.4));
+  height: var(--sprite-size, calc(var(--cell-size) * 1.4));
+  transform: none;
   transition: translate 160ms ease-out;
   will-change: translate;
   z-index: 6;
@@ -129,7 +135,6 @@
 
 .followerSprite {
   z-index: 6;
-  inset: -35%;
   font-size: calc(var(--cell-size) * 0.5);
   filter: drop-shadow(0 2px 2px #31542377);
 }

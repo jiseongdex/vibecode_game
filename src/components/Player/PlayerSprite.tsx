@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 import { playerSprites, playerWalkSprites } from '../../assets/assetManifest'
 import type { PlayerAppearance } from '../../assets/assetManifest'
@@ -77,8 +78,9 @@ export function PlayerSprite({
     <span
       className={`${styles.sprite} ${styles.playerSprite}`}
       style={{
-        translate: `${(position.col * 2 + 1.5) * cellSize}px ${(position.row * 2 + 1.5) * cellSize}px`,
-      }}
+        '--sprite-size': 'calc(var(--cell-size) * 1.4)',
+        translate: `${(position.col * 2 + 0.8) * cellSize}px ${(position.row * 2 + 0.8) * cellSize}px`,
+      } as CSSProperties}
       role="img"
       aria-label="탐험가"
       data-asset-slot="player"
@@ -89,6 +91,7 @@ export function PlayerSprite({
         src={src}
         alt=""
         aria-hidden="true"
+        style={{ objectFit: 'contain' }}
         onLoad={(event) => { event.currentTarget.hidden = false }}
         onError={(event) => { event.currentTarget.hidden = true }}
       />

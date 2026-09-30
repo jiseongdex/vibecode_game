@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 import { getRescueAnimal } from '../../assets/assetManifest'
 import type { Direction } from '../../game/types'
@@ -43,6 +44,7 @@ export function RescueSprite({
   return (
     <span
       className={`${styles.sprite} ${following ? styles.followerSprite : styles.rescueSprite}`}
+      style={{ '--sprite-size': 'calc(var(--cell-size) * 1.4)' } as CSSProperties}
       role="img"
       aria-label={following ? `구출한 동료 ${order}` : '구출 대상'}
       data-asset-slot={following ? 'follower' : 'rescue-target'}
@@ -61,6 +63,7 @@ export function RescueSprite({
           src={src}
           alt=""
           aria-hidden="true"
+          style={{ objectFit: 'contain' }}
           onError={(event) => { event.currentTarget.hidden = true }}
         />
         <span className={styles.spriteFallback} aria-hidden="true">

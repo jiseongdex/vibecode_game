@@ -63,6 +63,37 @@ describe('MazeBoard', () => {
     expect(screen.getByRole('img', { name: '열린 탈출구' })).toBeInTheDocument()
   })
 
+  it('uses the same 70-percent logical-cell sprite box for players and rescue animals', () => {
+    const state = stateFor(1, 15)
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const rescued = state.rescues[0]
+    rerender(
+      <MazeBoard
+        state={{
+          ...state,
+          rescues: [{ ...rescued, rescued: true }, ...state.rescues.slice(1)],
+          followers: [{ row: 0, col: 0 }],
+          followerFacings: ['down'],
+        }}
+        onMove={vi.fn()}
+      />,
+    )
+
+    const sprites = Array.from(
+      container.querySelectorAll<HTMLElement>(
+        '[data-asset-slot="player"], [data-asset-slot="rescue-target"], [data-asset-slot="follower"]',
+      ),
+    )
+    expect(sprites.length).toBe(state.stageConfig.rescueCount + 1)
+    expect(sprites.every((sprite) =>
+      sprite.style.getPropertyValue('--sprite-size') === 'calc(var(--cell-size) * 1.4)',
+    )).toBe(true)
+    expect(
+      Array.from(container.querySelectorAll('[data-asset-slot="player"] img, [data-asset-slot="rescue-target"] img, [data-asset-slot="follower"] img'))
+        .every((image) => (image as HTMLImageElement).style.objectFit === 'contain'),
+    ).toBe(true)
+  })
+
   it('follows the player while clamping the camera at board edges', () => {
     const state = stateFor(1, 15)
     const { rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
@@ -197,14 +228,14 @@ describe('MazeBoard', () => {
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(player.parentElement).toBe(screen.getByTestId('maze-board'))
-    expect(player.style.translate).toBe('39px 39px')
+    expect(player.style.translate).toBe('20.8px 20.8px')
 
     rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
     expect(player.querySelector('img')).toBe(image)
-    expect(player.style.translate).toBe(`${(visualPosition.col + 0.5) * 26}px ${(visualPosition.row + 0.5) * 26}px`)
+    expect(player.style.translate).toBe(`${(visualPosition.col - 0.2) * 26}px ${(visualPosition.row - 0.2) * 26}px`)
   })
 
   it('restarts the directional walk animation on consecutive blocked attempts without moving', () => {
