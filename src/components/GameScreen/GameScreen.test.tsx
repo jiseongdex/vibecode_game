@@ -27,6 +27,12 @@ describe('GameScreen', () => {
     }
     fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
     fireEvent.keyDown(window, { key: arrow })
+    const playerCell = document.querySelector('[data-asset-slot="player"]')!.parentElement!
+    expect(playerCell).toHaveAttribute('data-row', opening === 'down' ? '1' : '0')
+    expect(playerCell).toHaveAttribute('data-col', opening === 'right' ? '1' : '0')
+    expect(playerCell).toHaveAttribute('data-visual-row', opening === 'down' ? '3' : '1')
+    expect(playerCell).toHaveAttribute('data-visual-col', opening === 'right' ? '3' : '1')
+    fireEvent.keyDown(window, { key: arrow, repeat: true })
     expect(screen.getByText('이동: 1회')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: returnButton }))

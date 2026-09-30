@@ -41,6 +41,7 @@ export function useKeyboardMovement({
       if (!direction) return
 
       if (event.key.startsWith('Arrow')) event.preventDefault()
+      if (event.repeat) return
       onMove(direction)
     }
 

@@ -41,6 +41,18 @@ describe('useKeyboardMovement', () => {
     expect(onMove).not.toHaveBeenCalled()
   })
 
+  it('moves only once while a movement key is held', () => {
+    const onMove = vi.fn()
+    renderHook(() => useKeyboardMovement({ enabled: true, onMove }))
+
+    fireEvent.keyDown(window, { key: 'ArrowRight', repeat: false })
+    fireEvent.keyDown(window, { key: 'ArrowRight', repeat: true })
+    fireEvent.keyDown(window, { key: 'ArrowRight', repeat: true })
+
+    expect(onMove).toHaveBeenCalledTimes(1)
+    expect(onMove).toHaveBeenCalledWith('right')
+  })
+
   it('detaches its listener when disabled or unmounted', () => {
     const onMove = vi.fn()
     const { rerender, unmount } = renderHook(
