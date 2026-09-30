@@ -1,8 +1,8 @@
 import { placeEntities, moveFollowers } from './entityPlacement'
 import { generateMaze } from './mazeGenerator'
 import { getStageConfig } from './stageConfig'
+import { isWalkableGridPosition, logicalToGridPosition } from './mazeGrid'
 import type {
-  CellWalls,
   Direction,
   EntityPosition,
   Maze,
@@ -38,11 +38,11 @@ export type GameAction =
   | { type: 'RETRY_SAME_MAZE' }
   | { type: 'RESTART_NEW_MAZE'; maze: Maze }
 
-const movement: Record<Direction, Position & { wall: keyof CellWalls }> = {
-  up: { row: -1, col: 0, wall: 'top' },
-  right: { row: 0, col: 1, wall: 'right' },
-  down: { row: 1, col: 0, wall: 'bottom' },
-  left: { row: 0, col: -1, wall: 'left' },
+const movement: Record<Direction, Position> = {
+  up: { row: -1, col: 0 },
+  right: { row: 0, col: 1 },
+  down: { row: 1, col: 0 },
+  left: { row: 0, col: -1 },
 }
 
 function samePosition(first: Position, second: Position): boolean {
@@ -71,13 +71,15 @@ export function createGameState(stage: number, maze?: Maze): GameState {
     selectedMaze,
     stageConfig.rescueCount,
   )
-
   return {
     stageConfig,
     maze: selectedMaze,
-    player: { row: 0, col: 0 },
-    exit,
-    rescues,
+    player: logicalToGridPosition({ row: 0, col: 0 }),
+    exit: logicalToGridPosition(exit),
+    rescues: rescues.map((target) => ({
+      ...target,
+      ...logicalToGridPosition(target),
+    })),
     followers: [],
     playerFacing: 'down',
     followerFacings: [],
@@ -104,13 +106,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         row: state.player.row + offset.row,
         col: state.player.col + offset.col,
       }
-      if (
-        nextPlayer.row < 0 ||
-        nextPlayer.row >= state.maze.size ||
-        nextPlayer.col < 0 ||
-        nextPlayer.col >= state.maze.size ||
-        state.maze.cells[state.player.row][state.player.col].walls[offset.wall]
-      ) {
+      if (!isWalkableGridPosition(state.maze, nextPlayer)) {
         return state.playerFacing === action.direction
           ? state
           : { ...state, playerFacing: action.direction }

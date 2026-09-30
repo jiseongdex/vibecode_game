@@ -34,7 +34,7 @@ describe('saveStore', () => {
     const save = sampleSave()
     if (!save.currentSession) throw new Error('Expected an active sample session.')
     save.currentSession.state.rescues[0].rescued = true
-    save.currentSession.state.followers = [{ row: 0, col: 0 }]
+    save.currentSession.state.followers = [{ ...save.currentSession.state.player }]
     save.currentSession.state.followerFacings = ['down']
     saveSave(save)
     const restored = loadSave()
@@ -47,7 +47,9 @@ describe('saveStore', () => {
       save.currentSession.state.remainingSeconds,
     )
     expect(restored.currentSession?.state.rescues[0].rescued).toBe(true)
-    expect(restored.currentSession?.state.followers).toEqual([{ row: 0, col: 0 }])
+    expect(restored.currentSession?.state.followers).toEqual([
+      save.currentSession.state.player,
+    ])
     expect(restored.currentSession?.state).not.toHaveProperty('moveCount')
     expect(restored.stageRecords[1]).toEqual({ bestTimeSeconds: 90 })
     expect(JSON.parse(window.localStorage.getItem(SAVE_KEY)!).currentSession.state)
@@ -93,14 +95,31 @@ describe('saveStore', () => {
     }
   })
 
-  it('does not restore v1 or v2 saves during development', () => {
+  it('does not restore v1, v2, or v3 saves during development', () => {
     window.localStorage.setItem('maze-rescue-game.save.v1', JSON.stringify({ version: 1 }))
     window.localStorage.setItem('maze-rescue-game.save.v2', JSON.stringify({ version: 2 }))
+    window.localStorage.setItem('maze-rescue-game.save.v3', JSON.stringify({ version: 3 }))
 
     expect(loadSave()).toEqual(createEmptySave())
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
     expect(window.localStorage.getItem('maze-rescue-game.save.v1')).not.toBeNull()
     expect(window.localStorage.getItem('maze-rescue-game.save.v2')).not.toBeNull()
+    expect(window.localStorage.getItem('maze-rescue-game.save.v3')).not.toBeNull()
+  })
+
+  it('clears current and previous save keys', () => {
+    for (const key of [
+      'maze-rescue-game.save.v4',
+      'maze-rescue-game.save.v3',
+      'maze-rescue-game.save.v2',
+      'maze-rescue-game.save.v1',
+    ]) {
+      window.localStorage.setItem(key, 'saved')
+    }
+
+    clearSave()
+
+    expect(window.localStorage.length).toBe(0)
   })
 
   it('keeps unlock progress, the best time, and the newest valid session when merging', () => {
@@ -119,7 +138,7 @@ describe('saveStore', () => {
     expect(merged.currentSession?.updatedAt).toBe(300)
   })
 
-  it('only writes valid v3 data', () => {
+  it('only writes valid v4 data', () => {
     const invalid = { ...sampleSave(), version: 2 } as unknown as SaveData
     expect(isSaveData(invalid)).toBe(false)
     saveSave(invalid)

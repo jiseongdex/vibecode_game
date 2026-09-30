@@ -63,7 +63,12 @@ export function saveSave(data: SaveData): void {
 
 export function clearSave(): void {
   if (typeof window === 'undefined') return
-  for (const key of [SAVE_KEY, 'maze-rescue-game.save.v2', 'maze-rescue-game.save.v1']) {
+  for (const key of [
+    SAVE_KEY,
+    'maze-rescue-game.save.v3',
+    'maze-rescue-game.save.v2',
+    'maze-rescue-game.save.v1',
+  ]) {
     try {
       window.localStorage.removeItem(key)
     } catch {

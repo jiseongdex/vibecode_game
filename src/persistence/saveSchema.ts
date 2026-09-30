@@ -1,11 +1,12 @@
 import type { StageRecord } from '../game/campaignProgress'
 import type { GameState } from '../game/gameState'
 import { getReachablePositions } from '../game/mazeGenerator'
+import { gridToLogicalPosition, isWalkableGridPosition } from '../game/mazeGrid'
 import { getStageConfig, MAX_STAGE, MIN_STAGE } from '../game/stageConfig'
 import type { Cell, CellWalls, Direction, Maze, Position } from '../game/types'
 
-export const SAVE_VERSION = 3 as const
-export const SAVE_KEY = 'maze-rescue-game.save.v3'
+export const SAVE_VERSION = 4 as const
+export const SAVE_KEY = 'maze-rescue-game.save.v4'
 
 export type { StageRecord } from '../game/campaignProgress'
 
@@ -39,15 +40,19 @@ function isDirection(value: unknown): value is Direction {
   return value === 'up' || value === 'right' || value === 'down' || value === 'left'
 }
 
-function isPosition(value: unknown, size: number): value is Position {
+function isGridPosition(value: unknown, maze: Maze): value is Position {
   return (
     isObject(value) &&
     Number.isInteger(value.row) &&
     Number.isInteger(value.col) &&
-    (value.row as number) >= 0 &&
-    (value.row as number) < size &&
-    (value.col as number) >= 0 &&
-    (value.col as number) < size
+    isWalkableGridPosition(maze, value as unknown as Position)
+  )
+}
+
+function isFloorCenter(value: unknown, maze: Maze): value is Position {
+  return (
+    isGridPosition(value, maze) &&
+    gridToLogicalPosition(value) !== null
   )
 }
 
@@ -117,9 +122,9 @@ function isSavedSession(value: unknown, unlockedStage: number): boolean {
     !isMaze(state.maze) ||
     state.maze.size !== config.size ||
     state.seed !== state.maze.seed ||
-    !isPosition(state.player, config.size) ||
-    !isPosition(state.exit, config.size) ||
-    (state.exit.row === 0 && state.exit.col === 0) ||
+    !isGridPosition(state.player, state.maze) ||
+    !isFloorCenter(state.exit, state.maze) ||
+    (state.exit.row === 1 && state.exit.col === 1) ||
     !Array.isArray(state.rescues) ||
     state.rescues.length !== config.rescueCount ||
     !Array.isArray(state.followers) ||
@@ -141,11 +146,11 @@ function isSavedSession(value: unknown, unlockedStage: number): boolean {
     const candidate: unknown = target
     if (
       !isObject(candidate) ||
-      !isPosition(candidate, config.size) ||
+      !isFloorCenter(candidate, state.maze) ||
       typeof candidate.id !== 'string' ||
       candidate.id.length === 0 ||
       typeof candidate.rescued !== 'boolean' ||
-      (candidate.row === 0 && candidate.col === 0) ||
+      (candidate.row === 1 && candidate.col === 1) ||
       (candidate.row === state.exit.row && candidate.col === state.exit.col)
     ) {
       return false
@@ -159,7 +164,9 @@ function isSavedSession(value: unknown, unlockedStage: number): boolean {
 
   if (
     state.followers.length !== rescuedCount ||
-    !state.followers.every((position: unknown) => isPosition(position, config.size))
+    !state.followers.every((position: unknown) =>
+      isGridPosition(position, state.maze as Maze),
+    )
   ) {
     return false
   }

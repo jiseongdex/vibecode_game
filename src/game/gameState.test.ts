@@ -1,5 +1,6 @@
 import { createGameState, gameReducer } from './gameState'
 import { createSeededRandom, generateMaze, getReachablePositions } from './mazeGenerator'
+import { isWalkableGridPosition, logicalToGridPosition } from './mazeGrid'
 import type { Direction, Position } from './types'
 
 const deltas: Record<Direction, Position> = {
@@ -8,13 +9,6 @@ const deltas: Record<Direction, Position> = {
   down: { row: 1, col: 0 },
   left: { row: 0, col: -1 },
 }
-
-const wallByDirection = {
-  up: 'top',
-  right: 'right',
-  down: 'bottom',
-  left: 'left',
-} as const
 
 function setup() {
   const maze = generateMaze(15, createSeededRandom(42))
@@ -32,7 +26,7 @@ function directionBetween(from: Position, to: Position): Direction {
 }
 
 function pathTo(from: Position, destination: Position, maze: ReturnType<typeof generateMaze>): Position[] {
-  // A perfect maze has one route; use a small independent BFS over open walls.
+  // Search the expanded movement grid so each direction represents one tile.
   const queue: Position[][] = [[from]]
   const seen = new Set([`${from.row}:${from.col}`])
   for (let index = 0; index < queue.length; index += 1) {
@@ -40,10 +34,9 @@ function pathTo(from: Position, destination: Position, maze: ReturnType<typeof g
     const current = path.at(-1)!
     if (current.row === destination.row && current.col === destination.col) return path
     for (const direction of Object.keys(deltas) as Direction[]) {
-      if (maze.cells[current.row][current.col].walls[wallByDirection[direction]]) continue
       const next = { row: current.row + deltas[direction].row, col: current.col + deltas[direction].col }
       const key = `${next.row}:${next.col}`
-      if (next.row < 0 || next.row >= maze.size || next.col < 0 || next.col >= maze.size || seen.has(key)) continue
+      if (!isWalkableGridPosition(maze, next) || seen.has(key)) continue
       seen.add(key)
       queue.push([...path, next])
     }
@@ -54,8 +47,9 @@ function pathTo(from: Position, destination: Position, maze: ReturnType<typeof g
 describe('gameReducer', () => {
   it('places distinct targets and a farthest exit, and starts only once', () => {
     const ready = setup()
-    const reachable = getReachablePositions(ready.maze, ready.player)
-    expect(ready.exit).toEqual(reachable.at(-1))
+    const reachable = getReachablePositions(ready.maze, { row: 0, col: 0 })
+    expect(ready.exit).toEqual(logicalToGridPosition(reachable.at(-1)!))
+    expect(ready.player).toEqual({ row: 1, col: 1 })
     expect(ready.rescues).toHaveLength(1)
     expect(ready.playerFacing).toBe('down')
     expect(ready.followerFacings).toEqual([])
@@ -69,7 +63,7 @@ describe('gameReducer', () => {
     expect(gameReducer(playing, { type: 'START', now: 2000 })).toBe(playing)
   })
 
-  it('ignores wall, boundary, and unknown directions; counts valid moves', () => {
+  it('moves one expanded tile through open passages and blocks walls and junctions', () => {
     const state = gameReducer(setup(), { type: 'START', now: 0 })
     const facingWall = gameReducer(state, { type: 'MOVE', direction: 'up' })
     expect(facingWall).toMatchObject({
@@ -82,14 +76,23 @@ describe('gameReducer', () => {
     expect(gameReducer(facingWall, { type: 'MOVE', direction: 'up' })).toBe(facingWall)
     expect(gameReducer(state, { type: 'MOVE', direction: 'diagonal' as Direction })).toBe(state)
     const open = (Object.keys(deltas) as Direction[]).find(
-      (direction) => !state.maze.cells[0][0].walls[wallByDirection[direction]],
+      (direction) => isWalkableGridPosition(state.maze, {
+        row: state.player.row + deltas[direction].row,
+        col: state.player.col + deltas[direction].col,
+      }),
     )!
     const moved = gameReducer(state, { type: 'MOVE', direction: open })
-    expect(moved.player).toEqual(deltas[open])
+    expect(moved.player).toEqual({
+      row: state.player.row + deltas[open].row,
+      col: state.player.col + deltas[open].col,
+    })
+    expect(Math.abs(moved.player.row - state.player.row) + Math.abs(moved.player.col - state.player.col)).toBe(1)
     expect(moved.playerFacing).toBe(open)
     const closed = (Object.keys(deltas) as Direction[]).find(
-      (direction) =>
-        moved.maze.cells[moved.player.row][moved.player.col].walls[wallByDirection[direction]],
+      (direction) => !isWalkableGridPosition(state.maze, {
+        row: moved.player.row + deltas[direction].row,
+        col: moved.player.col + deltas[direction].col,
+      }),
     )
     if (closed) {
       const blocked = gameReducer(moved, { type: 'MOVE', direction: closed })
@@ -105,9 +108,9 @@ describe('gameReducer', () => {
     const exitRouteKeys = new Set(
       routeToExit.map((position) => `${position.row}:${position.col}`),
     )
-    const branchTarget = getReachablePositions(state.maze, state.player).find(
-      (position) => !exitRouteKeys.has(`${position.row}:${position.col}`),
-    )
+    const branchTarget = getReachablePositions(state.maze, { row: 0, col: 0 })
+      .map(logicalToGridPosition)
+      .find((position) => !exitRouteKeys.has(`${position.row}:${position.col}`))
     if (!branchTarget) throw new Error('Expected a branch outside the exit path.')
     state = {
       ...state,

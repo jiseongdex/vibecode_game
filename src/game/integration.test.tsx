@@ -5,6 +5,7 @@ import { completeStage, createCampaignProgress } from './campaignProgress'
 import { createGameState, gameReducer } from './gameState'
 import type { GameState } from './gameState'
 import { createSeededRandom, generateMaze } from './mazeGenerator'
+import { isWalkableGridPosition } from './mazeGrid'
 import { loadSave, mergeSaveData, saveSave } from '../persistence/saveStore'
 import { SAVE_VERSION } from '../persistence/saveSchema'
 import type { Direction, Maze, Position } from './types'
@@ -15,8 +16,6 @@ const steps: Array<[Direction, number, number]> = [
   ['down', 1, 0],
   ['left', 0, -1],
 ]
-const wallForDirection = { up: 'top', right: 'right', down: 'bottom', left: 'left' } as const
-
 function key(position: Position): string {
   return `${position.row}:${position.col}`
 }
@@ -30,9 +29,8 @@ function route(maze: Maze, start: Position, destination: Position): Direction[] 
     const current = queue[index]
     if (key(current) === key(destination)) break
     for (const [direction, rowDelta, colDelta] of steps) {
-      if (maze.cells[current.row][current.col].walls[wallForDirection[direction]]) continue
       const next = { row: current.row + rowDelta, col: current.col + colDelta }
-      if (next.row < 0 || next.col < 0 || next.row >= maze.size || next.col >= maze.size) continue
+      if (!isWalkableGridPosition(maze, next)) continue
       if (seen.has(key(next))) continue
       seen.add(key(next))
       previous.set(key(next), { from: key(current), direction })

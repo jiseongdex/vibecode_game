@@ -15,7 +15,7 @@ function validSave(): SaveData {
   }
 }
 
-describe('save schema v3', () => {
+describe('save schema v4', () => {
   it('accepts time-only progress and sessions without movement statistics', () => {
     const save = validSave()
     expect(isSaveData(save)).toBe(true)
@@ -23,9 +23,23 @@ describe('save schema v3', () => {
     expect(save.stageRecords[1]).not.toHaveProperty('bestMoveCount')
   })
 
-  it('rejects older save versions and invalid clear times', () => {
+  it('rejects v3 saves, invalid movement tiles, and invalid clear times', () => {
     const save = validSave()
-    expect(isSaveData({ ...save, version: 2 })).toBe(false)
+    expect(isSaveData({ ...save, version: 3 })).toBe(false)
+    expect(isSaveData({
+      ...save,
+      currentSession: save.currentSession && {
+        ...save.currentSession,
+        state: { ...save.currentSession.state, player: { row: 2, col: 2 } },
+      },
+    })).toBe(false)
+    expect(isSaveData({
+      ...save,
+      currentSession: save.currentSession && {
+        ...save.currentSession,
+        state: { ...save.currentSession.state, exit: { row: 1, col: 2 } },
+      },
+    })).toBe(false)
     expect(isSaveData({ ...save, stageRecords: { 1: { bestTimeSeconds: -1 } } })).toBe(false)
     expect(isSaveData({ ...save, stageRecords: { 1: { bestTimeSeconds: 2.5 } } })).toBe(false)
   })
