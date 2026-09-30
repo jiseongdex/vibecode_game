@@ -41,18 +41,35 @@ describe('useKeyboardMovement', () => {
     expect(onMove).not.toHaveBeenCalled()
   })
 
-  it('handles the initial keydown and every browser repeat', () => {
+  it('moves once for a tap and rate-limits held-key repeats to the walk cadence', () => {
     const onMove = vi.fn()
     renderHook(() => useKeyboardMovement({ enabled: true, onMove }))
 
-    fireEvent.keyDown(window, { key: 'ArrowRight', repeat: false })
-    fireEvent.keyDown(window, { key: 'ArrowRight', repeat: true })
-    fireEvent.keyDown(window, { key: 'ArrowRight', repeat: true })
+    const keyDown = (timeStamp: number, repeat: boolean) => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        code: 'ArrowRight',
+        repeat,
+        cancelable: true,
+      })
+      Object.defineProperty(event, 'timeStamp', { value: timeStamp })
+      window.dispatchEvent(event)
+    }
+
+    keyDown(0, false)
+    keyDown(499, true)
+    keyDown(500, true)
+    keyDown(659, true)
+    keyDown(660, true)
 
     expect(onMove).toHaveBeenCalledTimes(3)
     expect(onMove).toHaveBeenNthCalledWith(1, 'right')
     expect(onMove).toHaveBeenNthCalledWith(2, 'right')
     expect(onMove).toHaveBeenNthCalledWith(3, 'right')
+
+    fireEvent.keyUp(window, { key: 'ArrowRight', code: 'ArrowRight' })
+    keyDown(1000, true)
+    expect(onMove).toHaveBeenCalledTimes(3)
   })
 
   it('detaches its listener when disabled or unmounted', () => {
