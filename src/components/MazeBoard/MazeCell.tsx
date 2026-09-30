@@ -53,6 +53,7 @@ export function MazeCell({
     >
       {sides.map((side) => {
         const variant = getWallVariant(seed, cell.row, cell.col, side)
+        const src = theme.wall[variant]
         return (
           <span
             key={side}
@@ -61,10 +62,14 @@ export function MazeCell({
             data-wall-variant={variant}
             aria-hidden="true"
           >
-            <span
+            <img
+              key={src}
               className={styles.wallBlock}
-              style={{ backgroundImage: `url("${theme.wall[variant]}")` }}
+              src={src}
+              alt=""
+              onError={(event) => { event.currentTarget.hidden = true }}
             />
+            <span className={styles.wallFallback} />
           </span>
         )
       })}

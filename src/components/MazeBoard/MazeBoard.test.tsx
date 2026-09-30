@@ -126,7 +126,13 @@ describe('MazeBoard', () => {
     const image = container.querySelector('[data-asset-slot="player"] img')!
     fireEvent.error(image)
     expect(image).toHaveAttribute('hidden')
+    expect(image.nextElementSibling?.className).toContain('spriteFallback')
     expect(container.querySelector('[data-asset-slot="player"]')).toHaveTextContent('🧙‍♀️')
+
+    const animal = container.querySelector('[data-asset-slot="rescue-target"] img')!
+    fireEvent.error(animal)
+    expect(animal).toHaveAttribute('hidden')
+    expect(animal.nextElementSibling?.className).toContain('spriteFallback')
   })
 
   it('uses directional sprites and alternates walking feet only for real moves', () => {
@@ -216,6 +222,10 @@ describe('MazeBoard', () => {
         + Number(cell.col === state.maze.size - 1 && cell.walls.right)
         + Number(cell.row === state.maze.size - 1 && cell.walls.bottom), 0)
     expect(container.querySelectorAll('[data-wall-side]')).toHaveLength(boundaryCount)
+    const obstacles = Array.from(container.querySelectorAll('[data-wall-side] img'))
+    const theme = getMazeTheme(state.maze.seed)
+    expect(obstacles.every((image) => image.getAttribute('src')?.startsWith(`/assets/maps/maze-${theme}-wall-`))).toBe(true)
+    expect(new Set(obstacles.map((image) => image.getAttribute('src'))).size).toBe(3)
     expect(firstWalls.map(([side]) => side)).toContain('up')
     expect(firstWalls.map(([side]) => side)).toContain('left')
     expect(cells[0].style.backgroundColor).not.toBe('')
@@ -224,6 +234,11 @@ describe('MazeBoard', () => {
     expect(board).toHaveAttribute('data-theme', getMazeTheme(state.maze.seed))
     expect(cells[0].style.backgroundImage).toBe(firstFloor)
     expect(Array.from(cells[0].querySelectorAll('[data-wall-side]')).map((wall) => [wall.getAttribute('data-wall-side'), wall.getAttribute('data-wall-variant')])).toEqual(firstWalls)
+
+    const obstacle = container.querySelector('[data-wall-side] img')!
+    fireEvent.error(obstacle)
+    expect(obstacle).toHaveAttribute('hidden')
+    expect(obstacle.nextElementSibling?.className).toContain('wallFallback')
   })
 
   it('keeps neutral images when reduced motion is requested', () => {

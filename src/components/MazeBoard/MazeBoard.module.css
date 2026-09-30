@@ -34,41 +34,40 @@
 .wallSegment {
   position: absolute;
   z-index: 5;
-  display: grid;
-  place-items: center;
+  width: 0;
+  height: 0;
   pointer-events: none;
-  background: var(--wall-color);
-  box-shadow: 0 1px 2px #24331e55;
 }
 
-.wallSegmentup,
-.wallSegmentdown {
-  left: 0;
-  right: 0;
-  height: min(8px, calc(var(--cell-size) * 0.17));
-}
-
-.wallSegmentup { top: 0; }
-.wallSegmentdown { bottom: 0; }
-
-.wallSegmentleft,
-.wallSegmentright {
-  top: 0;
-  bottom: 0;
-  width: min(8px, calc(var(--cell-size) * 0.17));
-}
-
-.wallSegmentleft { left: 0; }
-.wallSegmentright { right: 0; }
+.wallSegmentup { top: 0; left: 50%; }
+.wallSegmentdown { bottom: 0; left: 50%; }
+.wallSegmentleft { left: 0; top: 50%; }
+.wallSegmentright { right: 0; top: 50%; }
 
 .wallBlock {
-  width: min(20px, calc(var(--cell-size) * 0.44));
-  height: min(20px, calc(var(--cell-size) * 0.44));
-  background-position: center;
-  background-size: contain;
-  background-repeat: no-repeat;
+  position: absolute;
+  width: calc(var(--cell-size) * 1.5);
+  height: calc(var(--cell-size) * 1.5);
+  max-width: none;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
   filter: drop-shadow(0 2px 2px #24331e55);
 }
+
+.wallBlock[hidden] { display: none; }
+
+.wallFallback {
+  display: none;
+  position: absolute;
+  width: calc(var(--cell-size) * 0.8);
+  height: calc(var(--cell-size) * 0.8);
+  transform: translate(-50%, -50%);
+  border-radius: 7px;
+  background: var(--wall-color);
+  box-shadow: 0 2px 3px #24331e55;
+}
+
+.wallBlock[hidden] + .wallFallback { display: block; }
 
 .sprite {
   position: absolute;
@@ -94,6 +93,9 @@
 
 .sprite img[hidden] { display: none; }
 
+.spriteFallback { display: none; }
+.sprite img[hidden] + .spriteFallback { display: grid; }
+
 .spriteVisual {
   position: absolute;
   inset: 0;
@@ -102,7 +104,7 @@
 }
 
 .playerSprite {
-  z-index: 4;
+  z-index: 6;
   filter: drop-shadow(0 2px 2px #173b3a88);
 }
 
@@ -111,12 +113,12 @@
 }
 
 .rescueSprite {
-  z-index: 2;
+  z-index: 6;
   filter: drop-shadow(0 2px 2px #65431177);
 }
 
 .followerSprite {
-  z-index: 3;
+  z-index: 6;
   inset: 6px;
   font-size: calc(var(--cell-size) * 0.5);
   filter: drop-shadow(0 2px 2px #31542377);

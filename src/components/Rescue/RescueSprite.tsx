@@ -56,7 +56,6 @@ export function RescueSprite({
         key={moveCount}
         className={`${styles.spriteVisual} ${hopping ? styles.hopping : ''}`}
       >
-        <span aria-hidden="true">{animal.fallback}</span>
         <img
           key={src}
           src={src}
@@ -64,6 +63,9 @@ export function RescueSprite({
           aria-hidden="true"
           onError={(event) => { event.currentTarget.hidden = true }}
         />
+        <span className={styles.spriteFallback} aria-hidden="true">
+          {animal.fallback}
+        </span>
       </span>
     </span>
   )

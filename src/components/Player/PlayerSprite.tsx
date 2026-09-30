@@ -54,7 +54,6 @@ export function PlayerSprite({
       data-facing={facing}
       data-motion={walk ? 'walk' : 'none'}
     >
-      <span aria-hidden="true">{appearance === 'girl' ? '🧙‍♀️' : '🧙‍♂️'}</span>
       <img
         key={src}
         src={src}
@@ -62,6 +61,9 @@ export function PlayerSprite({
         aria-hidden="true"
         onError={(event) => { event.currentTarget.hidden = true }}
       />
+      <span className={styles.spriteFallback} aria-hidden="true">
+        {appearance === 'girl' ? '🧙‍♀️' : '🧙‍♂️'}
+      </span>
     </span>
   )
 }
