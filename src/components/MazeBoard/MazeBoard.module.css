@@ -27,30 +27,47 @@
   width: var(--cell-size);
   height: var(--cell-size);
   box-sizing: border-box;
-  background: #f4edcf url('/assets/maps/maze-floor.png') center / 96px 96px repeat;
-  border-image-source: url('/assets/maps/maze-wall.png');
-  border-image-slice: 96;
-  border-image-repeat: round;
+  background-position: center;
+  background-size: cover;
 }
 
-.cell:nth-child(odd) {
-  background-color: #f8f0d7;
+.wallSegment {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: var(--wall-color);
+  box-shadow: 0 1px 2px #24331e55;
 }
 
-.wallTop {
-  border-top: 4px solid var(--color-wall);
+.wallSegmentup,
+.wallSegmentdown {
+  left: 0;
+  right: 0;
+  height: min(8px, calc(var(--cell-size) * 0.17));
 }
 
-.wallRight {
-  border-right: 4px solid var(--color-wall);
+.wallSegmentup { top: 0; }
+.wallSegmentdown { bottom: 0; }
+
+.wallSegmentleft,
+.wallSegmentright {
+  top: 0;
+  bottom: 0;
+  width: min(8px, calc(var(--cell-size) * 0.17));
 }
 
-.wallBottom {
-  border-bottom: 4px solid var(--color-wall);
-}
+.wallSegmentleft { left: 0; }
+.wallSegmentright { right: 0; }
 
-.wallLeft {
-  border-left: 4px solid var(--color-wall);
+.wallBlock {
+  width: min(20px, calc(var(--cell-size) * 0.44));
+  height: min(20px, calc(var(--cell-size) * 0.44));
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 2px 2px #24331e55);
 }
 
 .sprite {
@@ -58,13 +75,15 @@
   inset: 4px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  z-index: 2;
   font-size: calc(var(--cell-size) * 0.62);
   line-height: 1;
   user-select: none;
+  pointer-events: none;
 }
 
-.sprite img {
+.sprite img,
+.spriteVisual img {
   position: absolute;
   inset: 0;
   display: block;
@@ -75,23 +94,36 @@
 
 .sprite img[hidden] { display: none; }
 
+.spriteVisual {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
 .playerSprite {
   z-index: 4;
-  background: #d8f0de;
-  box-shadow: 0 2px 6px #173b3a77;
+  filter: drop-shadow(0 2px 2px #173b3a88);
+}
+
+.playerSprite[data-motion='walk'] {
+  animation: walkLift 160ms ease-in-out;
 }
 
 .rescueSprite {
   z-index: 2;
-  background: #fff3c8;
-  box-shadow: 0 2px 6px #65431166;
+  filter: drop-shadow(0 2px 2px #65431177);
 }
 
 .followerSprite {
   z-index: 3;
-  inset: 7px;
-  background: #d6f2ce;
-  font-size: calc(var(--cell-size) * 0.48);
+  inset: 6px;
+  font-size: calc(var(--cell-size) * 0.5);
+  filter: drop-shadow(0 2px 2px #31542377);
+}
+
+.hopping {
+  animation: animalHop 220ms ease-in-out both;
 }
 
 .exitSprite {
@@ -105,6 +137,16 @@
   background: #d5f0bb;
   filter: none;
   box-shadow: 0 0 9px #44804a;
+}
+
+@keyframes walkLift {
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes animalHop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-3px) scale(1.02); }
+  78% { transform: translateY(0) scale(1.03, 0.97); }
 }
 
 @media (max-width: 600px) {
@@ -123,12 +165,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .board {
-    transition: none;
-  }
-
-  .sprite {
-    animation: none;
-    transition: none;
-  }
+  .board { transition: none; }
+  .sprite, .spriteVisual { animation: none; transition: none; }
 }

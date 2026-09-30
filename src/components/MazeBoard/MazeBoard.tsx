@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
+import { mazeThemes } from '../../assets/assetManifest'
 import type { PlayerAppearance } from '../../assets/assetManifest'
+import { getMazeTheme } from '../../assets/mazeTheme'
 import type { GameState } from '../../game/gameState'
 import type { Direction, Position } from '../../game/types'
 import { ExitSprite } from '../Exit/ExitSprite'
@@ -19,6 +21,21 @@ export interface MazeBoardProps {
 interface ViewportSize {
   width: number
   height: number
+}
+
+interface MotionSnapshot {
+  moveCount: number
+  seed: number
+  player: Position
+  playerFacing: Direction
+  followers: Position[]
+}
+
+interface MotionState {
+  moveCount: number
+  playerMoved: boolean
+  playerFacing: Direction
+  followerMoved: boolean[]
 }
 
 function cameraOffset(
@@ -40,6 +57,14 @@ function samePosition(first: Position, second: Position): boolean {
 
 export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
+  const previous = useRef<MotionSnapshot>({
+    moveCount: state.moveCount,
+    seed: state.maze.seed,
+    player: { ...state.player },
+    playerFacing: state.playerFacing,
+    followers: state.followers.map((follower) => ({ ...follower })),
+  })
+  const [motion, setMotion] = useState<MotionState | null>(null)
   const [viewport, setViewport] = useState<ViewportSize>({
     width: 640,
     height: 480,
@@ -72,6 +97,38 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
     }
   }, [])
 
+  useLayoutEffect(() => {
+    const last = previous.current
+    const next: MotionSnapshot = {
+      moveCount: state.moveCount,
+      seed: state.maze.seed,
+      player: { ...state.player },
+      playerFacing: state.playerFacing,
+      followers: state.followers.map((follower) => ({ ...follower })),
+    }
+    previous.current = next
+
+    if (next.seed === last.seed && next.moveCount === last.moveCount + 1) {
+      setMotion({
+        moveCount: next.moveCount,
+        playerMoved: !samePosition(last.player, next.player),
+        playerFacing: next.playerFacing,
+        followerMoved: next.followers.map((follower, index) =>
+          Boolean(
+            last.followers[index] &&
+            !samePosition(last.followers[index], follower),
+          ),
+        ),
+      })
+    } else if (
+      next.seed !== last.seed ||
+      next.moveCount !== last.moveCount ||
+      next.playerFacing !== last.playerFacing
+    ) {
+      setMotion(null)
+    }
+  })
+
   const cellSize = Math.max(36, Math.min(52, Math.floor(viewport.width / 9)))
   const offsetX = cameraOffset(
     state.player.col,
@@ -92,6 +149,9 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
   } as CSSProperties
   const unlockedExit = state.rescues.every((target) => target.rescued)
   const rescuedTargets = state.rescues.filter((target) => target.rescued)
+  const themeId = getMazeTheme(state.maze.seed)
+  const theme = mazeThemes[themeId]
+  const currentMotion = motion?.moveCount === state.moveCount ? motion : null
 
   return (
     <div
@@ -101,7 +161,12 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
       aria-label={`${state.stageConfig.stage}단계 미로`}
       data-testid="maze-viewport"
     >
-      <div className={styles.board} style={boardStyle} data-testid="maze-board">
+      <div
+        className={styles.board}
+        style={boardStyle}
+        data-testid="maze-board"
+        data-theme={themeId}
+      >
         {state.maze.cells.flatMap((row) =>
           row.map((cell) => {
             const position = { row: cell.row, col: cell.col }
@@ -124,10 +189,21 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
                     : 'floor'
 
             return (
-              <MazeCell key={`${cell.row}:${cell.col}`} cell={cell} type={type}>
+              <MazeCell
+                key={`${cell.row}:${cell.col}`}
+                cell={cell}
+                type={type}
+                seed={state.maze.seed}
+                mazeSize={state.maze.size}
+                theme={theme}
+              >
                 {isExit && <ExitSprite unlocked={unlockedExit} />}
                 {waiting.map((target) => (
-                  <RescueSprite key={target.id} animalId={target.id} />
+                  <RescueSprite
+                    key={target.id}
+                    animalId={target.id}
+                    facing="down"
+                  />
                 ))}
                 {followers.map(({ index }) => (
                   <RescueSprite
@@ -135,9 +211,22 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
                     animalId={rescuedTargets[index]?.id ?? 'rescue-1'}
                     following
                     order={index + 1}
+                    facing={state.followerFacings[index] ?? 'down'}
+                    moveCount={state.moveCount}
+                    animateMove={currentMotion?.followerMoved[index] ?? false}
                   />
                 ))}
-                {isPlayer && <PlayerSprite appearance={appearance} />}
+                {isPlayer && (
+                  <PlayerSprite
+                    appearance={appearance}
+                    facing={state.playerFacing}
+                    moveCount={state.moveCount}
+                    animateMove={Boolean(
+                      currentMotion?.playerMoved &&
+                      currentMotion.playerFacing === state.playerFacing,
+                    )}
+                  />
+                )}
               </MazeCell>
             )
           }),
