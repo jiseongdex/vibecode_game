@@ -35,7 +35,7 @@
 
 .obstacleTile {
   position: relative;
-  z-index: 5;
+  z-index: 7;
   display: grid;
   place-items: center;
   width: var(--cell-size);
@@ -46,10 +46,12 @@
 
 .wallBlock {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  width: 170%;
+  height: 170%;
   object-fit: contain;
+  transform: translate(-50%, -50%);
   filter: drop-shadow(0 2px 2px #24331e55);
 }
 
@@ -72,7 +74,7 @@
 
 .sprite {
   position: absolute;
-  inset: 1px;
+  inset: -45%;
   display: grid;
   place-items: center;
   z-index: 2;
@@ -120,7 +122,7 @@
 
 .followerSprite {
   z-index: 6;
-  inset: 2px;
+  inset: -35%;
   font-size: calc(var(--cell-size) * 0.5);
   filter: drop-shadow(0 2px 2px #31542377);
 }
@@ -131,6 +133,7 @@
 
 .exitSprite {
   z-index: 1;
+  inset: 0;
   border-radius: 8px;
   background: #b9b6ac;
   filter: grayscale(0.75);

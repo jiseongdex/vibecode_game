@@ -131,7 +131,10 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
     }
   })
 
-  const cellSize = Math.max(28, Math.min(42, Math.floor(viewport.width / 13)))
+  // The visual grid has two tiles per logical step. Keep each step at the
+  // original board's 36–52px spacing instead of doubling its screen size.
+  const logicalCellSize = Math.max(36, Math.min(52, Math.floor(viewport.width / 9)))
+  const cellSize = Math.floor(logicalCellSize / 2)
   const boardTiles = visualSize(state.maze.size)
   const playerTile = visualCell(state.player)
   const offsetX = cameraOffset(

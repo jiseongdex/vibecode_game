@@ -76,7 +76,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-331px, -411px, 0)')
+    expect(board.style.transform).toBe('translate3d(-83px, -163px, 0)')
 
     rerender(
       <MazeBoard
@@ -84,7 +84,7 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-662px, -822px, 0)')
+    expect(board.style.transform).toBe('translate3d(-166px, -326px, 0)')
   })
 
   it('keeps the minimum cell size on a narrow viewport', () => {
@@ -94,7 +94,7 @@ describe('MazeBoard', () => {
     })
     try {
       render(<MazeBoard state={stateFor(1, 15)} onMove={vi.fn()} />)
-      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('28px')
+      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('18px')
     } finally {
       measure.mockRestore()
     }
@@ -222,6 +222,12 @@ describe('MazeBoard', () => {
         + Number(cell.col === state.maze.size - 1 && cell.walls.right)
         + Number(cell.row === state.maze.size - 1 && cell.walls.bottom), 0)
     expect(container.querySelectorAll('[data-wall-side]')).toHaveLength(boundaryCount)
+    const junctions = Array.from(container.querySelectorAll('[data-junction="true"]'))
+    expect(junctions.length).toBeGreaterThan(0)
+    expect(junctions.every((junction) =>
+      Number(junction.getAttribute('data-visual-row')) % 2 === 0 &&
+      Number(junction.getAttribute('data-visual-col')) % 2 === 0,
+    )).toBe(true)
     const obstacles = Array.from(container.querySelectorAll('[data-wall-side] img'))
     const theme = getMazeTheme(state.maze.seed)
     expect(obstacles.every((image) => image.getAttribute('src')?.startsWith(`/assets/maps/maze-${theme}-wall-`))).toBe(true)
@@ -252,6 +258,19 @@ describe('MazeBoard', () => {
       ),
     )
     expect(occupied.size).toBe(container.querySelectorAll('[data-wall-side]').length)
+    const junctions = new Set(
+      Array.from(container.querySelectorAll('[data-junction="true"]')).map((junction) =>
+        `${junction.getAttribute('data-visual-row')}:${junction.getAttribute('data-visual-col')}`,
+      ),
+    )
+    expect(junctions.size).toBe(container.querySelectorAll('[data-junction="true"]').length)
+    for (const slot of occupied) {
+      const [row, col] = slot.split(':').map(Number)
+      const neighbors = row % 2 === 0
+        ? [`${row}:${col - 1}`, `${row}:${col + 1}`]
+        : [`${row - 1}:${col}`, `${row + 1}:${col}`]
+      expect(neighbors.every((neighbor) => junctions.has(neighbor))).toBe(true)
+    }
 
     for (const cell of state.maze.cells.flat()) {
       const centerRow = cell.row * 2 + 1
@@ -260,6 +279,7 @@ describe('MazeBoard', () => {
       expect(center.style.gridRow).toBe(String(centerRow + 1))
       expect(center.style.gridColumn).toBe(String(centerCol + 1))
       expect(occupied.has(`${centerRow}:${centerCol}`)).toBe(false)
+      expect(junctions.has(`${centerRow}:${centerCol}`)).toBe(false)
       if (cell.col < state.maze.size - 1) {
         expect(occupied.has(`${centerRow}:${centerCol + 1}`)).toBe(cell.walls.right)
       }
