@@ -180,6 +180,30 @@ describe('MazeBoard', () => {
     }
   })
 
+  it('restarts the directional walk animation on consecutive blocked attempts without moving', () => {
+    vi.useFakeTimers()
+    try {
+      const state = { ...stateFor(1, 15), status: 'playing' as const }
+      const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+      const blocked = gameReducer(state, { type: 'MOVE', direction: 'up' })
+      expect(blocked.player).toEqual(state.player)
+
+      rerender(<MazeBoard state={blocked} onMove={vi.fn()} movementAttempt={1} />)
+      const player = container.querySelector('[data-asset-slot="player"]')!
+      expect(player).toHaveAttribute('data-motion', 'walk')
+      expect(player).toHaveAttribute('data-facing', 'up')
+      expect(player.querySelector('img')).toHaveAttribute('src', '/assets/players/player-girl-back-walk-a.png')
+
+      act(() => vi.advanceTimersByTime(80))
+      rerender(<MazeBoard state={blocked} onMove={vi.fn()} movementAttempt={2} />)
+      expect(container.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-motion', 'walk')
+      expect(container.querySelector('[data-asset-slot="player"] img')).toHaveAttribute('src', '/assets/players/player-girl-back-walk-b.png')
+      expect(blocked.player).toEqual(state.player)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('hops only existing followers that changed cells', () => {
     vi.useFakeTimers()
     try {

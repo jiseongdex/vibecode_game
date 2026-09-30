@@ -33,6 +33,13 @@ describe('GameScreen', () => {
     expect(playerCell).toHaveAttribute('data-visual-row', opening === 'down' ? '3' : '1')
     expect(playerCell).toHaveAttribute('data-visual-col', opening === 'right' ? '3' : '1')
     fireEvent.keyDown(window, { key: arrow, repeat: true })
+    expect(document.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-motion', 'walk')
+    const afterRepeatCell = document.querySelector('[data-asset-slot="player"]')!.parentElement!
+    const repeatedPosition = afterRepeatCell.getAttribute('data-row') + ':' + afterRepeatCell.getAttribute('data-col')
+    fireEvent.keyUp(window, { key: arrow })
+    act(() => vi.advanceTimersByTime(200))
+    const playerAfterRelease = document.querySelector('[data-asset-slot="player"]')!.parentElement!
+    expect(playerAfterRelease.getAttribute('data-row') + ':' + playerAfterRelease.getAttribute('data-col')).toBe(repeatedPosition)
 
     fireEvent.click(screen.getByRole('button', { name: returnButton }))
 
