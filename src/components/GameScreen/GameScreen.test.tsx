@@ -9,7 +9,7 @@ import { GameScreen } from './GameScreen'
 describe('GameScreen', () => {
   afterEach(() => vi.useRealTimers())
 
-  it('shares movement between keyboard and buttons, and ticks only while playing', () => {
+  it('shares movement between keyboard and buttons without a movement counter', () => {
     vi.useFakeTimers()
     const initialState = createGameState(1, generateMaze(15, createSeededRandom(123)))
     render(<GameScreen initialState={initialState} />)
@@ -33,10 +33,8 @@ describe('GameScreen', () => {
     expect(playerCell).toHaveAttribute('data-visual-row', opening === 'down' ? '3' : '1')
     expect(playerCell).toHaveAttribute('data-visual-col', opening === 'right' ? '3' : '1')
     fireEvent.keyDown(window, { key: arrow, repeat: true })
-    expect(screen.getByText('이동: 1회')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: returnButton }))
-    expect(screen.getByText('이동: 2회')).toBeInTheDocument()
 
     act(() => vi.advanceTimersByTime(1000))
     expect(
@@ -49,7 +47,6 @@ describe('GameScreen', () => {
       screen.getByText(`남은 시간: ${formatTime(initialState.remainingSeconds - 1)}`),
     ).toBeInTheDocument()
     fireEvent.keyDown(window, { key: arrow })
-    expect(screen.getByText('이동: 2회')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '이어하기' }))
     act(() => vi.advanceTimersByTime(1000))
@@ -71,7 +68,7 @@ describe('GameScreen', () => {
         expect(button).toBeDisabled()
       }
       fireEvent.keyDown(window, { key: 'ArrowRight' })
-      expect(screen.getByText('이동: 0회')).toBeInTheDocument()
+      expect(screen.queryByText(/이동:/)).not.toBeInTheDocument()
     },
   )
 
@@ -83,7 +80,6 @@ describe('GameScreen', () => {
       ...base,
       status: 'won' as const,
       remainingSeconds: base.remainingSeconds - 45,
-      moveCount: 61,
       rescues: base.rescues.map((target) => ({ ...target, rescued: true })),
     }
     const { rerender } = render(
@@ -95,7 +91,7 @@ describe('GameScreen', () => {
     )
 
     expect(onStageComplete).toHaveBeenCalledTimes(1)
-    expect(onStageComplete).toHaveBeenCalledWith(1, 45, 61)
+    expect(onStageComplete).toHaveBeenCalledWith(1, 45)
     rerender(
       <GameScreen
         initialState={won}

@@ -8,14 +8,14 @@ import styles from '../MazeBoard/MazeBoard.module.css'
 interface PlayerSpriteProps {
   appearance?: PlayerAppearance
   facing: Direction
-  moveCount: number
+  movementAttempt: number
   animateMove: boolean
 }
 
 export function PlayerSprite({
   appearance = 'girl',
   facing,
-  moveCount,
+  movementAttempt,
   animateMove,
 }: PlayerSpriteProps) {
   const [frame, setFrame] = useState<0 | 1 | null>(null)
@@ -36,11 +36,11 @@ export function PlayerSprite({
       window.clearTimeout(secondFrame)
       window.clearTimeout(stop)
     }
-  }, [animateMove, facing, moveCount])
+  }, [animateMove, facing, movementAttempt])
 
   const walk = frame !== null && animateMove
   const frameIndex =
-    moveCount % 2 === 1 ? frame : frame === null ? null : 1 - frame
+    movementAttempt % 2 === 1 ? frame : frame === null ? null : 1 - frame
   const src = walk && frameIndex !== null
     ? playerWalkSprites[appearance][facing][frameIndex]
     : playerSprites[appearance][facing]

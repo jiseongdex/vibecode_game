@@ -4,9 +4,8 @@ import { getReachablePositions } from '../game/mazeGenerator'
 import { getStageConfig, MAX_STAGE, MIN_STAGE } from '../game/stageConfig'
 import type { Cell, CellWalls, Direction, Maze, Position } from '../game/types'
 
-export const SAVE_VERSION = 2 as const
-export const SAVE_KEY = 'maze-rescue-game.save.v2'
-export const LEGACY_SAVE_KEY = 'maze-rescue-game.save.v1'
+export const SAVE_VERSION = 3 as const
+export const SAVE_KEY = 'maze-rescue-game.save.v3'
 
 export type { StageRecord } from '../game/campaignProgress'
 
@@ -15,22 +14,10 @@ export interface SavedSession {
   updatedAt: number
 }
 
-export interface SavedSessionV1 {
-  state: Omit<GameState, 'playerFacing' | 'followerFacings'> & { status: 'paused' }
-  updatedAt: number
-}
-
 export interface SaveData {
   version: typeof SAVE_VERSION
   unlockedStage: number
   currentSession: SavedSession | null
-  stageRecords: Record<number, StageRecord>
-}
-
-export interface SaveDataV1 {
-  version: 1
-  unlockedStage: number
-  currentSession: SavedSessionV1 | null
   stageRecords: Record<number, StageRecord>
 }
 
@@ -114,7 +101,7 @@ function isMaze(value: unknown): value is Maze {
   return getReachablePositions(value as unknown as Maze, { row: 0, col: 0 }).length === size * size
 }
 
-function isSavedSession(value: unknown, unlockedStage: number, version: 1 | 2): boolean {
+function isSavedSession(value: unknown, unlockedStage: number): boolean {
   if (!isObject(value) || !isNonnegativeInteger(value.updatedAt) || !isObject(value.state)) {
     return false
   }
@@ -136,7 +123,7 @@ function isSavedSession(value: unknown, unlockedStage: number, version: 1 | 2): 
     !Array.isArray(state.rescues) ||
     state.rescues.length !== config.rescueCount ||
     !Array.isArray(state.followers) ||
-    !isNonnegativeInteger(state.moveCount) ||
+    'moveCount' in state ||
     !isNonnegativeInteger(state.remainingSeconds) ||
     state.remainingSeconds === 0 ||
     state.remainingSeconds > config.timeLimitSeconds ||
@@ -177,7 +164,7 @@ function isSavedSession(value: unknown, unlockedStage: number, version: 1 | 2): 
     return false
   }
 
-  return version === 1 || (
+  return (
     isDirection(state.playerFacing) &&
     Array.isArray(state.followerFacings) &&
     state.followerFacings.length === state.followers.length &&
@@ -185,10 +172,10 @@ function isSavedSession(value: unknown, unlockedStage: number, version: 1 | 2): 
   )
 }
 
-function isSaveDataVersion(value: unknown, version: 1 | 2): boolean {
+export function isSaveData(value: unknown): value is SaveData {
   if (
     !isObject(value) ||
-    value.version !== version ||
+    value.version !== SAVE_VERSION ||
     !isStage(value.unlockedStage) ||
     !isObject(value.stageRecords)
   ) {
@@ -202,20 +189,12 @@ function isSaveDataVersion(value: unknown, version: 1 | 2): boolean {
       String(stage) !== key ||
       stage > value.unlockedStage ||
       !isObject(record) ||
-      !isNonnegativeInteger(record.bestTimeSeconds) ||
-      !isNonnegativeInteger(record.bestMoveCount)
+      'bestMoveCount' in record ||
+      !isNonnegativeInteger(record.bestTimeSeconds)
     ) {
       return false
     }
   }
 
-  return value.currentSession === null || isSavedSession(value.currentSession, value.unlockedStage, version)
-}
-
-export function isSaveData(value: unknown): value is SaveData {
-  return isSaveDataVersion(value, SAVE_VERSION)
-}
-
-export function isSaveDataV1(value: unknown): value is SaveDataV1 {
-  return isSaveDataVersion(value, 1)
+  return value.currentSession === null || isSavedSession(value.currentSession, value.unlockedStage)
 }

@@ -135,7 +135,7 @@ describe('MazeBoard', () => {
     expect(animal.nextElementSibling?.className).toContain('spriteFallback')
   })
 
-  it('uses directional sprites and alternates walking feet only for real moves', () => {
+  it('animates blocked attempts and alternates walking feet for movement inputs', () => {
     vi.useFakeTimers()
     try {
       const state = { ...stateFor(1, 15), status: 'playing' as const }
@@ -146,19 +146,22 @@ describe('MazeBoard', () => {
       expect(image()).toHaveAttribute('src', '/assets/players/player-boy-front.png')
 
       const blocked = gameReducer(state, { type: 'MOVE', direction: 'up' })
-      rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" />)
+      rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={1} />)
       expect(player()).toHaveAttribute('data-facing', 'up')
+      expect(player()).toHaveAttribute('data-motion', 'walk')
+      expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back-walk-a.png')
+      act(() => vi.advanceTimersByTime(160))
       expect(player()).toHaveAttribute('data-motion', 'none')
       expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back.png')
 
       const direction = openDirection(blocked)
       const moved = gameReducer(blocked, { type: 'MOVE', direction })
       const assetSide = { up: 'back', right: 'right', down: 'front', left: 'left' }[direction]
-      rerender(<MazeBoard state={moved} onMove={vi.fn()} appearance="boy" />)
+      rerender(<MazeBoard state={moved} onMove={vi.fn()} appearance="boy" movementAttempt={2} />)
       expect(player()).toHaveAttribute('data-motion', 'walk')
-      expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-a.png`)
-      act(() => vi.advanceTimersByTime(80))
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-b.png`)
+      act(() => vi.advanceTimersByTime(80))
+      expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-a.png`)
       act(() => vi.advanceTimersByTime(80))
       expect(player()).toHaveAttribute('data-motion', 'none')
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}.png`)
@@ -166,10 +169,10 @@ describe('MazeBoard', () => {
       const nextDirection = openDirection(moved)
       const next = gameReducer(moved, { type: 'MOVE', direction: nextDirection })
       const nextSide = { up: 'back', right: 'right', down: 'front', left: 'left' }[nextDirection]
-      rerender(<MazeBoard state={next} onMove={vi.fn()} appearance="boy" />)
-      expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${nextSide}-walk-b.png`)
-      act(() => vi.advanceTimersByTime(80))
+      rerender(<MazeBoard state={next} onMove={vi.fn()} appearance="boy" movementAttempt={3} />)
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${nextSide}-walk-a.png`)
+      act(() => vi.advanceTimersByTime(80))
+      expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${nextSide}-walk-b.png`)
       act(() => vi.advanceTimersByTime(80))
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${nextSide}.png`)
     } finally {
@@ -192,11 +195,10 @@ describe('MazeBoard', () => {
       const moved = {
         ...state,
         player: { row: 0, col: 1 },
-        moveCount: 1,
         followers: [{ row: 0, col: 1 }, { row: 0, col: 2 }],
         followerFacings: ['right' as const, 'down' as const],
       }
-      rerender(<MazeBoard state={moved} onMove={vi.fn()} />)
+      rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
       const followers = container.querySelectorAll('[data-asset-slot="follower"]')
       expect(followers[0]).toHaveAttribute('data-motion', 'hop')
       expect(followers[0]).toHaveAttribute('data-facing', 'right')
@@ -307,7 +309,7 @@ describe('MazeBoard', () => {
       const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
       const direction = openDirection(state)
       const moved = gameReducer(state, { type: 'MOVE', direction })
-      rerender(<MazeBoard state={moved} onMove={vi.fn()} />)
+      rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
       const player = container.querySelector('[data-asset-slot="player"]')!
       expect(player).toHaveAttribute('data-motion', 'none')
       expect(player.querySelector('img')?.getAttribute('src')).not.toContain('walk')

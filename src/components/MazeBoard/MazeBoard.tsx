@@ -18,6 +18,7 @@ export interface MazeBoardProps {
   state: GameState
   onMove: (direction: Direction) => void
   appearance?: PlayerAppearance
+  movementAttempt?: number
 }
 
 interface ViewportSize {
@@ -26,7 +27,7 @@ interface ViewportSize {
 }
 
 interface MotionSnapshot {
-  moveCount: number
+  movementAttempt: number
   seed: number
   player: Position
   playerFacing: Direction
@@ -34,8 +35,7 @@ interface MotionSnapshot {
 }
 
 interface MotionState {
-  moveCount: number
-  playerMoved: boolean
+  movementAttempt: number
   playerFacing: Direction
   followerMoved: boolean[]
 }
@@ -57,10 +57,14 @@ function samePosition(first: Position, second: Position): boolean {
   return first.row === second.row && first.col === second.col
 }
 
-export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
+export function MazeBoard({
+  state,
+  appearance = 'girl',
+  movementAttempt = 0,
+}: MazeBoardProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const previous = useRef<MotionSnapshot>({
-    moveCount: state.moveCount,
+    movementAttempt,
     seed: state.maze.seed,
     player: { ...state.player },
     playerFacing: state.playerFacing,
@@ -102,7 +106,7 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
   useLayoutEffect(() => {
     const last = previous.current
     const next: MotionSnapshot = {
-      moveCount: state.moveCount,
+      movementAttempt,
       seed: state.maze.seed,
       player: { ...state.player },
       playerFacing: state.playerFacing,
@@ -110,10 +114,12 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
     }
     previous.current = next
 
-    if (next.seed === last.seed && next.moveCount === last.moveCount + 1) {
+    if (
+      next.seed === last.seed &&
+      next.movementAttempt === last.movementAttempt + 1
+    ) {
       setMotion({
-        moveCount: next.moveCount,
-        playerMoved: !samePosition(last.player, next.player),
+        movementAttempt: next.movementAttempt,
         playerFacing: next.playerFacing,
         followerMoved: next.followers.map((follower, index) =>
           Boolean(
@@ -124,7 +130,7 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
       })
     } else if (
       next.seed !== last.seed ||
-      next.moveCount !== last.moveCount ||
+      next.movementAttempt !== last.movementAttempt ||
       next.playerFacing !== last.playerFacing
     ) {
       setMotion(null)
@@ -160,7 +166,7 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
   } as CSSProperties
   const unlockedExit = state.rescues.every((target) => target.rescued)
   const rescuedTargets = state.rescues.filter((target) => target.rescued)
-  const currentMotion = motion?.moveCount === state.moveCount ? motion : null
+  const currentMotion = motion?.movementAttempt === movementAttempt ? motion : null
 
   return (
     <div
@@ -220,7 +226,7 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
                     following
                     order={index + 1}
                     facing={state.followerFacings[index] ?? 'down'}
-                    moveCount={state.moveCount}
+                    movementAttempt={movementAttempt}
                     animateMove={currentMotion?.followerMoved[index] ?? false}
                   />
                 ))}
@@ -228,9 +234,9 @@ export function MazeBoard({ state, appearance = 'girl' }: MazeBoardProps) {
                   <PlayerSprite
                     appearance={appearance}
                     facing={state.playerFacing}
-                    moveCount={state.moveCount}
+                    movementAttempt={movementAttempt}
                     animateMove={Boolean(
-                      currentMotion?.playerMoved &&
+                      currentMotion &&
                       currentMotion.playerFacing === state.playerFacing,
                     )}
                   />

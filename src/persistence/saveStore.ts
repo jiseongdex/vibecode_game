@@ -3,12 +3,10 @@ import type { GameState } from '../game/gameState'
 import { gameReducer } from '../game/gameState'
 import {
   isSaveData,
-  isSaveDataV1,
-  LEGACY_SAVE_KEY,
   SAVE_KEY,
   SAVE_VERSION,
 } from './saveSchema'
-import type { SaveData, SaveDataV1, SavedSession } from './saveSchema'
+import type { SaveData, SavedSession } from './saveSchema'
 
 export function createEmptySave(): SaveData {
   const progress = createCampaignProgress()
@@ -33,24 +31,6 @@ export function makeSavedSession(state: GameState, now = Date.now()): SavedSessi
   return { state: paused as SavedSession['state'], updatedAt: now }
 }
 
-export function migrateV1Save(save: SaveDataV1): SaveData {
-  return {
-    version: SAVE_VERSION,
-    unlockedStage: save.unlockedStage,
-    stageRecords: save.stageRecords,
-    currentSession: save.currentSession === null
-      ? null
-      : {
-          ...save.currentSession,
-          state: {
-            ...save.currentSession.state,
-            playerFacing: 'down',
-            followerFacings: save.currentSession.state.followers.map(() => 'down'),
-          },
-        },
-  }
-}
-
 function parseStoredSave(raw: string | null): unknown {
   if (!raw) return null
   try {
@@ -65,18 +45,7 @@ export function loadSave(): SaveData {
     if (typeof window === 'undefined') return createEmptySave()
     const current = parseStoredSave(window.localStorage.getItem(SAVE_KEY))
     if (isSaveData(current)) return current
-
-    const legacy = parseStoredSave(window.localStorage.getItem(LEGACY_SAVE_KEY))
-    if (!isSaveDataV1(legacy)) return createEmptySave()
-
-    const migrated = migrateV1Save(legacy)
-    try {
-      window.localStorage.setItem(SAVE_KEY, JSON.stringify(migrated))
-      window.localStorage.removeItem(LEGACY_SAVE_KEY)
-    } catch {
-      // Preserve the v1 save when storage cannot complete migration.
-    }
-    return migrated
+    return createEmptySave()
   } catch {
     return createEmptySave()
   }
@@ -94,7 +63,7 @@ export function saveSave(data: SaveData): void {
 
 export function clearSave(): void {
   if (typeof window === 'undefined') return
-  for (const key of [SAVE_KEY, LEGACY_SAVE_KEY]) {
+  for (const key of [SAVE_KEY, 'maze-rescue-game.save.v2', 'maze-rescue-game.save.v1']) {
     try {
       window.localStorage.removeItem(key)
     } catch {
@@ -119,10 +88,6 @@ export function mergeSaveData(local: SaveData, remote: SaveData): SaveData {
       bestTimeSeconds: Math.min(
         localRecord?.bestTimeSeconds ?? Infinity,
         remoteRecord?.bestTimeSeconds ?? Infinity,
-      ),
-      bestMoveCount: Math.min(
-        localRecord?.bestMoveCount ?? Infinity,
-        remoteRecord?.bestMoveCount ?? Infinity,
       ),
     }
   }

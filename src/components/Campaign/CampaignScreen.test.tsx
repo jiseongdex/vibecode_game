@@ -27,28 +27,28 @@ describe('CampaignScreen', () => {
   it('unlocks the next stage and lets completed stages start again', () => {
     const onStartSession = vi.fn()
     const initial = createCampaignProgress()
-    const progress = completeStage(initial, 1, 80, 50)
+    const progress = completeStage(initial, 1, 80)
     const { rerender } = render(
       <CampaignScreen progress={progress} onStartSession={onStartSession} />,
     )
 
     expect(initial.unlockedStage).toBe(1)
     expect(progress.unlockedStage).toBe(2)
-    expect(screen.getByText('최고 01:20 · 50회')).toBeInTheDocument()
+    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '1단계 완료, 재플레이 가능' }))
     fireEvent.click(screen.getByRole('button', { name: '2단계 도전 가능' }))
     expect(onStartSession.mock.calls.map(([session]) => session.stageConfig.stage)).toEqual([1, 2])
 
-    const improved = completeStage(progress, 1, 95, 40)
+    const improved = completeStage(progress, 1, 95)
     rerender(<CampaignScreen progress={improved} onStartSession={onStartSession} />)
-    expect(improved.stageRecords[1]).toEqual({ bestTimeSeconds: 80, bestMoveCount: 40 })
-    expect(screen.getByText('최고 01:20 · 40회')).toBeInTheDocument()
+    expect(improved.stageRecords[1]).toEqual({ bestTimeSeconds: 80 })
+    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
   })
 
   it('shows the final campaign result after all twenty stages', () => {
     let progress = createCampaignProgress()
     for (let stage = 1; stage <= 20; stage += 1) {
-      progress = completeStage(progress, stage, stage * 10, stage * 20)
+      progress = completeStage(progress, stage, stage * 10)
     }
     render(<CampaignScreen progress={progress} onStartSession={vi.fn()} />)
 

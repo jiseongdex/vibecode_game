@@ -22,7 +22,6 @@ export interface GameState {
   followers: Position[]
   playerFacing: Direction
   followerFacings: Direction[]
-  moveCount: number
   remainingSeconds: number
   status: GameStatus
   startedAt: number | null
@@ -82,7 +81,6 @@ export function createGameState(stage: number, maze?: Maze): GameState {
     followers: [],
     playerFacing: 'down',
     followerFacings: [],
-    moveCount: 0,
     remainingSeconds: stageConfig.timeLimitSeconds,
     status: 'ready',
     startedAt: null,
@@ -157,7 +155,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         followers,
         playerFacing: action.direction,
         followerFacings,
-        moveCount: state.moveCount + 1,
         status: won ? 'won' : 'playing',
       }
     }

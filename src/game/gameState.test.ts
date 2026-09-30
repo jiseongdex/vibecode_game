@@ -77,7 +77,6 @@ describe('gameReducer', () => {
       playerFacing: 'up',
       followers: state.followers,
       followerFacings: state.followerFacings,
-      moveCount: 0,
     })
     expect(facingWall.rescues).toBe(state.rescues)
     expect(gameReducer(facingWall, { type: 'MOVE', direction: 'up' })).toBe(facingWall)
@@ -86,10 +85,8 @@ describe('gameReducer', () => {
       (direction) => !state.maze.cells[0][0].walls[wallByDirection[direction]],
     )!
     const moved = gameReducer(state, { type: 'MOVE', direction: open })
-    expect(moved.moveCount).toBe(1)
     expect(moved.player).toEqual(deltas[open])
     expect(moved.playerFacing).toBe(open)
-    expect(state.moveCount).toBe(0)
     const closed = (Object.keys(deltas) as Direction[]).find(
       (direction) =>
         moved.maze.cells[moved.player.row][moved.player.col].walls[wallByDirection[direction]],
@@ -98,7 +95,6 @@ describe('gameReducer', () => {
       const blocked = gameReducer(moved, { type: 'MOVE', direction: closed })
       expect(blocked.playerFacing).toBe(closed)
       expect(blocked.player).toEqual(moved.player)
-      expect(blocked.moveCount).toBe(moved.moveCount)
       expect(blocked.followers).toBe(moved.followers)
     }
   })
@@ -230,12 +226,11 @@ describe('gameReducer', () => {
 
   it('retries the same maze or resets with a new one', () => {
     const original = setup()
-    const lost = { ...original, status: 'lost' as const, moveCount: 9, remainingSeconds: 0 }
+    const lost = { ...original, status: 'lost' as const, remainingSeconds: 0 }
     const retry = gameReducer(lost, { type: 'RETRY_SAME_MAZE' })
     expect(retry.maze).toBe(original.maze)
     expect(retry.exit).toEqual(original.exit)
     expect(retry.rescues).toEqual(original.rescues)
-    expect(retry.moveCount).toBe(0)
     expect(retry.remainingSeconds).toBe(original.stageConfig.timeLimitSeconds)
     expect(retry.status).toBe('ready')
     expect(retry.playerFacing).toBe('down')

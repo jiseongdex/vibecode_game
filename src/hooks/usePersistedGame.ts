@@ -84,12 +84,11 @@ export function usePersistedGame() {
   }, [])
 
   const recordStageResult = useCallback(
-    (stage: number, clearTimeSeconds: number, moveCount: number) => {
+    (stage: number, clearTimeSeconds: number) => {
       const next = completeStage(
         current.current.progress,
         stage,
         clearTimeSeconds,
-        moveCount,
       )
       current.current = { ...current.current, progress: next }
       setProgress(next)

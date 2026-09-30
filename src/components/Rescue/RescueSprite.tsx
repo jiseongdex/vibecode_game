@@ -9,7 +9,7 @@ interface RescueSpriteProps {
   facing?: Direction
   following?: boolean
   order?: number
-  moveCount?: number
+  movementAttempt?: number
   animateMove?: boolean
 }
 
@@ -18,7 +18,7 @@ export function RescueSprite({
   facing = 'down',
   following = false,
   order,
-  moveCount = 0,
+  movementAttempt = 0,
   animateMove = false,
 }: RescueSpriteProps) {
   const [hopping, setHopping] = useState(false)
@@ -38,7 +38,7 @@ export function RescueSprite({
     setHopping(true)
     const stop = window.setTimeout(() => setHopping(false), 220)
     return () => window.clearTimeout(stop)
-  }, [following, animateMove, moveCount])
+  }, [following, animateMove, movementAttempt])
 
   return (
     <span
@@ -53,7 +53,7 @@ export function RescueSprite({
       title={animal.name}
     >
       <span
-        key={moveCount}
+        key={movementAttempt}
         className={`${styles.spriteVisual} ${hopping ? styles.hopping : ''}`}
       >
         <img

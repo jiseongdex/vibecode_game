@@ -5,7 +5,6 @@ export interface GameHudProps {
   remainingSeconds: number
   rescuedCount: number
   rescueCount: number
-  moveCount: number
   onPause: () => void
   canPause?: boolean
 }
@@ -22,7 +21,6 @@ export function GameHud({
   remainingSeconds,
   rescuedCount,
   rescueCount,
-  moveCount,
   onPause,
   canPause = true,
 }: GameHudProps) {
@@ -43,7 +41,6 @@ export function GameHud({
         <span role="status" aria-live="polite" aria-atomic="true">
           구출: {rescuedCount}/{rescueCount}
         </span>
-        <span>이동: {moveCount}회</span>
       </div>
       <button type="button" onClick={onPause} disabled={!canPause}>
         일시정지

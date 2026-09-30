@@ -49,7 +49,7 @@ export function CampaignScreen({ progress, onStartSession }: CampaignScreenProps
               {locked ? (
                 <span>잠김</span>
               ) : record ? (
-                <span>최고 {formatTime(record.bestTimeSeconds)} · {record.bestMoveCount}회</span>
+                <span>최고 {formatTime(record.bestTimeSeconds)}</span>
               ) : (
                 <span>시작하기</span>
               )}

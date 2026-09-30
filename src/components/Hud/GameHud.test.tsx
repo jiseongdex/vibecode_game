@@ -5,7 +5,7 @@ import { ResultOverlay } from '../Overlays/ResultOverlay'
 import { formatTime, GameHud } from './GameHud'
 
 describe('GameHud and overlays', () => {
-  it('shows stage, formatted timer, rescue progress, and move count', () => {
+  it('shows stage, formatted timer, and rescue progress', () => {
     const onPause = vi.fn()
     render(
       <GameHud
@@ -13,7 +13,6 @@ describe('GameHud and overlays', () => {
         remainingSeconds={125}
         rescuedCount={1}
         rescueCount={2}
-        moveCount={34}
         onPause={onPause}
       />,
     )
@@ -23,7 +22,7 @@ describe('GameHud and overlays', () => {
     expect(screen.getByText('구출: 1/2')).toBeInTheDocument()
     expect(screen.getByRole('timer')).toHaveAttribute('aria-live', 'polite')
     expect(screen.getByRole('status')).toHaveTextContent('구출: 1/2')
-    expect(screen.getByText('이동: 34회')).toBeInTheDocument()
+    expect(screen.queryByText(/이동:/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '일시정지' }))
     expect(onPause).toHaveBeenCalledTimes(1)
     expect(formatTime(0)).toBe('00:00')
@@ -36,7 +35,6 @@ describe('GameHud and overlays', () => {
         remainingSeconds={10}
         rescuedCount={0}
         rescueCount={1}
-        moveCount={0}
         onPause={vi.fn()}
         canPause={false}
       />,
@@ -61,7 +59,6 @@ describe('GameHud and overlays', () => {
         status="lost"
         stage={3}
         clearTimeSeconds={200}
-        moveCount={55}
         onRetrySameMaze={onRetrySameMaze}
         onRestartNewMaze={onRestartNewMaze}
       />,
@@ -81,7 +78,6 @@ describe('GameHud and overlays', () => {
         status="won"
         stage={2}
         clearTimeSeconds={78}
-        moveCount={47}
         onRetrySameMaze={vi.fn()}
         onRestartNewMaze={vi.fn()}
         onNextStage={onNextStage}
@@ -89,7 +85,7 @@ describe('GameHud and overlays', () => {
       />,
     )
 
-    expect(screen.getByText('클리어 시간 01:18 · 이동 47회')).toBeInTheDocument()
+    expect(screen.getByText('클리어 시간 01:18')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '같은 미로 재도전' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '다음 단계' }))
     fireEvent.click(screen.getByRole('button', { name: '단계 선택' }))
@@ -101,7 +97,6 @@ describe('GameHud and overlays', () => {
         status="won"
         stage={20}
         clearTimeSeconds={300}
-        moveCount={100}
         onRetrySameMaze={vi.fn()}
         onRestartNewMaze={vi.fn()}
         onNextStage={onNextStage}

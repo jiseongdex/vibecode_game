@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 
 import type { PlayerAppearance } from '../../assets/assetManifest'
 import { createGameState, gameReducer } from '../../game/gameState'
@@ -17,7 +17,7 @@ import styles from './GameScreen.module.css'
 interface GameScreenProps {
   appearance?: PlayerAppearance
   initialState?: GameState
-  onStageComplete?: (stage: number, clearTimeSeconds: number, moveCount: number) => void
+  onStageComplete?: (stage: number, clearTimeSeconds: number) => void
   onNextStage?: (stage: number) => void
   onCampaign?: () => void
   onStateChange?: (state: GameState) => void
@@ -42,8 +42,10 @@ export function GameScreen({
   )
   const playing = state.status === 'playing'
   const reportedWin = useRef(false)
+  const [movementAttempt, setMovementAttempt] = useState(0)
 
   const handleMove = useCallback((direction: Direction) => {
+    setMovementAttempt((attempt) => attempt + 1)
     dispatch({ type: 'MOVE', direction })
   }, [])
 
@@ -77,10 +79,9 @@ export function GameScreen({
       onStageComplete?.(
         state.stageConfig.stage,
         state.stageConfig.timeLimitSeconds - state.remainingSeconds,
-        state.moveCount,
       )
     }
-  }, [state.status, state.stageConfig, state.remainingSeconds, state.moveCount, onStageComplete])
+  }, [state.status, state.stageConfig, state.remainingSeconds, onStageComplete])
 
   const rescuedCount = state.rescues.filter((target) => target.rescued).length
 
@@ -91,13 +92,17 @@ export function GameScreen({
         remainingSeconds={state.remainingSeconds}
         rescuedCount={rescuedCount}
         rescueCount={state.stageConfig.rescueCount}
-        moveCount={state.moveCount}
         canPause={playing}
         onPause={pauseAndSave}
       />
 
       <div className={styles.playfield}>
-        <MazeBoard state={state} onMove={handleMove} appearance={appearance} />
+        <MazeBoard
+          state={state}
+          onMove={handleMove}
+          appearance={appearance}
+          movementAttempt={movementAttempt}
+        />
         {state.status === 'paused' && (
           <PauseOverlay
             onResume={() => dispatch({ type: 'RESUME', now: Date.now() })}
@@ -109,7 +114,6 @@ export function GameScreen({
             status={state.status}
             stage={state.stageConfig.stage}
             clearTimeSeconds={state.stageConfig.timeLimitSeconds - state.remainingSeconds}
-            moveCount={state.moveCount}
             onRetrySameMaze={() => dispatch({ type: 'RETRY_SAME_MAZE' })}
             onRestartNewMaze={() =>
               dispatch({

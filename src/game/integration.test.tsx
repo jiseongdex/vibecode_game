@@ -70,9 +70,8 @@ describe('gameplay integration', () => {
     state = walkTo(state, state.exit)
 
     expect(state.status).toBe('won')
-    const progress = completeStage(createCampaignProgress(), 1, 65, state.moveCount)
+    const progress = completeStage(createCampaignProgress(), 1, 65)
     expect(progress.unlockedStage).toBe(2)
-    expect(progress.stageRecords[1]).toEqual({ bestTimeSeconds: 65, bestMoveCount: state.moveCount })
   })
 
   it('times out, retries the same maze, and restarts with a different maze', () => {
@@ -106,16 +105,13 @@ describe('gameplay integration', () => {
     fireEvent.click(screen.getByRole('button', {
       name: startCell?.className.includes('wallRight') ? '아래로 이동' : '오른쪽으로 이동',
     }))
-    expect(screen.getByText('이동: 1회')).toBeInTheDocument()
     fireEvent(window, new Event('pagehide'))
     const saved = loadSave().currentSession
     expect(saved?.state.status).toBe('paused')
-    expect(saved?.state.moveCount).toBe(1)
     unmount()
 
     render(<App />)
     expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
-    expect(screen.getByText('이동: 1회')).toBeInTheDocument()
     expect(loadSave().currentSession?.state.maze).toEqual(saved?.state.maze)
     fireEvent.click(screen.getByRole('button', { name: '이어하기' }))
     expect(screen.queryByRole('dialog', { name: '일시정지' })).not.toBeInTheDocument()
@@ -132,19 +128,19 @@ describe('gameplay integration', () => {
 
     const initial = {
       unlockedStage: 20,
-      stageRecords: { 20: { bestTimeSeconds: 300, bestMoveCount: 900 } },
+      stageRecords: { 20: { bestTimeSeconds: 300 } },
     }
-    const improved = completeStage(initial, 20, 280, 950)
+    const improved = completeStage(initial, 20, 280)
     expect(improved.unlockedStage).toBe(20)
-    expect(improved.stageRecords[20]).toEqual({ bestTimeSeconds: 280, bestMoveCount: 900 })
+    expect(improved.stageRecords[20]).toEqual({ bestTimeSeconds: 280 })
 
     saveSave({ version: SAVE_VERSION, ...improved, currentSession: null })
     const merged = mergeSaveData(loadSave(), {
       version: SAVE_VERSION,
       unlockedStage: 20,
-      stageRecords: { 20: { bestTimeSeconds: 320, bestMoveCount: 850 } },
+      stageRecords: { 20: { bestTimeSeconds: 320 } },
       currentSession: null,
     })
-    expect(merged.stageRecords[20]).toEqual({ bestTimeSeconds: 280, bestMoveCount: 850 })
+    expect(merged.stageRecords[20]).toEqual({ bestTimeSeconds: 280 })
   })
 })

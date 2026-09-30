@@ -51,12 +51,10 @@ describe('App', () => {
     const startCell = document.querySelector('[data-row="0"][data-col="0"]')
     const direction = startCell?.className.includes('wallRight') ? 'ArrowDown' : 'ArrowRight'
     fireEvent.keyDown(window, { key: direction })
-    expect(screen.getByText('이동: 1회')).toBeInTheDocument()
 
     fireEvent(window, new Event('pagehide'))
     const saved = loadSave().currentSession
     expect(saved?.state.status).toBe('paused')
-    expect(saved?.state.moveCount).toBe(1)
     expect(saved?.state.player).not.toEqual({ row: 0, col: 0 })
     const savedMaze = saved?.state.maze
     const remaining = saved?.state.remainingSeconds
@@ -64,7 +62,6 @@ describe('App', () => {
 
     render(<App />)
     expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
-    expect(screen.getByText('이동: 1회')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: '탐험가' }).parentElement).toHaveAttribute(
       'data-row',
       String(saved?.state.player.row),
@@ -104,13 +101,13 @@ describe('App', () => {
     saveSave({
       version: SAVE_VERSION,
       unlockedStage: 2,
-      stageRecords: { 1: { bestTimeSeconds: 80, bestMoveCount: 40 } },
+      stageRecords: { 1: { bestTimeSeconds: 80 } },
       currentSession: null,
     })
     render(<App />)
 
     expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled()
-    expect(screen.getByText('최고 01:20 · 40회')).toBeInTheDocument()
+    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
   })
 
   it('pauses on a hidden tab and waits for an explicit resume', () => {

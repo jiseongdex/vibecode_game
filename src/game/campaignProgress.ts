@@ -2,7 +2,6 @@ import { MAX_STAGE, MIN_STAGE } from './stageConfig'
 
 export interface StageRecord {
   bestTimeSeconds: number
-  bestMoveCount: number
 }
 
 export interface CampaignProgress {
@@ -18,7 +17,6 @@ export function completeStage(
   progress: CampaignProgress,
   stage: number,
   clearTimeSeconds: number,
-  moveCount: number,
 ): CampaignProgress {
   if (
     !Number.isInteger(stage) ||
@@ -26,9 +24,7 @@ export function completeStage(
     stage > MAX_STAGE ||
     stage > progress.unlockedStage ||
     !Number.isInteger(clearTimeSeconds) ||
-    clearTimeSeconds < 0 ||
-    !Number.isInteger(moveCount) ||
-    moveCount < 0
+    clearTimeSeconds < 0
   ) {
     throw new RangeError('Invalid stage result.')
   }
@@ -43,7 +39,6 @@ export function completeStage(
           previous?.bestTimeSeconds ?? Infinity,
           clearTimeSeconds,
         ),
-        bestMoveCount: Math.min(previous?.bestMoveCount ?? Infinity, moveCount),
       },
     },
   }

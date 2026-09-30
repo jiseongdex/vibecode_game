@@ -5,7 +5,6 @@ interface ResultOverlayProps {
   status: 'won' | 'lost'
   stage: number
   clearTimeSeconds: number
-  moveCount: number
   onRetrySameMaze: () => void
   onRestartNewMaze: () => void
   onNextStage?: () => void
@@ -16,7 +15,6 @@ export function ResultOverlay({
   status,
   stage,
   clearTimeSeconds,
-  moveCount,
   onRetrySameMaze,
   onRestartNewMaze,
   onNextStage,
@@ -31,7 +29,7 @@ export function ResultOverlay({
           {won ? (stage === 20 ? '20단계 완료!' : `${stage}단계 클리어!`) : '시간 초과!'}
         </h2>
         {won ? (
-          <p>클리어 시간 {formatTime(clearTimeSeconds)} · 이동 {moveCount}회</p>
+          <p>클리어 시간 {formatTime(clearTimeSeconds)}</p>
         ) : (
           <p>친구를 모두 구출하고 탈출구를 다시 찾아보세요.</p>
         )}

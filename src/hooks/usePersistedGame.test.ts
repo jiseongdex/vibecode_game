@@ -9,13 +9,12 @@ describe('usePersistedGame', () => {
 
   it('saves a stage result and restores its unlock and best record', () => {
     const first = renderHook(() => usePersistedGame())
-    act(() => first.result.current.recordStageResult(1, 80, 40))
+    act(() => first.result.current.recordStageResult(1, 80))
     act(() => first.result.current.persistNow())
 
     expect(loadSave().unlockedStage).toBe(2)
     expect(loadSave().stageRecords[1]).toEqual({
       bestTimeSeconds: 80,
-      bestMoveCount: 40,
     })
     first.unmount()
 
