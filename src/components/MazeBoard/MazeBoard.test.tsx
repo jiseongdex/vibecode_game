@@ -91,7 +91,7 @@ describe('MazeBoard', () => {
     }} onMove={vi.fn()} />)
     const follower = container.querySelector('[data-asset-slot="follower"]')
     expect(follower).toHaveAttribute('data-animal', '강아지')
-    expect(follower?.querySelector('img')).toHaveAttribute('src', '/assets/animals/rescue-dog.png')
+    expect(follower?.querySelector('img')).toHaveAttribute('src', '/assets/animals/rescue-dog-front.png')
   })
 
   it('keeps emoji fallback visible when a local image fails to load', () => {
