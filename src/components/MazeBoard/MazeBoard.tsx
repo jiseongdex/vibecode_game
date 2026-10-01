@@ -24,11 +24,6 @@ export interface MazeBoardProps {
   pressedDirections?: readonly Direction[]
 }
 
-interface ViewportSize {
-  width: number
-  height: number
-}
-
 interface MotionSnapshot {
   movementAttempt: number
   seed: number
@@ -44,8 +39,14 @@ interface MotionState {
   followerMoved: boolean[]
 }
 
+const VIEWPORT_WIDTH = 1240
+const VIEWPORT_HEIGHT = 840
 const TARGET_VISIBLE_COLUMNS = 7.8
 const TARGET_VISIBLE_ROWS = 6.0
+const CELL_SIZE = Math.floor(Math.min(
+  VIEWPORT_WIDTH / TARGET_VISIBLE_COLUMNS,
+  VIEWPORT_HEIGHT / TARGET_VISIBLE_ROWS,
+))
 
 function cameraOffset(
   visualCoordinate: number,
@@ -71,7 +72,6 @@ export function MazeBoard({
   movementSource = 'button',
   pressedDirections = [],
 }: MazeBoardProps) {
-  const viewportRef = useRef<HTMLDivElement>(null)
   const previous = useRef<MotionSnapshot>({
     movementAttempt,
     seed: state.maze.seed,
@@ -80,37 +80,6 @@ export function MazeBoard({
     followers: state.followers.map((follower) => ({ ...follower })),
   })
   const [motion, setMotion] = useState<MotionState | null>(null)
-  const [viewport, setViewport] = useState<ViewportSize>({
-    width: 640,
-    height: 480,
-  })
-
-  useLayoutEffect(() => {
-    const element = viewportRef.current
-    if (!element) return
-
-    const measure = () => {
-      const rect = element.getBoundingClientRect()
-      const width = element.clientWidth || rect.width || 640
-      const height = element.clientHeight || rect.height || 480
-      setViewport((previous) =>
-        previous.width === width && previous.height === height
-          ? previous
-          : { width, height },
-      )
-    }
-
-    measure()
-    const observer =
-      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
-    observer?.observe(element)
-    window.addEventListener('resize', measure)
-
-    return () => {
-      observer?.disconnect()
-      window.removeEventListener('resize', measure)
-    }
-  }, [])
 
   useLayoutEffect(() => {
     const last = previous.current
@@ -147,26 +116,20 @@ export function MazeBoard({
     }
   })
 
-  const cellSize = Math.max(
-    1,
-    Math.floor(Math.min(
-      viewport.width / TARGET_VISIBLE_COLUMNS,
-      viewport.height / TARGET_VISIBLE_ROWS,
-    )),
-  )
+  const cellSize = CELL_SIZE
   const boardTiles = visualSize(state.maze.size)
   const playerTile = state.player
   const offsetX = cameraOffset(
     playerTile.col,
     boardTiles,
     cellSize,
-    viewport.width,
+    VIEWPORT_WIDTH,
   )
   const offsetY = cameraOffset(
     playerTile.row,
     boardTiles,
     cellSize,
-    viewport.height,
+    VIEWPORT_HEIGHT,
   )
   const themeId = getMazeTheme(state.maze.seed)
   const theme = mazeThemes[themeId]
@@ -194,7 +157,6 @@ export function MazeBoard({
 
   return (
     <div
-      ref={viewportRef}
       className={styles.viewport}
       role="region"
       aria-label={`${state.stageConfig.stage}단계 미로`}

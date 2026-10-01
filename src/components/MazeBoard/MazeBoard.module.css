@@ -1,16 +1,14 @@
 .viewport {
   position: relative;
-  width: 100%;
-  height: min(88vh, 840px);
-  min-height: 0;
+  width: 1240px;
+  height: 840px;
   margin-inline: auto;
   overflow: hidden;
   border: 5px solid var(--color-border);
   border-radius: 24px;
   background: #d2c6a3;
   box-shadow: var(--shadow-sticker), inset 0 0 30px #254f4133;
-  box-sizing: border-box;
-  touch-action: none;
+  box-sizing: content-box;
 }
 
 .board {
@@ -199,15 +197,7 @@
 
 @media (max-width: 600px) {
   .viewport {
-    height: min(65vh, 590px);
-    border-width: 3px;
     border-radius: 20px;
-  }
-}
-
-@media (max-height: 520px) and (orientation: landscape) {
-  .viewport {
-    height: min(58vh, 400px);
   }
 }
 

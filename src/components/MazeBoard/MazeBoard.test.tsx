@@ -170,9 +170,10 @@ describe('MazeBoard', () => {
     const board = screen.getByTestId('maze-board')
     const startTransform = board.style.transform
     expect(startTransform).toBe('translate3d(0px, 0px, 0)')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('80px')
-    expect(640 / 80).toBe(8)
-    expect(480 / 80).toBe(6)
+    expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
+    expect(1240 / 140).toBeGreaterThan(8)
+    expect(1240 / 140).toBeLessThan(9)
+    expect(840 / 140).toBe(6)
 
     rerender(
       <MazeBoard
@@ -181,7 +182,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-680px, -760px, 0)')
+    expect(board.style.transform).toBe('translate3d(-1130px, -1330px, 0)')
 
     rerender(
       <MazeBoard
@@ -189,7 +190,7 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-760px, -840px, 0)')
+    expect(board.style.transform).toBe('translate3d(-1270px, -1470px, 0)')
 
     rerender(
       <MazeBoard
@@ -197,20 +198,34 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-1840px, -2000px, 0)')
+    expect(board.style.transform).toBe('translate3d(-3100px, -3500px, 0)')
   })
 
-  it('keeps a similar visible area on a narrow viewport', () => {
+  it('keeps tile, player, and camera geometry fixed when the window changes size', () => {
     const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       width: 320, height: 245, top: 0, right: 320, bottom: 245, left: 0,
       x: 0, y: 0, toJSON: () => ({}),
     })
     try {
-      render(<MazeBoard state={stateFor(1, 15)} onMove={vi.fn()} />)
-      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('40px')
-      expect(320 / 40).toBe(8)
-      expect(245 / 40).toBeGreaterThan(6)
-      expect(245 / 40).toBeLessThan(7)
+      const initial = stateFor(1, 15)
+      const state = { ...initial, player: { row: 12, col: 12 } }
+      const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+      const board = screen.getByTestId('maze-board')
+      const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+      const initialTranslate = player.style.translate
+      const initialCamera = board.style.transform
+      expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
+      expect(player.style.getPropertyValue('--sprite-size')).toBe('calc(var(--cell-size) * 1.6)')
+
+      measure.mockReturnValue({
+        width: 1600, height: 1000, top: 0, right: 1600, bottom: 1000, left: 0,
+        x: 0, y: 0, toJSON: () => ({}),
+      })
+      window.dispatchEvent(new Event('resize'))
+      rerender(<MazeBoard state={state} onMove={vi.fn()} />)
+      expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
+      expect(player.style.translate).toBe(initialTranslate)
+      expect(board.style.transform).toBe(initialCamera)
     } finally {
       measure.mockRestore()
     }

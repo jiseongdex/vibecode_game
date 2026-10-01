@@ -1,5 +1,5 @@
 .screen {
-  width: min(100%, 1240px);
+  width: min(100%, 1282px);
   margin: 0 auto;
   padding: 16px;
   box-sizing: border-box;
@@ -8,6 +8,7 @@
 
 .playfield {
   position: relative;
+  width: max-content;
 }
 
 .actions {
