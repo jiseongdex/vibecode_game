@@ -1,8 +1,7 @@
 .viewport {
   position: relative;
-  width: min(100%, 91vh, 850px);
-  aspect-ratio: 17 / 13;
-  height: auto;
+  width: 100%;
+  height: min(80vh, 760px);
   min-height: 0;
   margin-inline: auto;
   overflow: hidden;
@@ -186,14 +185,14 @@
 
 @media (max-width: 600px) {
   .viewport {
-    width: min(100%, 68vh, 588px);
+    height: min(60vh, 540px);
     border-width: 3px;
   }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
   .viewport {
-    width: min(100%, 62.8vh, 392px);
+    height: min(52vh, 360px);
   }
 }
 
