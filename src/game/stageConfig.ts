@@ -28,7 +28,7 @@ export function getTimeLimitSeconds(stage: number): number {
     size * size * 0.42 + rescueCount * size * 1.8,
   )
 
-  return Math.max(90, calculatedSeconds)
+  return Math.max(90, Math.ceil(calculatedSeconds * 0.8))
 }
 
 export function getStageConfig(stage: number): StageConfig {

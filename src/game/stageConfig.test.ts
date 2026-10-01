@@ -22,13 +22,13 @@ describe('stageConfig', () => {
   )
 
   it('calculates the time limit from maze size and rescue count', () => {
-    expect(getTimeLimitSeconds(1)).toBe(122)
-    expect(getTimeLimitSeconds(20)).toBe(755)
+    expect(getTimeLimitSeconds(1)).toBe(98)
+    expect(getTimeLimitSeconds(20)).toBe(604)
     expect(getStageConfig(17)).toEqual({
       stage: 17,
       size: 31,
       rescueCount: 5,
-      timeLimitSeconds: 683,
+      timeLimitSeconds: 547,
     })
   })
 
