@@ -68,6 +68,44 @@ describe('GameScreen', () => {
     ).toBeInTheDocument()
   })
 
+  it('walks in place while a blocked key is held and stops on release, blur, or pause', () => {
+    vi.useFakeTimers()
+    const initialState = createGameState(1, generateMaze(15, createSeededRandom(123)))
+    render(<GameScreen initialState={initialState} />)
+    fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+
+    const player = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    const image = player.querySelector('img')!
+    const startPosition = player.style.translate
+    fireEvent.keyDown(window, { key: 'ArrowUp', code: 'ArrowUp' })
+    expect(player).toHaveAttribute('data-motion', 'walk')
+    expect(image).toHaveAttribute('src', '/assets/players/player-girl-back-walk-a.png')
+    act(() => vi.advanceTimersByTime(110))
+    expect(player).toHaveAttribute('data-motion', 'walk')
+    expect(image).toHaveAttribute('src', '/assets/players/player-girl-back-walk-b.png')
+    expect(player.style.translate).toBe(startPosition)
+
+    fireEvent.keyUp(window, { key: 'ArrowUp', code: 'ArrowUp' })
+    expect(player).toHaveAttribute('data-motion', 'none')
+    expect(image).toHaveAttribute('src', '/assets/players/player-girl-back.png')
+
+    fireEvent.keyDown(window, { key: 'ArrowUp', code: 'ArrowUp' })
+    expect(player).toHaveAttribute('data-motion', 'walk')
+    fireEvent.blur(window)
+    expect(player).toHaveAttribute('data-motion', 'none')
+
+    fireEvent.click(screen.getByRole('button', { name: '위로 이동' }))
+    expect(player).toHaveAttribute('data-motion', 'walk')
+    act(() => vi.advanceTimersByTime(110))
+    expect(player).toHaveAttribute('data-motion', 'none')
+
+    fireEvent.keyDown(window, { key: 'ArrowUp', code: 'ArrowUp' })
+    expect(player).toHaveAttribute('data-motion', 'walk')
+    fireEvent.click(screen.getByRole('button', { name: '일시정지' }))
+    expect(player).toHaveAttribute('data-motion', 'none')
+    expect(player.style.translate).toBe(startPosition)
+  })
+
   it.each(['paused', 'won', 'lost'] as const)(
     'disables keyboard and direction buttons when %s',
     (status) => {

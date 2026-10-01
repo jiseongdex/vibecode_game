@@ -115,4 +115,49 @@ describe('useKeyboardMovement', () => {
       vi.useRealTimers()
     }
   })
+
+  it('reports distinct held directions and clears them on release, blur, and disable', () => {
+    vi.useFakeTimers()
+    const onMove = vi.fn()
+    const onPressedDirectionsChange = vi.fn()
+    const { rerender, unmount } = renderHook(
+      ({ enabled }) => useKeyboardMovement({
+        enabled,
+        onMove,
+        onPressedDirectionsChange,
+      }),
+      { initialProps: { enabled: true } },
+    )
+
+    try {
+      fireEvent.keyDown(window, { key: 'ArrowUp', code: 'ArrowUp' })
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith(['up'])
+      fireEvent.keyDown(window, { key: 'w', code: 'KeyW' })
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith(['up'])
+      fireEvent.keyDown(window, { key: 'ArrowLeft', code: 'ArrowLeft' })
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith(['up', 'left'])
+
+      fireEvent.keyUp(window, { key: 'ArrowUp', code: 'ArrowUp' })
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith(['up', 'left'])
+      fireEvent.keyUp(window, { key: 'w', code: 'KeyW' })
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith(['left'])
+      fireEvent.keyUp(window, { key: 'ArrowLeft', code: 'ArrowLeft' })
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith([])
+
+      fireEvent.keyDown(window, { key: 'ArrowRight', code: 'ArrowRight' })
+      fireEvent.blur(window)
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith([])
+      act(() => vi.advanceTimersByTime(220))
+      expect(onMove).toHaveBeenCalledTimes(4)
+
+      fireEvent.keyDown(window, { key: 'ArrowDown', code: 'ArrowDown' })
+      rerender({ enabled: false })
+      expect(onPressedDirectionsChange).toHaveBeenLastCalledWith([])
+      act(() => vi.advanceTimersByTime(220))
+      expect(onMove).toHaveBeenCalledTimes(5)
+    } finally {
+      unmount()
+      vi.useRealTimers()
+    }
+  })
 })

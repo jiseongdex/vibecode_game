@@ -7,6 +7,7 @@ const HOLD_REPEAT_INTERVAL_MS = 110
 interface KeyboardMovementOptions {
   enabled: boolean
   onMove: (direction: Direction) => void
+  onPressedDirectionsChange?: (directions: Direction[]) => void
 }
 
 const keyDirections: Record<string, Direction> = {
@@ -23,21 +24,31 @@ const keyDirections: Record<string, Direction> = {
 export function useKeyboardMovement({
   enabled,
   onMove,
+  onPressedDirectionsChange,
 }: KeyboardMovementOptions): void {
   useEffect(() => {
     if (!enabled) return
 
-    const keyTimers = new Map<string, number>()
+    const keyTimers = new Map<string, { timer: number; direction: Direction }>()
+
+    const notifyPressedDirections = () => {
+      onPressedDirectionsChange?.([
+        ...new Set([...keyTimers.values()].map(({ direction }) => direction)),
+      ])
+    }
 
     const stopKey = (keyId: string) => {
-      const timer = keyTimers.get(keyId)
-      if (timer === undefined) return
-      window.clearInterval(timer)
+      const pressed = keyTimers.get(keyId)
+      if (pressed === undefined) return
+      window.clearInterval(pressed.timer)
       keyTimers.delete(keyId)
+      notifyPressedDirections()
     }
 
     const clearPressedKeys = () => {
-      for (const keyId of keyTimers.keys()) stopKey(keyId)
+      for (const { timer } of keyTimers.values()) window.clearInterval(timer)
+      keyTimers.clear()
+      notifyPressedDirections()
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -63,8 +74,12 @@ export function useKeyboardMovement({
       onMove(direction)
       keyTimers.set(
         keyId,
-        window.setInterval(() => onMove(direction), HOLD_REPEAT_INTERVAL_MS),
+        {
+          timer: window.setInterval(() => onMove(direction), HOLD_REPEAT_INTERVAL_MS),
+          direction,
+        },
       )
+      notifyPressedDirections()
     }
 
     const handleKeyUp = (event: KeyboardEvent) => {
@@ -80,5 +95,5 @@ export function useKeyboardMovement({
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', clearPressedKeys)
     }
-  }, [enabled, onMove])
+  }, [enabled, onMove, onPressedDirectionsChange])
 }

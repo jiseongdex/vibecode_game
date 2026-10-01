@@ -251,7 +251,7 @@ describe('MazeBoard', () => {
     expect(animal.nextElementSibling?.className).toContain('spriteFallback')
   })
 
-  it('keeps blocked attempts still and alternates walking feet for successful moves', () => {
+  it('animates blocked attempts in place and alternates walking feet for successful moves', () => {
     vi.useFakeTimers()
     try {
       const state = { ...stateFor(1, 15), status: 'playing' as const }
@@ -268,9 +268,11 @@ describe('MazeBoard', () => {
       expect(player()).toBe(playerNode)
       expect(image()).toBe(imageNode)
       expect(player()).toHaveAttribute('data-facing', 'up')
-      expect(player()).toHaveAttribute('data-motion', 'none')
-      expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back.png')
-      act(() => vi.advanceTimersByTime(110))
+      expect(player()).toHaveAttribute('data-motion', 'walk')
+      expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back-walk-a.png')
+      act(() => vi.advanceTimersByTime(55))
+      expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back-walk-b.png')
+      act(() => vi.advanceTimersByTime(55))
       expect(player()).toHaveAttribute('data-motion', 'none')
       expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back.png')
 
@@ -302,6 +304,57 @@ describe('MazeBoard', () => {
     }
   })
 
+  it.each([
+    ['up', 'top', 'back'],
+    ['left', 'left', 'left'],
+    ['down', 'bottom', 'front'],
+    ['right', 'right', 'right'],
+  ] as const)('walks in place against a %s wall', (direction, wallSide, assetSide) => {
+    vi.useFakeTimers()
+    try {
+      const initial = stateFor(1, 15)
+      const cell = initial.maze.cells.flat().find((candidate) => candidate.walls[wallSide])!
+      const state = {
+        ...initial,
+        player: { row: cell.row * 2 + 1, col: cell.col * 2 + 1 },
+        playerFacing: direction,
+        status: 'playing' as const,
+      }
+      const blocked = gameReducer(state, { type: 'MOVE', direction })
+      expect(blocked.player).toEqual(state.player)
+
+      const { container, rerender } = render(
+        <MazeBoard state={state} onMove={vi.fn()} appearance="boy" />,
+      )
+      const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+      const image = player.querySelector('img')!
+      const initialTranslate = player.style.translate
+      const initialSize = player.style.getPropertyValue('--sprite-size')
+
+      rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={1} />)
+      expect(player).toHaveAttribute('data-facing', direction)
+      expect(player).toHaveAttribute('data-motion', 'walk')
+      expect(image).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-a.png`)
+      act(() => vi.advanceTimersByTime(55))
+      expect(image).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-b.png`)
+
+      rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={2} />)
+      expect(player).toHaveAttribute('data-motion', 'walk')
+      expect(image).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-b.png`)
+      act(() => vi.advanceTimersByTime(55))
+      expect(image).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-a.png`)
+      expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
+      expect(player.querySelector('img')).toBe(image)
+      expect(player.style.translate).toBe(initialTranslate)
+      expect(player.style.getPropertyValue('--sprite-size')).toBe(initialSize)
+      act(() => vi.advanceTimersByTime(55))
+      expect(player).toHaveAttribute('data-motion', 'none')
+      expect(image).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}.png`)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('fades the previous facing on a blocked turn without restarting on repeated input', () => {
     vi.useFakeTimers()
     try {
@@ -316,7 +369,7 @@ describe('MazeBoard', () => {
       expect(blocked.player).toEqual(state.player)
       rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={1} />)
       expect(player()).toHaveAttribute('data-facing', 'up')
-      expect(player().querySelector('img')).toHaveAttribute('src', '/assets/players/player-boy-back.png')
+      expect(player().querySelector('img')).toHaveAttribute('src', '/assets/players/player-boy-back-walk-a.png')
       expect(overlay()).toHaveAttribute('data-turn-previous', '/assets/players/player-boy-front.png')
       expect(overlay()).toHaveAttribute('aria-hidden', 'true')
 
@@ -325,8 +378,8 @@ describe('MazeBoard', () => {
 
       rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={2} />)
       expect(overlay()).toBeNull()
-      expect(player()).toHaveAttribute('data-motion', 'none')
-      expect(player().querySelector('img')).toHaveAttribute('src', '/assets/players/player-boy-back.png')
+      expect(player()).toHaveAttribute('data-motion', 'walk')
+      expect(player().querySelector('img')).toHaveAttribute('src', '/assets/players/player-boy-back-walk-b.png')
     } finally {
       vi.useRealTimers()
     }
@@ -404,7 +457,7 @@ describe('MazeBoard', () => {
     expect(top + (1.6 * cellSize) / 2).toBe((visualPosition.row + 0.5) * cellSize)
   })
 
-  it('keeps the same image and size when repeatedly blocked by a lower wall', () => {
+  it('keeps the same element, size, and position when repeatedly blocked by a lower wall', () => {
     vi.useFakeTimers()
     try {
       const initial = stateFor(1, 15)
@@ -424,18 +477,19 @@ describe('MazeBoard', () => {
       const initialSize = player.style.getPropertyValue('--sprite-size')
       const initialTranslate = player.style.translate
       rerender(<MazeBoard state={blocked} onMove={vi.fn()} movementAttempt={1} />)
-      expect(player).toHaveAttribute('data-motion', 'none')
+      expect(player).toHaveAttribute('data-motion', 'walk')
       expect(player).toHaveAttribute('data-facing', 'down')
-      expect(image).toHaveAttribute('src', '/assets/players/player-girl-front.png')
+      expect(image).toHaveAttribute('src', '/assets/players/player-girl-front-walk-a.png')
       expect(player.style.getPropertyValue('--sprite-size')).toBe(initialSize)
       expect(player.style.translate).toBe(initialTranslate)
 
       act(() => vi.advanceTimersByTime(55))
+      expect(image).toHaveAttribute('src', '/assets/players/player-girl-front-walk-b.png')
       rerender(<MazeBoard state={blocked} onMove={vi.fn()} movementAttempt={2} />)
       expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
       expect(player.querySelector('img')).toBe(image)
-      expect(player).toHaveAttribute('data-motion', 'none')
-      expect(image).toHaveAttribute('src', '/assets/players/player-girl-front.png')
+      expect(player).toHaveAttribute('data-motion', 'walk')
+      expect(image).toHaveAttribute('src', '/assets/players/player-girl-front-walk-b.png')
       expect(player.style.getPropertyValue('--sprite-size')).toBe(initialSize)
       expect(player.style.translate).toBe(initialTranslate)
     } finally {

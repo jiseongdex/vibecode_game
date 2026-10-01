@@ -26,6 +26,8 @@ interface GameScreenProps {
   onDiscardSession?: () => void
 }
 
+type MovementSource = 'keyboard' | 'button'
+
 export function GameScreen({
   appearance = 'girl',
   initialState,
@@ -44,13 +46,28 @@ export function GameScreen({
   const playing = state.status === 'playing'
   const reportedWin = useRef(false)
   const [movementAttempt, setMovementAttempt] = useState(0)
+  const [movementSource, setMovementSource] = useState<MovementSource>('button')
+  const [pressedDirections, setPressedDirections] = useState<Direction[]>([])
 
-  const handleMove = useCallback((direction: Direction) => {
+  const handleMove = useCallback((direction: Direction, source: MovementSource) => {
+    setMovementSource(source)
     setMovementAttempt((attempt) => attempt + 1)
     dispatch({ type: 'MOVE', direction })
   }, [])
+  const handleKeyboardMove = useCallback(
+    (direction: Direction) => handleMove(direction, 'keyboard'),
+    [handleMove],
+  )
+  const handleButtonMove = useCallback(
+    (direction: Direction) => handleMove(direction, 'button'),
+    [handleMove],
+  )
 
-  useKeyboardMovement({ enabled: playing, onMove: handleMove })
+  useKeyboardMovement({
+    enabled: playing,
+    onMove: handleKeyboardMove,
+    onPressedDirectionsChange: setPressedDirections,
+  })
 
   const pauseAndSave = useCallback(() => {
     if (state.status !== 'playing') return
@@ -100,9 +117,11 @@ export function GameScreen({
       <div className={styles.playfield}>
         <MazeBoard
           state={state}
-          onMove={handleMove}
+          onMove={handleButtonMove}
           appearance={appearance}
           movementAttempt={movementAttempt}
+          movementSource={movementSource}
+          pressedDirections={pressedDirections}
         />
         {state.status === 'paused' && (
           <PauseOverlay
@@ -137,7 +156,7 @@ export function GameScreen({
         )}
       </div>
 
-      <DirectionControls disabled={!playing} onMove={handleMove} />
+      <DirectionControls disabled={!playing} onMove={handleButtonMove} />
     </div>
   )
 }

@@ -20,6 +20,8 @@ export interface MazeBoardProps {
   onMove: (direction: Direction) => void
   appearance?: PlayerAppearance
   movementAttempt?: number
+  movementSource?: 'keyboard' | 'button'
+  pressedDirections?: readonly Direction[]
 }
 
 interface ViewportSize {
@@ -66,6 +68,8 @@ export function MazeBoard({
   state,
   appearance = 'girl',
   movementAttempt = 0,
+  movementSource = 'button',
+  pressedDirections = [],
 }: MazeBoardProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const previous = useRef<MotionSnapshot>({
@@ -177,6 +181,16 @@ export function MazeBoard({
   const unlockedExit = state.rescues.every((target) => target.rescued)
   const rescuedTargets = state.rescues.filter((target) => target.rescued)
   const currentMotion = motion?.movementAttempt === movementAttempt ? motion : null
+  const animatePlayer = Boolean(
+    currentMotion &&
+    currentMotion.playerFacing === state.playerFacing &&
+    (
+      currentMotion.playerMoved ||
+      (
+        state.status === 'playing' &&
+        (movementSource === 'button' || pressedDirections.includes(state.playerFacing)))
+    ),
+  )
 
   return (
     <div
@@ -269,11 +283,7 @@ export function MazeBoard({
           position={state.player}
           cellSize={cellSize}
           movementAttempt={movementAttempt}
-          animateMove={Boolean(
-            currentMotion &&
-            currentMotion.playerMoved &&
-            currentMotion.playerFacing === state.playerFacing,
-          )}
+          animateMove={animatePlayer}
         />
         <WallLayer maze={state.maze} theme={theme} />
       </div>
