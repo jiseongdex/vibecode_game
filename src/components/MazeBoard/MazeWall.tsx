@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react'
 import type { MazeThemeAssets } from '../../assets/assetManifest'
 import { getWallVariant } from '../../assets/mazeTheme'
 import type { Maze } from '../../game/types'
+import { wallDepth } from './boardDepth'
 import { closedWallSlots } from './boardGeometry'
 import styles from './MazeBoard.module.css'
 
@@ -25,6 +26,7 @@ function ObstacleTile({ row, col, variant, theme, side }: ObstacleTileProps) {
   const style = {
     gridRow: row + 1,
     gridColumn: col + 1,
+    zIndex: wallDepth(row),
     '--wall-color': theme.wallColor,
   } as CSSProperties
 

@@ -45,7 +45,6 @@
 
 .obstacleTile {
   position: relative;
-  z-index: 7;
   display: grid;
   place-items: center;
   width: var(--cell-size);
@@ -130,7 +129,6 @@
   transform: none;
   transition: translate 120ms linear;
   will-change: translate;
-  z-index: 9;
   filter: drop-shadow(0 2px 2px #173b3a88);
 }
 
@@ -150,12 +148,12 @@
 }
 
 .rescueSprite {
-  z-index: 8;
+  z-index: var(--foreground-depth);
   filter: drop-shadow(0 2px 2px #65431177);
 }
 
 .followerSprite {
-  z-index: 8;
+  z-index: var(--foreground-depth);
   transition: top 120ms linear, left 120ms linear;
   font-size: calc(var(--cell-size) * 0.5);
   filter: drop-shadow(0 2px 2px #31542377);
@@ -166,7 +164,7 @@
 }
 
 .exitSprite {
-  z-index: 8;
+  z-index: var(--foreground-depth);
   inset: 0;
   width: var(--cell-size);
   height: var(--cell-size);

@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react'
 import { playerSprites, playerWalkSprites } from '../../assets/assetManifest'
 import type { PlayerAppearance } from '../../assets/assetManifest'
 import type { Direction, Position } from '../../game/types'
+import { playerDepth } from '../MazeBoard/boardDepth'
 import styles from '../MazeBoard/MazeBoard.module.css'
 
 const playerImageCache = new Map<string, HTMLImageElement>()
@@ -125,6 +126,7 @@ export function PlayerSprite({
       style={{
         '--sprite-size': `calc(var(--cell-size) * ${PLAYER_SPRITE_SCALE})`,
         translate: `${spriteLeft}px ${spriteTop}px`,
+        zIndex: playerDepth(position.row),
       } as CSSProperties}
       role="img"
       aria-label="탐험가"

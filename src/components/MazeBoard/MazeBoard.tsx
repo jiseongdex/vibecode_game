@@ -9,6 +9,7 @@ import type { Direction, Position } from '../../game/types'
 import { ExitSprite } from '../Exit/ExitSprite'
 import { PlayerSprite } from '../Player/PlayerSprite'
 import { RescueSprite } from '../Rescue/RescueSprite'
+import { foregroundDepth } from './boardDepth'
 import { openPassageSlots, visualCell, visualSize } from './boardGeometry'
 import { MazeCell } from './MazeCell'
 import { WallLayer } from './MazeWall'
@@ -166,6 +167,7 @@ export function MazeBoard({
   const boardStyle = {
     '--cell-size': `${cellSize}px`,
     '--visual-size': boardTiles,
+    '--foreground-depth': foregroundDepth(boardTiles),
     backgroundColor: theme.floorColor,
     backgroundImage: `url("${theme.floor[0]}")`,
     transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
