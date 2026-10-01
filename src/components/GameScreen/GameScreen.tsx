@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
 
 import type { PlayerAppearance } from '../../assets/assetManifest'
 import { createGameState, gameReducer } from '../../game/gameState'
@@ -28,6 +28,9 @@ interface GameScreenProps {
 
 type MovementSource = 'keyboard' | 'button'
 
+const BASE_FRAME_WIDTH = 1250
+const BASE_FRAME_HEIGHT = 850
+
 export function GameScreen({
   appearance = 'girl',
   initialState,
@@ -48,6 +51,29 @@ export function GameScreen({
   const [movementAttempt, setMovementAttempt] = useState(0)
   const [movementSource, setMovementSource] = useState<MovementSource>('button')
   const [pressedDirections, setPressedDirections] = useState<Direction[]>([])
+  const [sceneScale, setSceneScale] = useState(1)
+  const playfieldAreaRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const area = playfieldAreaRef.current
+    if (!area) return
+
+    const measure = () => {
+      const { width, height } = area.getBoundingClientRect()
+      if (width <= 0 || height <= 0) return
+      const next = Math.min(1, width / BASE_FRAME_WIDTH, height / BASE_FRAME_HEIGHT)
+      if (next > 0) setSceneScale((previous) => previous === next ? previous : next)
+    }
+
+    measure()
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(measure)
+      observer.observe(area)
+      return () => observer.disconnect()
+    }
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
   const handleMove = useCallback((direction: Direction, source: MovementSource) => {
     setMovementSource(source)
@@ -114,49 +140,60 @@ export function GameScreen({
         onPause={pauseAndSave}
       />
 
-      <div className={styles.playfield}>
-        <MazeBoard
-          state={state}
-          onMove={handleButtonMove}
-          appearance={appearance}
-          movementAttempt={movementAttempt}
-          movementSource={movementSource}
-          pressedDirections={pressedDirections}
-        />
-        {state.status === 'paused' && (
-          <PauseOverlay
-            onResume={() => dispatch({ type: 'RESUME', now: Date.now() })}
-            onDiscard={onDiscardSession}
-          />
-        )}
-        {(state.status === 'won' || state.status === 'lost') && (
-          <ResultOverlay
-            status={state.status}
-            stage={state.stageConfig.stage}
-            clearTimeSeconds={state.stageConfig.timeLimitSeconds - state.remainingSeconds}
-            onRetrySameMaze={() => dispatch({ type: 'RETRY_SAME_MAZE' })}
-            onRestartNewMaze={() =>
-              dispatch({
-                type: 'RESTART_NEW_MAZE',
-                maze: generateMaze(state.stageConfig.size),
-              })
-            }
-            onNextStage={onNextStage ? () => onNextStage(state.stageConfig.stage + 1) : undefined}
-            onCampaign={onCampaign}
-          />
-        )}
-      </div>
+      <div className={styles.gameContent}>
+        <div className={styles.playfieldArea} ref={playfieldAreaRef}>
+          <div
+            className={styles.playfield}
+            style={{ width: BASE_FRAME_WIDTH * sceneScale, height: BASE_FRAME_HEIGHT * sceneScale }}
+            data-testid="playfield"
+          >
+            <MazeBoard
+              state={state}
+              onMove={handleButtonMove}
+              appearance={appearance}
+              movementAttempt={movementAttempt}
+              movementSource={movementSource}
+              pressedDirections={pressedDirections}
+              scale={sceneScale}
+            />
+            {state.status === 'paused' && (
+              <PauseOverlay
+                onResume={() => dispatch({ type: 'RESUME', now: Date.now() })}
+                onDiscard={onDiscardSession}
+              />
+            )}
+            {(state.status === 'won' || state.status === 'lost') && (
+              <ResultOverlay
+                status={state.status}
+                stage={state.stageConfig.stage}
+                clearTimeSeconds={state.stageConfig.timeLimitSeconds - state.remainingSeconds}
+                onRetrySameMaze={() => dispatch({ type: 'RETRY_SAME_MAZE' })}
+                onRestartNewMaze={() =>
+                  dispatch({
+                    type: 'RESTART_NEW_MAZE',
+                    maze: generateMaze(state.stageConfig.size),
+                  })
+                }
+                onNextStage={onNextStage ? () => onNextStage(state.stageConfig.stage + 1) : undefined}
+                onCampaign={onCampaign}
+              />
+            )}
+          </div>
+        </div>
 
-      <div className={styles.actions}>
-        {state.status === 'ready' && (
-          <button type="button" onClick={() => dispatch({ type: 'START', now: Date.now() })}>
-            <StickerIcon kind="footprint" />
-            시작하기
-          </button>
-        )}
-      </div>
+        <div className={styles.controlsArea}>
+          <div className={styles.actions}>
+            {state.status === 'ready' && (
+              <button type="button" onClick={() => dispatch({ type: 'START', now: Date.now() })}>
+                <StickerIcon kind="footprint" />
+                시작하기
+              </button>
+            )}
+          </div>
 
-      <DirectionControls disabled={!playing} onMove={handleButtonMove} />
+          <DirectionControls disabled={!playing} onMove={handleButtonMove} />
+        </div>
+      </div>
     </div>
   )
 }

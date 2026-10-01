@@ -5,7 +5,7 @@
   grid-template-rows: repeat(2, 64px);
   gap: 8px;
   justify-content: center;
-  margin: 12px auto 18px;
+  margin: 0 auto;
   padding: 10px;
   border: 2px solid var(--color-border);
   border-radius: 28px;
@@ -70,14 +70,12 @@
     grid-template-columns: repeat(3, 56px);
     grid-template-rows: repeat(2, 56px);
     gap: 6px;
-    margin-top: 8px;
     padding: 8px;
   }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
   .controls {
-    margin-top: 4px;
     grid-template-columns: repeat(3, 48px);
     grid-template-rows: repeat(2, 48px);
     gap: 4px;

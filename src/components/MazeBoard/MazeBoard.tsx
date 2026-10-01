@@ -22,6 +22,7 @@ export interface MazeBoardProps {
   movementAttempt?: number
   movementSource?: 'keyboard' | 'button'
   pressedDirections?: readonly Direction[]
+  scale?: number
 }
 
 interface MotionSnapshot {
@@ -71,6 +72,7 @@ export function MazeBoard({
   movementAttempt = 0,
   movementSource = 'button',
   pressedDirections = [],
+  scale = 1,
 }: MazeBoardProps) {
   const previous = useRef<MotionSnapshot>({
     movementAttempt,
@@ -116,20 +118,23 @@ export function MazeBoard({
     }
   })
 
-  const cellSize = CELL_SIZE
+  const sceneScale = Number.isFinite(scale) && scale > 0 ? scale : 1
+  const cellSize = CELL_SIZE * sceneScale
+  const viewWidth = VIEWPORT_WIDTH * sceneScale
+  const viewHeight = VIEWPORT_HEIGHT * sceneScale
   const boardTiles = visualSize(state.maze.size)
   const playerTile = state.player
   const offsetX = cameraOffset(
     playerTile.col,
     boardTiles,
     cellSize,
-    VIEWPORT_WIDTH,
+    viewWidth,
   )
   const offsetY = cameraOffset(
     playerTile.row,
     boardTiles,
     cellSize,
-    VIEWPORT_HEIGHT,
+    viewHeight,
   )
   const themeId = getMazeTheme(state.maze.seed)
   const theme = mazeThemes[themeId]
@@ -161,6 +166,7 @@ export function MazeBoard({
       role="region"
       aria-label={`${state.stageConfig.stage}단계 미로`}
       data-testid="maze-viewport"
+      style={{ width: viewWidth, height: viewHeight, borderWidth: 5 * sceneScale }}
     >
       <div
         className={styles.board}

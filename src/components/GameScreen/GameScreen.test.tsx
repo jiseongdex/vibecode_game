@@ -7,7 +7,53 @@ import { formatTime } from '../Hud/GameHud'
 import { GameScreen } from './GameScreen'
 
 describe('GameScreen', () => {
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('fits the scene to its available space without resetting the game', () => {
+    vi.stubGlobal('ResizeObserver', undefined)
+    let width = 1250
+    let height = 850
+    const originalMeasure = HTMLElement.prototype.getBoundingClientRect
+    const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.className?.includes?.('playfieldArea')) {
+        return {
+          width, height, top: 0, left: 0, right: width, bottom: height,
+          x: 0, y: 0, toJSON: () => ({}),
+        }
+      }
+      return originalMeasure.call(this)
+    })
+
+    try {
+      const initialState = createGameState(1, generateMaze(15, createSeededRandom(123)))
+      render(<GameScreen initialState={initialState} />)
+      const frame = screen.getByTestId('playfield')
+      const board = screen.getByTestId('maze-board')
+      expect(frame.style.width).toBe('1250px')
+      expect(frame.style.height).toBe('850px')
+      expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
+
+      fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+      width = 625
+      height = 425
+      fireEvent(window, new Event('resize'))
+      expect(frame.style.width).toBe('625px')
+      expect(frame.style.height).toBe('425px')
+      expect(board.style.getPropertyValue('--cell-size')).toBe('70px')
+      expect(screen.getByRole('button', { name: '일시정지' })).toBeEnabled()
+
+      const opening = initialState.maze.cells[0][0].walls.right ? 'ArrowDown' : 'ArrowRight'
+      fireEvent.keyDown(window, { key: opening })
+      expect(document.querySelector('[data-asset-slot="player"]')).toHaveAttribute(
+        'data-grid-row', opening === 'ArrowDown' ? '2' : '1',
+      )
+    } finally {
+      measure.mockRestore()
+    }
+  })
 
   it('shares movement between keyboard and buttons without a movement counter', () => {
     vi.useFakeTimers()

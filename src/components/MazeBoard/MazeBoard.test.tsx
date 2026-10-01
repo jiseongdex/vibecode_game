@@ -201,34 +201,32 @@ describe('MazeBoard', () => {
     expect(board.style.transform).toBe('translate3d(-3100px, -3500px, 0)')
   })
 
-  it('keeps tile, player, and camera geometry fixed when the window changes size', () => {
-    const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
-      width: 320, height: 245, top: 0, right: 320, bottom: 245, left: 0,
-      x: 0, y: 0, toJSON: () => ({}),
-    })
-    try {
-      const initial = stateFor(1, 15)
-      const state = { ...initial, player: { row: 12, col: 12 } }
-      const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
-      const board = screen.getByTestId('maze-board')
-      const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
-      const initialTranslate = player.style.translate
-      const initialCamera = board.style.transform
-      expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
-      expect(player.style.getPropertyValue('--sprite-size')).toBe('calc(var(--cell-size) * 1.6)')
+  it('scales the frame, tiles, player, and camera together', () => {
+    const initial = stateFor(1, 15)
+    const state = { ...initial, player: { row: 12, col: 12 } }
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const board = screen.getByTestId('maze-board')
+    const viewport = screen.getByTestId('maze-viewport')
+    const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    const originalTranslate = player.style.translate
 
-      measure.mockReturnValue({
-        width: 1600, height: 1000, top: 0, right: 1600, bottom: 1000, left: 0,
-        x: 0, y: 0, toJSON: () => ({}),
-      })
-      window.dispatchEvent(new Event('resize'))
-      rerender(<MazeBoard state={state} onMove={vi.fn()} />)
-      expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
-      expect(player.style.translate).toBe(initialTranslate)
-      expect(board.style.transform).toBe(initialCamera)
-    } finally {
-      measure.mockRestore()
-    }
+    expect(viewport.style.width).toBe('1240px')
+    expect(viewport.style.height).toBe('840px')
+    expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
+    expect(board.style.transform).toBe('translate3d(-1130px, -1330px, 0)')
+
+    rerender(<MazeBoard state={state} onMove={vi.fn()} scale={0.5} />)
+    expect(viewport.style.width).toBe('620px')
+    expect(viewport.style.height).toBe('420px')
+    expect(viewport.style.borderWidth).toBe('2.5px')
+    expect(board.style.getPropertyValue('--cell-size')).toBe('70px')
+    expect(board.style.transform).toBe('translate3d(-565px, -665px, 0)')
+    expect(Number.parseFloat(player.style.translate)).toBe(Number.parseFloat(originalTranslate) / 2)
+    expect(620 / 70).toBe(1240 / 140)
+    expect(420 / 70).toBe(840 / 140)
+
+    rerender(<MazeBoard state={{ ...state, player: { row: 29, col: 29 } }} onMove={vi.fn()} scale={0.5} />)
+    expect(board.style.transform).toBe('translate3d(-1550px, -1750px, 0)')
   })
 
   it('uses five distinct local animal images and keeps the animal in the follower line', () => {

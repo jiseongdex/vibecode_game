@@ -1,7 +1,5 @@
 .viewport {
   position: relative;
-  width: 1240px;
-  height: 840px;
   margin-inline: auto;
   overflow: hidden;
   border: 5px solid var(--color-border);

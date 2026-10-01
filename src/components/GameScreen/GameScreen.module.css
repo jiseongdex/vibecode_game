@@ -1,14 +1,46 @@
 .screen {
-  width: min(100%, 1282px);
+  width: min(100%, 1400px);
+  height: 100%;
+  min-height: 0;
   margin: 0 auto;
-  padding: 16px;
+  padding: 8px 16px;
   box-sizing: border-box;
   color: var(--color-ink);
+  display: flex;
+  flex-direction: column;
+}
+
+.gameContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.playfieldArea {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
 }
 
 .playfield {
   position: relative;
-  width: max-content;
+  flex: none;
+}
+
+.controlsArea {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 6px;
 }
 
 .actions {
@@ -17,13 +49,12 @@
   gap: 8px;
   align-items: center;
   justify-content: center;
-  min-height: 58px;
-  margin-top: 10px;
+  min-height: 0;
+  margin: 0;
 }
 
 .actions:empty {
-  min-height: 0;
-  margin-top: 0;
+  display: none;
 }
 
 .actions button {
@@ -31,15 +62,15 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 52px;
-  padding: 8px 24px;
+  min-height: 44px;
+  padding: 4px 18px;
   border: 2px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-mint);
   color: var(--color-ink);
   box-shadow: var(--shadow-sticker);
   font-family: var(--font-ui);
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1.1;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease;
@@ -66,20 +97,23 @@
 
 @media (max-width: 600px) {
   .screen {
-    padding: 8px;
+    padding: 4px 8px;
   }
+}
 
-  .actions {
-    margin-top: 6px;
+@media (min-width: 900px), (max-height: 520px) and (orientation: landscape) {
+  .gameContent { flex-direction: row; }
+  .controlsArea {
+    width: 214px;
+    padding: 0 0 0 8px;
   }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
   .screen {
-    padding-top: 4px;
+    padding: 2px 8px;
   }
-
-  .actions { margin-top: 4px; }
+  .controlsArea { width: 180px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
