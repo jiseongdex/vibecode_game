@@ -65,6 +65,10 @@
   grid-row: 2;
 }
 
+@media (min-width: 601px) {
+  .controls { display: none; }
+}
+
 @media (max-width: 600px) {
   .controls {
     grid-template-columns: repeat(3, 56px);

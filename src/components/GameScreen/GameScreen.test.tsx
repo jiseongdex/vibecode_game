@@ -29,7 +29,8 @@ describe('GameScreen', () => {
 
     try {
       const initialState = createGameState(1, generateMaze(15, createSeededRandom(123)))
-      render(<GameScreen initialState={initialState} />)
+      const onStateChange = vi.fn()
+      render(<GameScreen initialState={initialState} onStateChange={onStateChange} />)
       const frame = screen.getByTestId('playfield')
       const board = screen.getByTestId('maze-board')
       expect(frame.style.width).toBe('1250px')
@@ -50,6 +51,25 @@ describe('GameScreen', () => {
       expect(document.querySelector('[data-asset-slot="player"]')).toHaveAttribute(
         'data-grid-row', opening === 'ArrowDown' ? '2' : '1',
       )
+
+      const player = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+      const position = [player.dataset.gridRow, player.dataset.gridCol]
+      const stateChanges = onStateChange.mock.calls.length
+      width = 1600
+      height = 1100
+      fireEvent(window, new Event('resize'))
+      expect(frame.style.width).toBe('1600px')
+      expect(frame.style.height).toBe('1088px')
+      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(179.2)
+      expect([player.dataset.gridRow, player.dataset.gridCol]).toEqual(position)
+      expect(onStateChange).toHaveBeenCalledTimes(stateChanges)
+
+      width = 1250
+      height = 650
+      fireEvent(window, new Event('resize'))
+      expect(Number.parseFloat(frame.style.width)).toBeCloseTo(1250 * 650 / 850)
+      expect(Number.parseFloat(frame.style.height)).toBeCloseTo(650)
+      expect(onStateChange).toHaveBeenCalledTimes(stateChanges)
     } finally {
       measure.mockRestore()
     }

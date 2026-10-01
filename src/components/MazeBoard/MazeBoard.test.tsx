@@ -225,6 +225,16 @@ describe('MazeBoard', () => {
     expect(620 / 70).toBe(1240 / 140)
     expect(420 / 70).toBe(840 / 140)
 
+    rerender(<MazeBoard state={state} onMove={vi.fn()} scale={1.28} />)
+    expect(Number.parseFloat(viewport.style.width)).toBeCloseTo(1240 * 1.28)
+    expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(840 * 1.28)
+    expect(Number.parseFloat(viewport.style.borderWidth)).toBeCloseTo(6.4)
+    expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(179.2)
+    const enlargedCamera = board.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px, 0\)/)
+    expect(Number(enlargedCamera?.[1])).toBeCloseTo(-1130 * 1.28)
+    expect(Number(enlargedCamera?.[2])).toBeCloseTo(-1330 * 1.28)
+    expect(Number.parseFloat(player.style.translate)).toBeCloseTo(Number.parseFloat(originalTranslate) * 1.28)
+
     rerender(<MazeBoard state={{ ...state, player: { row: 29, col: 29 } }} onMove={vi.fn()} scale={0.5} />)
     expect(board.style.transform).toBe('translate3d(-1550px, -1750px, 0)')
   })

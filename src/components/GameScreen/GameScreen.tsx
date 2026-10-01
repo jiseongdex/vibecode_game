@@ -60,8 +60,8 @@ export function GameScreen({
 
     const measure = () => {
       const { width, height } = area.getBoundingClientRect()
-      if (width <= 0 || height <= 0) return
-      const next = Math.min(1, width / BASE_FRAME_WIDTH, height / BASE_FRAME_HEIGHT)
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return
+      const next = Math.min(width / BASE_FRAME_WIDTH, height / BASE_FRAME_HEIGHT)
       if (next > 0) setSceneScale((previous) => previous === next ? previous : next)
     }
 
