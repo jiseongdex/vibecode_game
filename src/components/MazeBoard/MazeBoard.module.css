@@ -50,7 +50,6 @@
   width: var(--cell-size);
   height: var(--cell-size);
   overflow: hidden;
-  background: var(--wall-color);
   pointer-events: none;
 }
 
@@ -130,7 +129,7 @@
   transform: none;
   transition: translate 160ms ease-out;
   will-change: translate;
-  z-index: 6;
+  z-index: 8;
   filter: drop-shadow(0 2px 2px #173b3a88);
 }
 
