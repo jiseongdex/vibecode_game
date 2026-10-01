@@ -96,9 +96,14 @@ describe('MazeBoard', () => {
     expect(container.querySelector(
       `[data-wall-side][data-visual-row="${connector.row}"][data-visual-col="${connector.col}"]`,
     )).toBeNull()
-    expect(Array.from(container.querySelectorAll<HTMLElement>('[data-asset-slot="rescue-target"]'))
-      .every((target) => Number(target.dataset.gridRow) % 2 === 1 && Number(target.dataset.gridCol) % 2 === 1),
-    ).toBe(true)
+    const targets = Array.from(container.querySelectorAll<HTMLElement>('[data-asset-slot="rescue-target"]'))
+    expect(targets.every((target) =>
+      Number(target.dataset.gridRow) % 2 === 1 && Number(target.dataset.gridCol) % 2 === 1,
+    )).toBe(true)
+    for (const target of targets) {
+      expect(target.style.top).toBe(`${Math.round((Number(target.dataset.gridRow) - 0.2) * 26 * 100) / 100}px`)
+      expect(target.style.left).toBe(`${Math.round((Number(target.dataset.gridCol) - 0.2) * 26 * 100) / 100}px`)
+    }
 
     rerender(<MazeBoard
       state={{
@@ -112,8 +117,8 @@ describe('MazeBoard', () => {
     const follower = container.querySelector<HTMLElement>('[data-asset-slot="follower"]')!
     expect(follower.dataset.gridRow).toBe(String(connector.row))
     expect(follower.dataset.gridCol).toBe(String(connector.col))
-    expect(follower.style.top).toBe(`${Math.round((connector.row - 0.7) * 26 * 100) / 100}px`)
-    expect(follower.style.left).toBe(`${Math.round((connector.col - 0.7) * 26 * 100) / 100}px`)
+    expect(follower.style.top).toBe(`${Math.round((connector.row - 0.2) * 26 * 100) / 100}px`)
+    expect(follower.style.left).toBe(`${Math.round((connector.col - 0.2) * 26 * 100) / 100}px`)
     expect(follower.parentElement).toBe(screen.getByTestId('maze-board'))
   })
 

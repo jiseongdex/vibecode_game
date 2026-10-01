@@ -141,20 +141,26 @@ describe('gameReducer', () => {
       }
     }
     const nextRoute = pathTo(state.player, state.exit, state.maze)
+    let previousDirection: Direction | null = null
+    let corners = 0
     for (let index = 1; index < nextRoute.length; index += 1) {
       const previous = state.player
       const previousFollower = state.followers[0]
       const previousFacing = state.followerFacings[0]
+      const direction = directionBetween(nextRoute[index - 1], nextRoute[index])
       state = gameReducer(state, {
-        type: 'MOVE', direction: directionBetween(nextRoute[index - 1], nextRoute[index]),
+        type: 'MOVE', direction,
       })
       expect(state.followers[0]).toEqual(previous)
+      if (previousDirection !== null && direction !== previousDirection) corners += 1
+      previousDirection = direction
       expect(state.followerFacings[0]).toBe(
         previousFollower.row === previous.row && previousFollower.col === previous.col
           ? previousFacing
           : directionBetween(previousFollower, previous),
       )
     }
+    expect(corners).toBeGreaterThan(0)
     expect(state.status).toBe('won')
     expect(gameReducer(state, { type: 'MOVE', direction: 'left' })).toBe(state)
   })
