@@ -167,11 +167,9 @@ describe('MazeBoard', () => {
     const board = screen.getByTestId('maze-board')
     const startTransform = board.style.transform
     expect(startTransform).toBe('translate3d(0px, 0px, 0)')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('73px')
-    expect(640 / 73).toBeGreaterThan(8)
-    expect(640 / 73).toBeLessThan(9)
-    expect(480 / 73).toBeGreaterThan(6)
-    expect(480 / 73).toBeLessThan(7)
+    expect(board.style.getPropertyValue('--cell-size')).toBe('80px')
+    expect(640 / 80).toBe(8)
+    expect(480 / 80).toBe(6)
 
     rerender(
       <MazeBoard
@@ -180,7 +178,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-592.5px, -672.5px, 0)')
+    expect(board.style.transform).toBe('translate3d(-680px, -760px, 0)')
 
     rerender(
       <MazeBoard
@@ -188,7 +186,7 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-665.5px, -745.5px, 0)')
+    expect(board.style.transform).toBe('translate3d(-760px, -840px, 0)')
 
     rerender(
       <MazeBoard
@@ -196,7 +194,7 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-1623px, -1783px, 0)')
+    expect(board.style.transform).toBe('translate3d(-1840px, -2000px, 0)')
   })
 
   it('keeps a similar visible area on a narrow viewport', () => {
@@ -206,11 +204,10 @@ describe('MazeBoard', () => {
     })
     try {
       render(<MazeBoard state={stateFor(1, 15)} onMove={vi.fn()} />)
-      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('37px')
-      expect(320 / 37).toBeGreaterThan(8)
-      expect(320 / 37).toBeLessThan(9)
-      expect(245 / 37).toBeGreaterThan(6)
-      expect(245 / 37).toBeLessThan(7)
+      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('40px')
+      expect(320 / 40).toBe(8)
+      expect(245 / 40).toBeGreaterThan(6)
+      expect(245 / 40).toBeLessThan(7)
     } finally {
       measure.mockRestore()
     }

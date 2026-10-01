@@ -40,8 +40,8 @@ interface MotionState {
   followerMoved: boolean[]
 }
 
-const TARGET_VISIBLE_COLUMNS = 8.5
-const TARGET_VISIBLE_ROWS = 6.5
+const TARGET_VISIBLE_COLUMNS = 7.8
+const TARGET_VISIBLE_ROWS = 6.0
 
 function cameraOffset(
   visualCoordinate: number,
