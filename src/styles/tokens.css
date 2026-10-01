@@ -1,16 +1,21 @@
 :root {
   color-scheme: light;
-  --color-ink: #292b28;
-  --color-muted: #46544c;
-  --color-paper: #fff9e9;
-  --color-panel: #fff3d4;
-  --color-gold: #eed28d;
-  --color-border: #44563f;
+  --color-ink: #243d35;
+  --color-muted: #415c50;
+  --color-paper: #fffaf0;
+  --color-panel: #fff1d9;
+  --color-gold: #f3d994;
+  --color-border: #466651;
   --color-wall: #254f41;
-  --color-success: #246344;
+  --color-success: #276746;
   --color-warning: #a44616;
   --color-danger: #a0232a;
   --color-focus: #075f83;
-  --shadow-panel: 0 12px 30px rgb(35 47 31 / 17%);
-  --radius-panel: 18px;
+  --color-mint: #d8f0df;
+  --color-strawberry: #d96372;
+  --color-leaf: #4f9468;
+  --shadow-panel: 0 12px 30px rgb(35 67 45 / 16%);
+  --shadow-sticker: 0 5px 0 rgb(70 102 81 / 24%), 0 12px 22px rgb(46 73 50 / 12%);
+  --radius-panel: 24px;
+  --font-ui: 'Nanum Pen Script', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
 }

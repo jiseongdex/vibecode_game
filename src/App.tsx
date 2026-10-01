@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 
 import type { PlayerAppearance } from './assets/assetManifest'
 import { CampaignScreen } from './components/Campaign/CampaignScreen'
+import { StickerIcon } from './components/Decorations/StickerIcon'
 import { GameScreen } from './components/GameScreen/GameScreen'
 import { createGameState } from './game/gameState'
 import type { GameState } from './game/gameState'
@@ -55,8 +56,8 @@ export function App() {
   return (
     <main>
       <header>
-        <p>20개의 미로, 하나의 구출 작전</p>
-        <h1>미로 구출대</h1>
+        <h1><StickerIcon kind="leaf" />동물 구출 대작전<StickerIcon kind="mushroom" /></h1>
+        <p>알록달록한 미로를 지나 친구들을 구해요</p>
       </header>
 
       <section aria-label="게임 화면" data-testid="game-container">

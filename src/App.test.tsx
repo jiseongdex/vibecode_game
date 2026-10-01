@@ -16,7 +16,7 @@ describe('App', () => {
     render(<App />)
 
     expect(
-      screen.getByRole('heading', { name: '미로 구출대' }),
+      screen.getByRole('heading', { name: '동물 구출 대작전' }),
     ).toBeInTheDocument()
     expect(screen.getByTestId('game-container')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '2단계 잠김' })).toBeDisabled()
