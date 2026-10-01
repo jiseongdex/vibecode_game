@@ -14,6 +14,7 @@ export function PlayerAppearancePicker({ value, onChange }: Props) {
         <button
           key={appearance}
           type="button"
+          aria-label={appearance === 'girl' ? '여자 탐험가' : '남자 탐험가'}
           aria-pressed={value === appearance}
           onClick={() => onChange(appearance)}
         >

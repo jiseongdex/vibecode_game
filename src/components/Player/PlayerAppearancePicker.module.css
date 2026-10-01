@@ -2,36 +2,84 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin: 8px auto 16px;
-  padding: 0 16px;
+  gap: 12px;
+  margin: 5px auto 18px;
 }
 
 .picker button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  min-height: 48px;
-  padding: 4px 12px 4px 4px;
+  min-width: 150px;
+  min-height: 64px;
+  padding: 6px 16px 6px 8px;
   border: 2px solid var(--color-border);
   border-radius: 999px;
-  background: var(--color-paper);
+  background: #fff0dc;
   color: var(--color-ink);
-  box-shadow: 0 3px 0 #44563f66;
-  font-size: 14px;
-  font-weight: 700;
+  box-shadow: var(--shadow-sticker);
+  font-size: 25px;
+  line-height: 1.1;
   cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.picker button:hover,
+.picker button:focus-visible { transform: translateY(-2px); }
+
+.picker button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgb(70 102 81 / 24%);
 }
 
 .picker button[aria-pressed='true'] {
   border-color: var(--color-success);
-  background: #d8edc4;
+  background: var(--color-mint);
+}
+
+.picker button[aria-pressed='true']::after {
+  content: '✓';
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-success);
+  color: white;
+  font: 700 13px/1 system-ui, sans-serif;
+}
+
+.picker button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
 }
 
 .picker img {
-  width: 36px;
-  height: 36px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
 }
 
 .picker img[hidden] { display: none; }
+
+@media (min-width: 361px) and (max-width: 700px) {
+  .picker button {
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 5px;
+    padding-inline: 6px;
+    font-size: 22px;
+  }
+
+  .picker img { width: 38px; height: 38px; }
+}
+
+@media (max-width: 360px) {
+  .picker button { min-width: 135px; padding-inline: 6px; font-size: 22px; }
+  .picker img { width: 40px; height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picker button { transition: none; }
+}

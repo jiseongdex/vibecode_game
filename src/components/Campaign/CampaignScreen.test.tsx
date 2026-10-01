@@ -4,6 +4,28 @@ import { completeStage, createCampaignProgress } from '../../game/campaignProgre
 import { CampaignScreen } from './CampaignScreen'
 
 describe('CampaignScreen', () => {
+  it('keeps stage order while the visual route snakes across desktop and mobile columns', () => {
+    render(<CampaignScreen progress={createCampaignProgress()} appearance="girl" onAppearanceChange={vi.fn()} onStartSession={vi.fn()} />)
+
+    const stages = screen.getAllByRole('button', { name: /단계/ })
+    expect(stages.map((button) => button.getAttribute('aria-label')?.split('단계')[0])).toEqual(
+      Array.from({ length: 20 }, (_, index) => String(index + 1)),
+    )
+
+    const routeNode = (stage: number) => stages[stage - 1].parentElement!
+    expect(routeNode(1).style.getPropertyValue('--desktop-col')).toBe('1')
+    expect(routeNode(5).style.getPropertyValue('--desktop-col')).toBe('5')
+    expect(routeNode(5)).toHaveAttribute('data-desktop-next', 'down')
+    expect(routeNode(6).style.getPropertyValue('--desktop-col')).toBe('5')
+    expect(routeNode(10).style.getPropertyValue('--desktop-col')).toBe('1')
+    expect(routeNode(2).style.getPropertyValue('--mobile-col')).toBe('2')
+    expect(routeNode(2)).toHaveAttribute('data-mobile-next', 'down')
+    expect(routeNode(3).style.getPropertyValue('--mobile-col')).toBe('2')
+    expect(routeNode(4).style.getPropertyValue('--mobile-col')).toBe('1')
+    expect(routeNode(20)).toHaveAttribute('data-desktop-next', 'end')
+    expect(routeNode(20)).toHaveAttribute('data-mobile-next', 'end')
+  })
+
   it('locks future stages and creates a new game for an unlocked stage', () => {
     const onStartSession = vi.fn()
     const onAppearanceChange = vi.fn()
