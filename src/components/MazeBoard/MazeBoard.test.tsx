@@ -87,6 +87,10 @@ describe('MazeBoard', () => {
       col: state.player.col + delta[direction].col,
     }
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const cellSize = Number.parseInt(
+      screen.getByTestId('maze-board').style.getPropertyValue('--cell-size'),
+      10,
+    )
     const tile = container.querySelector<HTMLElement>(
       `[data-open-passage="true"][data-visual-row="${connector.row}"][data-visual-col="${connector.col}"]`,
     )
@@ -100,9 +104,13 @@ describe('MazeBoard', () => {
     expect(targets.every((target) =>
       Number(target.dataset.gridRow) % 2 === 1 && Number(target.dataset.gridCol) % 2 === 1,
     )).toBe(true)
+    const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    expect(player.style.translate).toBe(
+      `${Math.round((state.player.col - 0.2) * cellSize * 100) / 100}px ${Math.round((state.player.row - 0.2) * cellSize * 100) / 100}px`,
+    )
     for (const target of targets) {
-      expect(target.style.top).toBe(`${Math.round((Number(target.dataset.gridRow) - 0.2) * 26 * 100) / 100}px`)
-      expect(target.style.left).toBe(`${Math.round((Number(target.dataset.gridCol) - 0.2) * 26 * 100) / 100}px`)
+      expect(target.style.top).toBe(`${Math.round((Number(target.dataset.gridRow) - 0.2) * cellSize * 100) / 100}px`)
+      expect(target.style.left).toBe(`${Math.round((Number(target.dataset.gridCol) - 0.2) * cellSize * 100) / 100}px`)
     }
 
     rerender(<MazeBoard
@@ -117,8 +125,8 @@ describe('MazeBoard', () => {
     const follower = container.querySelector<HTMLElement>('[data-asset-slot="follower"]')!
     expect(follower.dataset.gridRow).toBe(String(connector.row))
     expect(follower.dataset.gridCol).toBe(String(connector.col))
-    expect(follower.style.top).toBe(`${Math.round((connector.row - 0.2) * 26 * 100) / 100}px`)
-    expect(follower.style.left).toBe(`${Math.round((connector.col - 0.2) * 26 * 100) / 100}px`)
+    expect(follower.style.top).toBe(`${Math.round((connector.row - 0.2) * cellSize * 100) / 100}px`)
+    expect(follower.style.left).toBe(`${Math.round((connector.col - 0.2) * cellSize * 100) / 100}px`)
     expect(follower.parentElement).toBe(screen.getByTestId('maze-board'))
   })
 
@@ -158,6 +166,12 @@ describe('MazeBoard', () => {
     const { rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const board = screen.getByTestId('maze-board')
     const startTransform = board.style.transform
+    expect(startTransform).toBe('translate3d(0px, 0px, 0)')
+    expect(board.style.getPropertyValue('--cell-size')).toBe('73px')
+    expect(640 / 73).toBeGreaterThan(8)
+    expect(640 / 73).toBeLessThan(9)
+    expect(480 / 73).toBeGreaterThan(6)
+    expect(480 / 73).toBeLessThan(7)
 
     rerender(
       <MazeBoard
@@ -166,7 +180,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-5px, -85px, 0)')
+    expect(board.style.transform).toBe('translate3d(-592.5px, -672.5px, 0)')
 
     rerender(
       <MazeBoard
@@ -174,17 +188,29 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-31px, -111px, 0)')
+    expect(board.style.transform).toBe('translate3d(-665.5px, -745.5px, 0)')
+
+    rerender(
+      <MazeBoard
+        state={{ ...state, player: { row: 29, col: 29 } }}
+        onMove={vi.fn()}
+      />,
+    )
+    expect(board.style.transform).toBe('translate3d(-1623px, -1783px, 0)')
   })
 
-  it('keeps the minimum cell size on a narrow viewport', () => {
+  it('keeps a similar visible area on a narrow viewport', () => {
     const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
-      width: 320, height: 220, top: 0, right: 320, bottom: 220, left: 0,
+      width: 320, height: 245, top: 0, right: 320, bottom: 245, left: 0,
       x: 0, y: 0, toJSON: () => ({}),
     })
     try {
       render(<MazeBoard state={stateFor(1, 15)} onMove={vi.fn()} />)
-      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('18px')
+      expect(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size')).toBe('37px')
+      expect(320 / 37).toBeGreaterThan(8)
+      expect(320 / 37).toBeLessThan(9)
+      expect(245 / 37).toBeGreaterThan(6)
+      expect(245 / 37).toBeLessThan(7)
     } finally {
       measure.mockRestore()
     }
@@ -280,6 +306,10 @@ describe('MazeBoard', () => {
     const state = { ...stateFor(1, 15), status: 'playing' as const }
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    const cellSize = Number.parseInt(
+      screen.getByTestId('maze-board').style.getPropertyValue('--cell-size'),
+      10,
+    )
     const image = player.querySelector('img')!
     const direction = openDirection(state)
     const moved = gameReducer(state, { type: 'MOVE', direction })
@@ -287,15 +317,17 @@ describe('MazeBoard', () => {
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(player.parentElement).toBe(screen.getByTestId('maze-board'))
-    expect(player.style.translate).toBe('20.8px 20.8px')
+    expect(player.style.translate).toBe(
+      `${Math.round((state.player.col - 0.2) * cellSize * 100) / 100}px ${Math.round((state.player.row - 0.2) * cellSize * 100) / 100}px`,
+    )
 
     rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
     expect(player.querySelector('img')).toBe(image)
-    const left = Math.round((visualPosition.col - 0.2) * 26 * 100) / 100
-    const top = Math.round((visualPosition.row - 0.2) * 26 * 100) / 100
+    const left = Math.round((visualPosition.col - 0.2) * cellSize * 100) / 100
+    const top = Math.round((visualPosition.row - 0.2) * cellSize * 100) / 100
     expect(player.style.translate).toBe(`${left}px ${top}px`)
   })
 

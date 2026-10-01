@@ -1,8 +1,10 @@
 .viewport {
   position: relative;
-  width: 100%;
-  height: min(70vh, 650px);
-  min-height: 300px;
+  width: min(100%, 91vh, 850px);
+  aspect-ratio: 17 / 13;
+  height: auto;
+  min-height: 0;
+  margin-inline: auto;
   overflow: hidden;
   border: 5px solid var(--color-border);
   border-radius: 18px;
@@ -184,16 +186,14 @@
 
 @media (max-width: 600px) {
   .viewport {
-    height: min(52vh, 450px);
-    min-height: 220px;
+    width: min(100%, 68vh, 588px);
     border-width: 3px;
   }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
   .viewport {
-    height: min(48vh, 300px);
-    min-height: 150px;
+    width: min(100%, 62.8vh, 392px);
   }
 }
 

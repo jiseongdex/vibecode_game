@@ -40,6 +40,9 @@ interface MotionState {
   followerMoved: boolean[]
 }
 
+const TARGET_VISIBLE_COLUMNS = 8.5
+const TARGET_VISIBLE_ROWS = 6.5
+
 function cameraOffset(
   visualCoordinate: number,
   boardTiles: number,
@@ -137,10 +140,13 @@ export function MazeBoard({
     }
   })
 
-  // The visual grid has two tiles per logical step. Keep each step at the
-  // original board's 36–52px spacing instead of doubling its screen size.
-  const logicalCellSize = Math.max(36, Math.min(52, Math.floor(viewport.width / 9)))
-  const cellSize = Math.floor(logicalCellSize / 2)
+  const cellSize = Math.max(
+    1,
+    Math.floor(Math.min(
+      viewport.width / TARGET_VISIBLE_COLUMNS,
+      viewport.height / TARGET_VISIBLE_ROWS,
+    )),
+  )
   const boardTiles = visualSize(state.maze.size)
   const playerTile = state.player
   const offsetX = cameraOffset(
