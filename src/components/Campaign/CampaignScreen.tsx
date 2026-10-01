@@ -1,17 +1,26 @@
+import type { PlayerAppearance } from '../../assets/assetManifest'
 import type { GameState } from '../../game/gameState'
 import { createGameState } from '../../game/gameState'
 import type { CampaignProgress } from '../../game/campaignProgress'
 import { generateMaze } from '../../game/mazeGenerator'
 import { getMazeSize, MAX_STAGE } from '../../game/stageConfig'
 import { formatTime } from '../Hud/GameHud'
+import { PlayerAppearancePicker } from '../Player/PlayerAppearancePicker'
 import styles from './CampaignScreen.module.css'
 
 interface CampaignScreenProps {
   progress: CampaignProgress
+  appearance: PlayerAppearance
+  onAppearanceChange: (appearance: PlayerAppearance) => void
   onStartSession: (session: GameState) => void
 }
 
-export function CampaignScreen({ progress, onStartSession }: CampaignScreenProps) {
+export function CampaignScreen({
+  progress,
+  appearance,
+  onAppearanceChange,
+  onStartSession,
+}: CampaignScreenProps) {
   const completedCount = Object.keys(progress.stageRecords).length
   const campaignComplete = Boolean(progress.stageRecords[MAX_STAGE])
 
@@ -31,6 +40,8 @@ export function CampaignScreen({ progress, onStartSession }: CampaignScreenProps
         <p>친구를 구출하고 탈출구에 도착하면 다음 단계가 열립니다.</p>
       )}
       <p>완료 {completedCount}/20단계 · 해금 {progress.unlockedStage}/20단계</p>
+
+      <PlayerAppearancePicker value={appearance} onChange={onAppearanceChange} />
 
       <div className={styles.grid}>
         {Array.from({ length: MAX_STAGE }, (_, index) => index + 1).map((stage) => {

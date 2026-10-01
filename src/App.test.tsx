@@ -25,22 +25,25 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: '시작하기' })).toBeInTheDocument()
   })
 
-  it('lets the player switch explorers and restores the choice on return', () => {
+  it('sets the explorer on stage selection and hides the picker during a game', () => {
     const { unmount } = render(<App />)
     const girl = screen.getByRole('button', { name: '여자 탐험가' })
     const boy = screen.getByRole('button', { name: '남자 탐험가' })
     expect(girl).toHaveAttribute('aria-pressed', 'true')
 
-    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
     fireEvent.click(boy)
     expect(boy).toHaveAttribute('aria-pressed', 'true')
-    expect(document.querySelector('[data-asset-slot="player"] img'))
-      .toHaveAttribute('src', '/assets/players/player-boy-front.png')
     expect(window.localStorage.getItem('maze-rescue-game.appearance.v1')).toBe('boy')
 
     unmount()
     render(<App />)
     expect(screen.getByRole('button', { name: '남자 탐험가' })).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
+    expect(screen.queryByRole('button', { name: '여자 탐험가' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '남자 탐험가' })).toBeNull()
+    expect(document.querySelector('[data-asset-slot="player"] img'))
+      .toHaveAttribute('src', '/assets/players/player-boy-front.png')
   })
 
   it('restores the same maze and position in a paused state after leaving', () => {
@@ -62,9 +65,13 @@ describe('App', () => {
 
     render(<App />)
     expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: '탐험가' }).parentElement).toHaveAttribute(
-      'data-row',
+    expect(screen.getByRole('img', { name: '탐험가' })).toHaveAttribute(
+      'data-grid-row',
       String(saved?.state.player.row),
+    )
+    expect(screen.getByRole('img', { name: '탐험가' })).toHaveAttribute(
+      'data-grid-col',
+      String(saved?.state.player.col),
     )
     expect(loadSave().currentSession?.state.maze).toEqual(savedMaze)
     expect(loadSave().currentSession?.state.remainingSeconds).toBe(remaining)
@@ -83,6 +90,8 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: '게임 버리고 단계 선택' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '게임 버리고 단계 선택' }))
     expect(screen.getByRole('button', { name: '1단계 도전 가능' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '여자 탐험가' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '남자 탐험가' })).toBeInTheDocument()
     expect(loadSave().currentSession).toBeNull()
   })
 

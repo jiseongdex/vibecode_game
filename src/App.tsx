@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react'
 import type { PlayerAppearance } from './assets/assetManifest'
 import { CampaignScreen } from './components/Campaign/CampaignScreen'
 import { GameScreen } from './components/GameScreen/GameScreen'
-import { PlayerAppearancePicker } from './components/Player/PlayerAppearancePicker'
 import { createGameState } from './game/gameState'
 import type { GameState } from './game/gameState'
 import { generateMaze } from './game/mazeGenerator'
@@ -60,8 +59,6 @@ export function App() {
         <h1>미로 구출대</h1>
       </header>
 
-      <PlayerAppearancePicker value={appearance} onChange={chooseAppearance} />
-
       <section aria-label="게임 화면" data-testid="game-container">
         {session ? (
           <GameScreen
@@ -76,7 +73,12 @@ export function App() {
             onDiscardSession={discardSession}
           />
         ) : (
-          <CampaignScreen progress={progress} onStartSession={startSession} />
+          <CampaignScreen
+            progress={progress}
+            appearance={appearance}
+            onAppearanceChange={chooseAppearance}
+            onStartSession={startSession}
+          />
         )}
       </section>
     </main>
