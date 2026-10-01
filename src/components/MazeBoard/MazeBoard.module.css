@@ -154,15 +154,22 @@
 }
 
 .exitSprite {
-  z-index: 1;
+  z-index: 8;
   inset: 0;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  overflow: hidden;
+  transform: none;
   border-radius: 8px;
   filter: grayscale(0.75);
 }
 
 .exitUnlocked {
   filter: none;
-  filter: drop-shadow(0 0 9px #44804a);
+}
+
+.exitUnlocked img {
+  filter: drop-shadow(0 0 4px #44804a);
 }
 
 @keyframes walkLift {
