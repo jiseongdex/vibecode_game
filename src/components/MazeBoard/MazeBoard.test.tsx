@@ -299,6 +299,77 @@ describe('MazeBoard', () => {
     }
   })
 
+  it('fades the previous facing on a blocked turn without restarting on repeated input', () => {
+    vi.useFakeTimers()
+    try {
+      const state = { ...stateFor(1, 15), status: 'playing' as const }
+      const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} appearance="boy" />)
+      const player = () => container.querySelector('[data-asset-slot="player"]')!
+      const overlay = () => player().querySelector('[data-turn-previous]')
+      expect(overlay()).toBeNull()
+      expect(player().querySelectorAll('img')).toHaveLength(1)
+
+      const blocked = gameReducer(state, { type: 'MOVE', direction: 'up' })
+      expect(blocked.player).toEqual(state.player)
+      rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={1} />)
+      expect(player()).toHaveAttribute('data-facing', 'up')
+      expect(player().querySelector('img')).toHaveAttribute('src', '/assets/players/player-boy-back-walk-a.png')
+      expect(overlay()).toHaveAttribute('data-turn-previous', '/assets/players/player-boy-front.png')
+      expect(overlay()).toHaveAttribute('aria-hidden', 'true')
+
+      act(() => vi.advanceTimersByTime(100))
+      expect(overlay()).toBeNull()
+
+      rerender(<MazeBoard state={blocked} onMove={vi.fn()} appearance="boy" movementAttempt={2} />)
+      expect(overlay()).toBeNull()
+      expect(player()).toHaveAttribute('data-motion', 'walk')
+      expect(player().querySelector('img')).toHaveAttribute('src', '/assets/players/player-boy-back-walk-b.png')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('restarts a turn from the latest image when the facing changes again quickly', () => {
+    vi.useFakeTimers()
+    try {
+      const state = stateFor(1, 15)
+      const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+      const player = () => container.querySelector('[data-asset-slot="player"]')!
+      const overlay = () => player().querySelector('[data-turn-previous]')
+
+      rerender(<MazeBoard state={{ ...state, playerFacing: 'up' }} onMove={vi.fn()} />)
+      const firstOverlay = overlay()
+      expect(firstOverlay).toHaveAttribute('data-turn-previous', '/assets/players/player-girl-front.png')
+
+      act(() => vi.advanceTimersByTime(40))
+      rerender(<MazeBoard state={{ ...state, playerFacing: 'right' }} onMove={vi.fn()} />)
+      expect(overlay()).not.toBe(firstOverlay)
+      expect(overlay()).toHaveAttribute('data-turn-previous', '/assets/players/player-girl-back.png')
+      expect(player().querySelector('img')).toHaveAttribute('src', '/assets/players/player-girl-right.png')
+
+      act(() => vi.advanceTimersByTime(60))
+      expect(overlay()).toBeInTheDocument()
+      act(() => vi.advanceTimersByTime(40))
+      expect(overlay()).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('shows a turn transition when a move succeeds in a new direction', () => {
+    const state = { ...stateFor(1, 15), status: 'playing' as const }
+    const direction = openDirection(state)
+    const initial = { ...state, playerFacing: direction === 'down' ? 'up' as const : 'down' as const }
+    const { container, rerender } = render(<MazeBoard state={initial} onMove={vi.fn()} />)
+    const previousSrc = container.querySelector('[data-asset-slot="player"] img')?.getAttribute('src')
+    const moved = gameReducer(initial, { type: 'MOVE', direction })
+    expect(moved.player).not.toEqual(initial.player)
+
+    rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
+    expect(container.querySelector('[data-turn-previous]')).toHaveAttribute('data-turn-previous', previousSrc)
+    expect(container.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-facing', direction)
+  })
+
   it('keeps one player sprite and image while interpolating between cell centers', () => {
     const state = { ...stateFor(1, 15), status: 'playing' as const }
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
@@ -479,12 +550,13 @@ describe('MazeBoard', () => {
     try {
       const state = { ...stateFor(1, 15), status: 'playing' as const }
       const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
-      const direction = openDirection(state)
-      const moved = gameReducer(state, { type: 'MOVE', direction })
+      const moved = gameReducer(state, { type: 'MOVE', direction: 'up' })
       rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
       const player = container.querySelector('[data-asset-slot="player"]')!
       expect(player).toHaveAttribute('data-motion', 'none')
-      expect(player.querySelector('img')?.getAttribute('src')).not.toContain('walk')
+      expect(player).toHaveAttribute('data-facing', 'up')
+      expect(player.querySelector('img')).toHaveAttribute('src', '/assets/players/player-girl-back.png')
+      expect(player.querySelector('[data-turn-previous]')).toBeNull()
     } finally {
       window.matchMedia = original
     }

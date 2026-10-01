@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
 import { playerSprites, playerWalkSprites } from '../../assets/assetManifest'
@@ -34,6 +34,19 @@ interface PlayerSpriteProps {
   movementAttempt: number
   animateMove: boolean
 }
+
+interface RenderedPlayerVisual {
+  appearance: PlayerAppearance
+  facing: Direction
+  src: string
+}
+
+interface TurnOverlay {
+  id: number
+  src: string
+}
+
+const TURN_DURATION_MS = 100
 
 export function PlayerSprite({
   appearance = 'girl',
@@ -73,6 +86,34 @@ export function PlayerSprite({
   const src = walk && frameIndex !== null
     ? playerWalkSprites[appearance][facing][frameIndex]
     : playerSprites[appearance][facing]
+  const previousVisual = useRef<RenderedPlayerVisual>({ appearance, facing, src })
+  const nextTurnId = useRef(0)
+  const [turn, setTurn] = useState<TurnOverlay | null>(null)
+
+  useLayoutEffect(() => {
+    const previous = previousVisual.current
+    if (previous.appearance === appearance && previous.facing !== facing) {
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        setTurn(null)
+      } else {
+        nextTurnId.current += 1
+        setTurn({ id: nextTurnId.current, src: previous.src })
+      }
+    } else if (previous.appearance !== appearance) {
+      setTurn(null)
+    }
+    previousVisual.current = { appearance, facing, src }
+  })
+
+  useEffect(() => {
+    if (!turn) return
+
+    const stop = window.setTimeout(() => {
+      setTurn((current) => current?.id === turn.id ? null : current)
+    }, TURN_DURATION_MS)
+    return () => window.clearTimeout(stop)
+  }, [turn])
+
   const spriteLeft = Math.round((position.col - 0.2) * cellSize * 100) / 100
   const spriteTop = Math.round((position.row - 0.2) * cellSize * 100) / 100
 
@@ -102,6 +143,15 @@ export function PlayerSprite({
       <span className={styles.spriteFallback} aria-hidden="true">
         {appearance === 'girl' ? '🧙‍♀️' : '🧙‍♂️'}
       </span>
+      {turn && (
+        <span
+          key={turn.id}
+          className={styles.turnPrevious}
+          style={{ backgroundImage: `url("${turn.src}")` }}
+          aria-hidden="true"
+          data-turn-previous={turn.src}
+        />
+      )}
     </span>
   )
 }
