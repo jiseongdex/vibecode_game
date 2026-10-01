@@ -106,7 +106,7 @@ describe('MazeBoard', () => {
     )).toBe(true)
     const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
     expect(player.style.translate).toBe(
-      `${Math.round((state.player.col - 0.2) * cellSize * 100) / 100}px ${Math.round((state.player.row - 0.2) * cellSize * 100) / 100}px`,
+      `${Math.round((state.player.col - 0.3) * cellSize * 100) / 100}px ${Math.round((state.player.row - 0.3) * cellSize * 100) / 100}px`,
     )
     for (const target of targets) {
       expect(target.style.top).toBe(`${Math.round((Number(target.dataset.gridRow) - 0.2) * cellSize * 100) / 100}px`)
@@ -130,7 +130,7 @@ describe('MazeBoard', () => {
     expect(follower.parentElement).toBe(screen.getByTestId('maze-board'))
   })
 
-  it('uses the same 70-percent logical-cell sprite box for players and rescue animals', () => {
+  it('renders the player larger than rescue animals while keeping image proportions', () => {
     const state = stateFor(1, 15)
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const rescued = state.rescues[0]
@@ -152,7 +152,10 @@ describe('MazeBoard', () => {
       ),
     )
     expect(sprites.length).toBe(state.stageConfig.rescueCount + 1)
-    expect(sprites.every((sprite) =>
+    const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    const animals = sprites.filter((sprite) => sprite !== player)
+    expect(player.style.getPropertyValue('--sprite-size')).toBe('calc(var(--cell-size) * 1.6)')
+    expect(animals.every((sprite) =>
       sprite.style.getPropertyValue('--sprite-size') === 'calc(var(--cell-size) * 1.4)',
     )).toBe(true)
     expect(
@@ -386,7 +389,7 @@ describe('MazeBoard', () => {
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(player.parentElement).toBe(screen.getByTestId('maze-board'))
     expect(player.style.translate).toBe(
-      `${Math.round((state.player.col - 0.2) * cellSize * 100) / 100}px ${Math.round((state.player.row - 0.2) * cellSize * 100) / 100}px`,
+      `${Math.round((state.player.col - 0.3) * cellSize * 100) / 100}px ${Math.round((state.player.row - 0.3) * cellSize * 100) / 100}px`,
     )
 
     rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
@@ -394,9 +397,11 @@ describe('MazeBoard', () => {
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
     expect(player.querySelector('img')).toBe(image)
-    const left = Math.round((visualPosition.col - 0.2) * cellSize * 100) / 100
-    const top = Math.round((visualPosition.row - 0.2) * cellSize * 100) / 100
+    const left = Math.round((visualPosition.col - 0.3) * cellSize * 100) / 100
+    const top = Math.round((visualPosition.row - 0.3) * cellSize * 100) / 100
     expect(player.style.translate).toBe(`${left}px ${top}px`)
+    expect(left + (1.6 * cellSize) / 2).toBe((visualPosition.col + 0.5) * cellSize)
+    expect(top + (1.6 * cellSize) / 2).toBe((visualPosition.row + 0.5) * cellSize)
   })
 
   it('restarts the directional walk animation on consecutive blocked attempts without moving', () => {

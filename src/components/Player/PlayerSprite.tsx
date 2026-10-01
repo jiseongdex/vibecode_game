@@ -47,6 +47,7 @@ interface TurnOverlay {
 }
 
 const TURN_DURATION_MS = 100
+const PLAYER_SPRITE_SCALE = 1.6
 
 export function PlayerSprite({
   appearance = 'girl',
@@ -114,14 +115,15 @@ export function PlayerSprite({
     return () => window.clearTimeout(stop)
   }, [turn])
 
-  const spriteLeft = Math.round((position.col - 0.2) * cellSize * 100) / 100
-  const spriteTop = Math.round((position.row - 0.2) * cellSize * 100) / 100
+  const spriteInset = (PLAYER_SPRITE_SCALE - 1) / 2
+  const spriteLeft = Math.round((position.col - spriteInset) * cellSize * 100) / 100
+  const spriteTop = Math.round((position.row - spriteInset) * cellSize * 100) / 100
 
   return (
     <span
       className={`${styles.sprite} ${styles.playerSprite}`}
       style={{
-        '--sprite-size': 'calc(var(--cell-size) * 1.4)',
+        '--sprite-size': `calc(var(--cell-size) * ${PLAYER_SPRITE_SCALE})`,
         translate: `${spriteLeft}px ${spriteTop}px`,
       } as CSSProperties}
       role="img"

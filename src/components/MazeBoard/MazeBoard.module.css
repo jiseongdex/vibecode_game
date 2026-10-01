@@ -50,7 +50,7 @@
   place-items: center;
   width: var(--cell-size);
   height: var(--cell-size);
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
 }
 
