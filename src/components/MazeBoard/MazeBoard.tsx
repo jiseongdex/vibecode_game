@@ -38,6 +38,7 @@ interface MotionSnapshot {
 interface MotionState {
   movementAttempt: number
   playerFacing: Direction
+  playerMoved: boolean
   followerMoved: boolean[]
 }
 
@@ -125,6 +126,7 @@ export function MazeBoard({
       setMotion({
         movementAttempt: next.movementAttempt,
         playerFacing: next.playerFacing,
+        playerMoved: !samePosition(last.player, next.player),
         followerMoved: next.followers.map((follower, index) =>
           Boolean(
             last.followers[index] &&
@@ -269,6 +271,7 @@ export function MazeBoard({
           movementAttempt={movementAttempt}
           animateMove={Boolean(
             currentMotion &&
+            currentMotion.playerMoved &&
             currentMotion.playerFacing === state.playerFacing,
           )}
         />

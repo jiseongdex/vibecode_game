@@ -28,9 +28,17 @@ describe('GameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
     fireEvent.keyDown(window, { key: arrow })
     const playerSprite = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
+    const cellSize = Number.parseInt(
+      screen.getByTestId('maze-board').style.getPropertyValue('--cell-size'),
+      10,
+    )
+    const expectedRow = opening === 'down' ? 2 : 1
+    const expectedCol = opening === 'down' ? 1 : 2
     expect(playerSprite).toHaveAttribute('data-grid-row', opening === 'down' ? '2' : '1')
     expect(playerSprite).toHaveAttribute('data-grid-col', opening === 'down' ? '1' : '2')
-    expect(playerSprite.style.translate).toBe(opening === 'down' ? '7.8px 33.8px' : '33.8px 7.8px')
+    expect(playerSprite.style.translate).toBe(
+      `${Math.round((expectedCol - 0.3) * cellSize * 100) / 100}px ${Math.round((expectedRow - 0.3) * cellSize * 100) / 100}px`,
+    )
     fireEvent.keyDown(window, { key: arrow, repeat: true })
     expect(document.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-motion', 'walk')
     const repeatedPosition = playerSprite.style.translate
