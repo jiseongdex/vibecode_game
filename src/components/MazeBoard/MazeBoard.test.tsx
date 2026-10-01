@@ -282,15 +282,15 @@ describe('MazeBoard', () => {
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(player.parentElement).toBe(screen.getByTestId('maze-board'))
-    expect(player.style.translate).toBe('7.8px 7.8px')
+    expect(player.style.translate).toBe('20.8px 20.8px')
 
     rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
 
     expect(container.querySelectorAll('[data-asset-slot="player"]')).toHaveLength(1)
     expect(container.querySelector('[data-asset-slot="player"]')).toBe(player)
     expect(player.querySelector('img')).toBe(image)
-    const left = Math.round((visualPosition.col - 0.7) * 26 * 100) / 100
-    const top = Math.round((visualPosition.row - 0.7) * 26 * 100) / 100
+    const left = Math.round((visualPosition.col - 0.2) * 26 * 100) / 100
+    const top = Math.round((visualPosition.row - 0.2) * 26 * 100) / 100
     expect(player.style.translate).toBe(`${left}px ${top}px`)
   })
 

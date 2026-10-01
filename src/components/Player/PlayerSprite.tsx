@@ -73,8 +73,8 @@ export function PlayerSprite({
   const src = walk && frameIndex !== null
     ? playerWalkSprites[appearance][facing][frameIndex]
     : playerSprites[appearance][facing]
-  const spriteLeft = Math.round((position.col - 0.7) * cellSize * 100) / 100
-  const spriteTop = Math.round((position.row - 0.7) * cellSize * 100) / 100
+  const spriteLeft = Math.round((position.col - 0.2) * cellSize * 100) / 100
+  const spriteTop = Math.round((position.row - 0.2) * cellSize * 100) / 100
 
   return (
     <span
