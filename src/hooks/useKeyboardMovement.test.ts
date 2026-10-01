@@ -1,4 +1,4 @@
-import { fireEvent, renderHook } from '@testing-library/react'
+import { act, fireEvent, renderHook } from '@testing-library/react'
 
 import { useKeyboardMovement } from './useKeyboardMovement'
 
@@ -41,53 +41,78 @@ describe('useKeyboardMovement', () => {
     expect(onMove).not.toHaveBeenCalled()
   })
 
-  it('moves once for a tap and rate-limits held-key repeats to the walk cadence', () => {
+  it('moves once for a tap and repeats a held key every 110ms without native duplicates', () => {
+    vi.useFakeTimers()
     const onMove = vi.fn()
-    renderHook(() => useKeyboardMovement({ enabled: true, onMove }))
+    const { unmount } = renderHook(() => useKeyboardMovement({ enabled: true, onMove }))
 
-    const keyDown = (timeStamp: number, repeat: boolean) => {
-      const event = new KeyboardEvent('keydown', {
+    try {
+      const keyDown = (repeat = false) => fireEvent.keyDown(window, {
         key: 'ArrowRight',
         code: 'ArrowRight',
         repeat,
-        cancelable: true,
       })
-      Object.defineProperty(event, 'timeStamp', { value: timeStamp })
-      window.dispatchEvent(event)
+      const keyUp = () => fireEvent.keyUp(window, {
+        key: 'ArrowRight',
+        code: 'ArrowRight',
+      })
+
+      keyDown()
+      expect(onMove).toHaveBeenCalledTimes(1)
+      act(() => vi.advanceTimersByTime(50))
+      keyUp()
+      act(() => vi.advanceTimersByTime(300))
+      expect(onMove).toHaveBeenCalledTimes(1)
+
+      keyDown()
+      expect(onMove).toHaveBeenCalledTimes(2)
+      keyDown(true)
+      keyDown()
+      act(() => vi.advanceTimersByTime(109))
+      expect(onMove).toHaveBeenCalledTimes(2)
+      act(() => vi.advanceTimersByTime(1))
+      expect(onMove).toHaveBeenCalledTimes(3)
+      act(() => vi.advanceTimersByTime(110))
+      expect(onMove).toHaveBeenCalledTimes(4)
+      keyUp()
+      keyDown(true)
+      act(() => vi.advanceTimersByTime(300))
+      expect(onMove).toHaveBeenCalledTimes(4)
+    } finally {
+      unmount()
+      vi.useRealTimers()
     }
-
-    keyDown(0, false)
-    keyDown(499, true)
-    keyDown(500, true)
-    keyDown(659, true)
-    keyDown(660, true)
-
-    expect(onMove).toHaveBeenCalledTimes(3)
-    expect(onMove).toHaveBeenNthCalledWith(1, 'right')
-    expect(onMove).toHaveBeenNthCalledWith(2, 'right')
-    expect(onMove).toHaveBeenNthCalledWith(3, 'right')
-
-    fireEvent.keyUp(window, { key: 'ArrowRight', code: 'ArrowRight' })
-    keyDown(1000, true)
-    expect(onMove).toHaveBeenCalledTimes(3)
   })
 
-  it('detaches its listener when disabled or unmounted', () => {
+  it('stops held-key movement on blur, disable, and unmount', () => {
+    vi.useFakeTimers()
     const onMove = vi.fn()
     const { rerender, unmount } = renderHook(
       ({ enabled }) => useKeyboardMovement({ enabled, onMove }),
       { initialProps: { enabled: true } },
     )
 
-    fireEvent.keyDown(window, { key: 'W' })
-    expect(onMove).toHaveBeenCalledTimes(1)
-    rerender({ enabled: false })
-    fireEvent.keyDown(window, { key: 'W' })
-    expect(onMove).toHaveBeenCalledTimes(1)
+    try {
+      fireEvent.keyDown(window, { key: 'W' })
+      expect(onMove).toHaveBeenCalledTimes(1)
+      fireEvent.blur(window)
+      act(() => vi.advanceTimersByTime(330))
+      expect(onMove).toHaveBeenCalledTimes(1)
 
-    rerender({ enabled: true })
-    unmount()
-    fireEvent.keyDown(window, { key: 'W' })
-    expect(onMove).toHaveBeenCalledTimes(1)
+      fireEvent.keyDown(window, { key: 'W' })
+      expect(onMove).toHaveBeenCalledTimes(2)
+      rerender({ enabled: false })
+      act(() => vi.advanceTimersByTime(330))
+      fireEvent.keyDown(window, { key: 'W' })
+      expect(onMove).toHaveBeenCalledTimes(2)
+
+      rerender({ enabled: true })
+      unmount()
+      fireEvent.keyDown(window, { key: 'W' })
+      expect(onMove).toHaveBeenCalledTimes(2)
+    } finally {
+      unmount()
+      vi.useRealTimers()
+    }
   })
 })

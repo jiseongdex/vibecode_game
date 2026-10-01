@@ -59,8 +59,8 @@ export function PlayerSprite({
     }
 
     setFrame(0)
-    const secondFrame = window.setTimeout(() => setFrame(1), 80)
-    const stop = window.setTimeout(() => setFrame(null), 160)
+    const secondFrame = window.setTimeout(() => setFrame(1), 55)
+    const stop = window.setTimeout(() => setFrame(null), 110)
     return () => {
       window.clearTimeout(secondFrame)
       window.clearTimeout(stop)

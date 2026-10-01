@@ -239,7 +239,7 @@ describe('MazeBoard', () => {
       expect(player()).toHaveAttribute('data-facing', 'up')
       expect(player()).toHaveAttribute('data-motion', 'walk')
       expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back-walk-a.png')
-      act(() => vi.advanceTimersByTime(160))
+      act(() => vi.advanceTimersByTime(110))
       expect(player()).toHaveAttribute('data-motion', 'none')
       expect(image()).toHaveAttribute('src', '/assets/players/player-boy-back.png')
 
@@ -251,9 +251,9 @@ describe('MazeBoard', () => {
       expect(image()).toBe(imageNode)
       expect(player()).toHaveAttribute('data-motion', 'walk')
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-b.png`)
-      act(() => vi.advanceTimersByTime(80))
+      act(() => vi.advanceTimersByTime(55))
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}-walk-a.png`)
-      act(() => vi.advanceTimersByTime(80))
+      act(() => vi.advanceTimersByTime(55))
       expect(player()).toHaveAttribute('data-motion', 'none')
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${assetSide}.png`)
 
@@ -262,9 +262,9 @@ describe('MazeBoard', () => {
       const nextSide = { up: 'back', right: 'right', down: 'front', left: 'left' }[nextDirection]
       rerender(<MazeBoard state={next} onMove={vi.fn()} appearance="boy" movementAttempt={3} />)
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${nextSide}-walk-a.png`)
-      act(() => vi.advanceTimersByTime(80))
+      act(() => vi.advanceTimersByTime(55))
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${nextSide}-walk-b.png`)
-      act(() => vi.advanceTimersByTime(80))
+      act(() => vi.advanceTimersByTime(55))
       expect(image()).toHaveAttribute('src', `/assets/players/player-boy-${nextSide}.png`)
     } finally {
       vi.useRealTimers()
@@ -308,7 +308,7 @@ describe('MazeBoard', () => {
       expect(player).toHaveAttribute('data-facing', 'up')
       expect(player.querySelector('img')).toHaveAttribute('src', '/assets/players/player-girl-back-walk-a.png')
 
-      act(() => vi.advanceTimersByTime(80))
+      act(() => vi.advanceTimersByTime(55))
       rerender(<MazeBoard state={blocked} onMove={vi.fn()} movementAttempt={2} />)
       expect(container.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-motion', 'walk')
       expect(container.querySelector('[data-asset-slot="player"] img')).toHaveAttribute('src', '/assets/players/player-girl-back-walk-b.png')

@@ -20,7 +20,7 @@
   height: calc(var(--visual-size) * var(--cell-size));
   background-size: var(--cell-size) var(--cell-size);
   background-repeat: repeat;
-  transition: transform 160ms ease-out;
+  transition: transform 120ms linear;
   will-change: transform;
 }
 
@@ -127,14 +127,14 @@
   width: var(--sprite-size, calc(var(--cell-size) * 1.4));
   height: var(--sprite-size, calc(var(--cell-size) * 1.4));
   transform: none;
-  transition: translate 160ms ease-out;
+  transition: translate 120ms linear;
   will-change: translate;
   z-index: 8;
   filter: drop-shadow(0 2px 2px #173b3a88);
 }
 
 .playerSprite[data-motion='walk'] {
-  animation: walkLift 160ms ease-in-out;
+  animation: walkLift 110ms ease-in-out;
 }
 
 .rescueSprite {

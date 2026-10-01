@@ -2,8 +2,7 @@ import { useEffect } from 'react'
 
 import type { Direction } from '../game/types'
 
-const INITIAL_REPEAT_DELAY_MS = 500
-const MIN_REPEAT_INTERVAL_MS = 160
+const HOLD_REPEAT_INTERVAL_MS = 110
 
 interface KeyboardMovementOptions {
   enabled: boolean
@@ -28,7 +27,18 @@ export function useKeyboardMovement({
   useEffect(() => {
     if (!enabled) return
 
-    const keyTimes = new Map<string, { startedAt: number; lastMoveAt: number }>()
+    const keyTimers = new Map<string, number>()
+
+    const stopKey = (keyId: string) => {
+      const timer = keyTimers.get(keyId)
+      if (timer === undefined) return
+      window.clearInterval(timer)
+      keyTimers.delete(keyId)
+    }
+
+    const clearPressedKeys = () => {
+      for (const keyId of keyTimers.keys()) stopKey(keyId)
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return
@@ -48,35 +58,24 @@ export function useKeyboardMovement({
       if (event.key.startsWith('Arrow')) event.preventDefault()
 
       const keyId = event.code || event.key
-      if (event.repeat) {
-        const timing = keyTimes.get(keyId)
-        if (
-          !timing ||
-          event.timeStamp - timing.startedAt < INITIAL_REPEAT_DELAY_MS ||
-          event.timeStamp - timing.lastMoveAt < MIN_REPEAT_INTERVAL_MS
-        ) {
-          return
-        }
-        timing.lastMoveAt = event.timeStamp
-      } else {
-        keyTimes.set(keyId, {
-          startedAt: event.timeStamp,
-          lastMoveAt: event.timeStamp,
-        })
-      }
+      if (event.repeat || keyTimers.has(keyId)) return
 
       onMove(direction)
+      keyTimers.set(
+        keyId,
+        window.setInterval(() => onMove(direction), HOLD_REPEAT_INTERVAL_MS),
+      )
     }
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      keyTimes.delete(event.code || event.key)
+      stopKey(event.code || event.key)
     }
-    const clearPressedKeys = () => keyTimes.clear()
 
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
     window.addEventListener('blur', clearPressedKeys)
     return () => {
+      clearPressedKeys()
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', clearPressedKeys)
