@@ -1,4 +1,5 @@
 import { formatTime } from '../Hud/GameHud'
+import { StickerIcon } from '../Decorations/StickerIcon'
 import styles from './Overlays.module.css'
 
 interface ResultOverlayProps {
@@ -25,13 +26,17 @@ export function ResultOverlay({
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="result-title">
       <div className={styles.panel}>
+        <StickerIcon kind={won ? 'leaf' : 'footprint'} className={styles.decoration} />
         <h2 id="result-title">
           {won ? (stage === 20 ? '20단계 완료!' : `${stage}단계 클리어!`) : '시간 초과!'}
         </h2>
         {won ? (
-          <p>클리어 시간 {formatTime(clearTimeSeconds)}</p>
+          <>
+            <p>친구들이 무사히 돌아왔어요!</p>
+            <p>클리어 시간 {formatTime(clearTimeSeconds)}</p>
+          </>
         ) : (
-          <p>친구를 모두 구출하고 탈출구를 다시 찾아보세요.</p>
+          <p>친구들을 모두 구출하고 탈출구까지 다시 가봐요.</p>
         )}
         <div className={styles.actions}>
           {!won && (

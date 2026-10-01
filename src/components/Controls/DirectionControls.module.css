@@ -1,29 +1,38 @@
 .controls {
   display: grid;
-  grid-template-columns: repeat(3, 56px);
-  grid-template-rows: repeat(2, 56px);
+  width: max-content;
+  grid-template-columns: repeat(3, 64px);
+  grid-template-rows: repeat(2, 64px);
   gap: 8px;
   justify-content: center;
-  margin: 16px auto 0;
+  margin: 12px auto 18px;
+  padding: 10px;
+  border: 2px solid var(--color-border);
+  border-radius: 28px;
+  background: var(--color-paper);
+  box-shadow: var(--shadow-sticker);
 }
 
 .button {
   min-width: 44px;
   min-height: 44px;
   border: 2px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-panel);
+  border-radius: 20px;
+  background: var(--color-mint);
   color: var(--color-ink);
   font: 700 30px/1 system-ui, sans-serif;
-  box-shadow: 0 3px 0 var(--color-border);
+  box-shadow: 0 4px 0 rgb(70 102 81 / 38%);
   cursor: pointer;
   touch-action: none;
   user-select: none;
 }
 
+.button:hover:not(:disabled) { background: #bfe7cb; }
+
 .button:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--color-border);
+  background: #bfe7cb;
+  box-shadow: 0 2px 0 rgb(70 102 81 / 38%);
 }
 
 .button:focus-visible {
@@ -32,7 +41,7 @@
 }
 
 .button:disabled {
-  opacity: 0.45;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -58,15 +67,20 @@
 
 @media (max-width: 600px) {
   .controls {
-    grid-template-columns: repeat(3, 52px);
-    grid-template-rows: repeat(2, 52px);
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(2, 56px);
     gap: 6px;
-    margin-top: 10px;
+    margin-top: 8px;
+    padding: 8px;
   }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
   .controls {
-    margin-top: 6px;
+    margin-top: 4px;
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(2, 48px);
+    gap: 4px;
+    padding: 5px;
   }
 }

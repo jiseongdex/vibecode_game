@@ -8,6 +8,7 @@ import type { Direction } from '../../game/types'
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement'
 import { usePageVisibilityPause } from '../../hooks/usePageVisibilityPause'
 import { DirectionControls } from '../Controls/DirectionControls'
+import { StickerIcon } from '../Decorations/StickerIcon'
 import { GameHud } from '../Hud/GameHud'
 import { MazeBoard } from '../MazeBoard/MazeBoard'
 import { PauseOverlay } from '../Overlays/PauseOverlay'
@@ -130,6 +131,7 @@ export function GameScreen({
       <div className={styles.actions}>
         {state.status === 'ready' && (
           <button type="button" onClick={() => dispatch({ type: 'START', now: Date.now() })}>
+            <StickerIcon kind="footprint" />
             시작하기
           </button>
         )}

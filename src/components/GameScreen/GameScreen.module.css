@@ -16,21 +16,46 @@
   gap: 8px;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
-  margin-top: 12px;
+  min-height: 58px;
+  margin-top: 10px;
+}
+
+.actions:empty {
+  min-height: 0;
+  margin-top: 0;
 }
 
 .actions button {
-  min-height: 44px;
-  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 8px 24px;
   border: 2px solid var(--color-border);
-  border-radius: 10px;
-  background: var(--color-gold);
+  border-radius: 999px;
+  background: var(--color-mint);
   color: var(--color-ink);
-  font: inherit;
-  font-size: 16px;
-  font-weight: 700;
+  box-shadow: var(--shadow-sticker);
+  font-family: var(--font-ui);
+  font-size: 28px;
+  line-height: 1.1;
   cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.actions button svg {
+  width: 22px;
+  height: 22px;
+  color: var(--color-leaf);
+}
+
+.actions button:hover,
+.actions button:focus-visible { transform: translateY(-2px); }
+
+.actions button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgb(70 102 81 / 24%);
 }
 
 .actions button:focus-visible {
@@ -52,4 +77,10 @@
   .screen {
     padding-top: 4px;
   }
+
+  .actions { margin-top: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actions button { transition: none; }
 }

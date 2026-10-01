@@ -6,9 +6,9 @@
   margin-inline: auto;
   overflow: hidden;
   border: 5px solid var(--color-border);
-  border-radius: 18px;
+  border-radius: 24px;
   background: #d2c6a3;
-  box-shadow: var(--shadow-panel), inset 0 0 30px #254f4133;
+  box-shadow: var(--shadow-sticker), inset 0 0 30px #254f4133;
   box-sizing: border-box;
   touch-action: none;
 }
@@ -201,6 +201,7 @@
   .viewport {
     height: min(65vh, 590px);
     border-width: 3px;
+    border-radius: 20px;
   }
 }
 

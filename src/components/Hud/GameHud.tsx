@@ -1,3 +1,4 @@
+import { StickerIcon } from '../Decorations/StickerIcon'
 import styles from './GameHud.module.css'
 
 export interface GameHudProps {
@@ -27,9 +28,9 @@ export function GameHud({
   return (
     <header className={styles.hud}>
       <div className={styles.stats}>
-        <span>{stage}단계</span>
+        <span className={styles.badge}><StickerIcon kind="leaf" />{stage}단계</span>
         <span
-          className={remainingSeconds <= 10 ? styles.urgent : undefined}
+          className={`${styles.badge} ${remainingSeconds <= 10 ? styles.urgent : ''}`}
           data-urgent={remainingSeconds <= 10}
           role="timer"
           aria-live="polite"
@@ -37,9 +38,9 @@ export function GameHud({
         >
           남은 시간: {formatTime(remainingSeconds)}
         </span>
-        {remainingSeconds <= 10 && <span role="status">⚠️ 시간 부족</span>}
-        <span role="status" aria-live="polite" aria-atomic="true">
-          구출: {rescuedCount}/{rescueCount}
+        {remainingSeconds <= 10 && <span className={styles.warning} role="status">⚠️ 시간 부족</span>}
+        <span className={styles.badge} role="status" aria-live="polite" aria-atomic="true">
+          <StickerIcon kind="footprint" />구출: {rescuedCount}/{rescueCount}
         </span>
       </div>
       <button type="button" onClick={onPause} disabled={!canPause}>

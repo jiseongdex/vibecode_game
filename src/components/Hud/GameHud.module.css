@@ -1,44 +1,85 @@
 .hud {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 20px;
+  gap: 8px 12px;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 24px;
   border: 2px solid var(--color-border);
-  background: var(--color-panel);
+  background: var(--color-paper);
   color: var(--color-ink);
-  box-shadow: var(--shadow-panel);
-  font-weight: 700;
+  box-shadow: var(--shadow-sticker);
 }
 
 .stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  gap: 7px;
+  align-items: center;
 }
 
-.urgent {
+.badge, .warning {
+  display: inline-flex;
+  align-items: center;
+  min-height: 43px;
+  padding: 4px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-mint);
+  font-size: 27px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.badge:nth-child(2) { background: #fff0dc; }
+
+.badge svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  color: var(--color-leaf);
+}
+
+.warning {
+  border-color: var(--color-danger);
+  background: #ffe5e2;
   color: var(--color-danger);
+}
+
+.badge.urgent {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+  background: #ffe5e2;
   animation: pulse 700ms ease-in-out infinite alternate;
 }
 
 .hud button {
   min-height: 44px;
-  padding: 6px 12px;
+  padding: 5px 18px;
   border: 2px solid var(--color-border);
-  border-radius: 10px;
-  background: #fff5d9;
+  border-radius: 999px;
+  background: #fff0dc;
   color: inherit;
-  font: inherit;
+  box-shadow: 0 3px 0 rgb(70 102 81 / 24%);
+  font-family: var(--font-ui);
+  font-size: 26px;
+  line-height: 1.1;
   cursor: pointer;
 }
 
 .hud button:disabled {
-  opacity: 0.45;
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.hud button:hover:not(:disabled),
+.hud button:focus-visible { transform: translateY(-2px); }
+
+.hud button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgb(70 102 81 / 24%);
 }
 
 .hud button:focus-visible {
@@ -51,6 +92,19 @@
   to { opacity: 0.55; }
 }
 
+@media (max-width: 600px) {
+  .hud { justify-content: center; padding: 8px; }
+  .stats { justify-content: center; }
+  .badge, .warning { min-height: 38px; padding: 3px 9px; font-size: 22px; }
+  .badge svg { width: 16px; height: 16px; margin-right: 4px; }
+  .hud button { font-size: 24px; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud { margin-bottom: 6px; padding: 5px 8px; }
+  .badge, .warning { min-height: 36px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .urgent { animation: none; }
+  .badge.urgent { animation: none; }
 }
