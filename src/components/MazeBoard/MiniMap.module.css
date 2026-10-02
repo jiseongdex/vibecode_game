@@ -50,8 +50,8 @@
 }
 
 .animal {
-  width: clamp(3px, 2.4%, 6px);
-  height: clamp(3px, 2.4%, 6px);
+  width: clamp(4px, 3%, 8px);
+  height: clamp(4px, 3%, 8px);
   border-radius: 50%;
   background: var(--color-danger);
   box-shadow: 0 0 0 1px var(--color-paper);
@@ -59,8 +59,8 @@
 }
 
 .exit {
-  width: clamp(4px, 3%, 7px);
-  height: clamp(4px, 3%, 7px);
+  width: clamp(5px, 3.5%, 9px);
+  height: clamp(5px, 3.5%, 9px);
   background: var(--color-success);
   box-shadow: 0 0 0 1px var(--color-paper);
   transform: translate(-50%, -50%) rotate(45deg);
