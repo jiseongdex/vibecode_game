@@ -60,7 +60,7 @@ describe('saveStore', () => {
   })
 
   it('restores randomized and legacy animal IDs without changing the save version', () => {
-    const maze = generateMaze(19, createSeededRandom(51))
+    const maze = generateMaze(20, createSeededRandom(51))
     const ready = createGameState(5, maze)
     const save: SaveData = {
       version: SAVE_VERSION,
@@ -83,6 +83,28 @@ describe('saveStore', () => {
     })
     expect(loadSave().currentSession?.state.rescues.map((target) => target.id))
       .toEqual(legacyTargets.map((target) => target.id))
+  })
+
+  it('keeps v4 campaign progress while dropping its incompatible active maze', () => {
+    const old = sampleSave()
+    window.localStorage.setItem('maze-rescue-game.save.v4', JSON.stringify({
+      ...old,
+      version: 4,
+      currentSession: {
+        ...old.currentSession,
+        state: {
+          ...old.currentSession?.state,
+          stageConfig: { ...old.currentSession?.state.stageConfig, timeLimitSeconds: 98 },
+        },
+      },
+    }))
+
+    expect(loadSave()).toEqual({
+      version: SAVE_VERSION,
+      unlockedStage: old.unlockedStage,
+      stageRecords: old.stageRecords,
+      currentSession: null,
+    })
   })
 
   it('ignores malformed, old-version, and structurally invalid saves', () => {
@@ -135,6 +157,7 @@ describe('saveStore', () => {
 
   it('clears current and previous save keys', () => {
     for (const key of [
+      'maze-rescue-game.save.v5',
       'maze-rescue-game.save.v4',
       'maze-rescue-game.save.v3',
       'maze-rescue-game.save.v2',
@@ -164,7 +187,7 @@ describe('saveStore', () => {
     expect(merged.currentSession?.updatedAt).toBe(300)
   })
 
-  it('only writes valid v4 data', () => {
+  it('only writes valid v5 data', () => {
     const invalid = { ...sampleSave(), version: 2 } as unknown as SaveData
     expect(isSaveData(invalid)).toBe(false)
     saveSave(invalid)

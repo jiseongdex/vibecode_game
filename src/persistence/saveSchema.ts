@@ -2,11 +2,11 @@ import type { StageRecord } from '../game/campaignProgress'
 import type { GameState } from '../game/gameState'
 import { getReachablePositions } from '../game/mazeGenerator'
 import { gridToLogicalPosition, isWalkableGridPosition } from '../game/mazeGrid'
-import { getStageConfig, MAX_STAGE, MIN_STAGE } from '../game/stageConfig'
+import { getMazeSize, getStageConfig, MAX_STAGE, MIN_STAGE } from '../game/stageConfig'
 import type { Cell, CellWalls, Direction, Maze, Position } from '../game/types'
 
-export const SAVE_VERSION = 4 as const
-export const SAVE_KEY = 'maze-rescue-game.save.v4'
+export const SAVE_VERSION = 5 as const
+export const SAVE_KEY = 'maze-rescue-game.save.v5'
 
 export type { StageRecord } from '../game/campaignProgress'
 
@@ -75,8 +75,7 @@ function isMaze(value: unknown): value is Maze {
   const size = value.size as number
   if (
     size < 15 ||
-    size > 33 ||
-    size % 2 === 0 ||
+    size > getMazeSize(MAX_STAGE) ||
     !isNonnegativeInteger(value.seed) ||
     (value.seed as number) > 0xffffffff ||
     value.cells.length !== size

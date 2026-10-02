@@ -55,7 +55,7 @@ function expectMinimapView(left: number, top: number, right: number, bottom: num
 describe('MazeBoard', () => {
   it.each([
     [1, 15],
-    [20, 33],
+    [20, 37],
   ])('renders stage %i as a %ix%i board', (stage, size) => {
     const state = stateFor(stage, size)
     const { container } = render(<MazeBoard state={state} onMove={vi.fn()} />)
@@ -338,7 +338,7 @@ describe('MazeBoard', () => {
   })
 
   it('uses five distinct local animal images and keeps the animal in the follower line', () => {
-    const state = stateFor(20, 33)
+    const state = stateFor(20, 37)
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const waiting = Array.from(container.querySelectorAll('[data-asset-slot="rescue-target"]'))
     expect(new Set(waiting.map((element) => element.getAttribute('data-animal'))))
@@ -619,7 +619,7 @@ describe('MazeBoard', () => {
   })
 
   it('keeps the same follower image through rapid moves and direction changes', () => {
-    const base = stateFor(5, 19)
+    const base = stateFor(5, 20)
     const state = {
       ...base,
       rescues: base.rescues.map((rescue, index) => ({ ...rescue, rescued: index === 0 })),

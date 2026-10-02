@@ -9,10 +9,10 @@ describe('stageConfig', () => {
   it.each([
     [1, 15, 1],
     [4, 17, 1],
-    [5, 19, 2],
-    [16, 29, 4],
-    [17, 31, 5],
-    [20, 33, 5],
+    [5, 20, 2],
+    [16, 32, 4],
+    [17, 35, 5],
+    [20, 37, 5],
   ])(
     'calculates stage %i as a %ix%i maze with %i rescue band',
     (stage, expectedSize, expectedRescueCount) => {
@@ -21,14 +21,15 @@ describe('stageConfig', () => {
     },
   )
 
-  it('calculates the time limit from maze size and rescue count', () => {
-    expect(getTimeLimitSeconds(1)).toBe(98)
-    expect(getTimeLimitSeconds(20)).toBe(604)
+  it('shortens the time budget despite the larger maze', () => {
+    expect(getTimeLimitSeconds(1)).toBe(92)
+    expect(getTimeLimitSeconds(5)).toBe(166)
+    expect(getTimeLimitSeconds(20)).toBe(567)
     expect(getStageConfig(17)).toEqual({
       stage: 17,
-      size: 31,
+      size: 35,
       rescueCount: 5,
-      timeLimitSeconds: 547,
+      timeLimitSeconds: 513,
     })
   })
 

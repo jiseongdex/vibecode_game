@@ -123,7 +123,7 @@ describe('gameplay integration', () => {
   })
 
   it('rescues five animals on stage 20 and keeps the best merged records', () => {
-    const maze = generateMaze(33, createSeededRandom(20))
+    const maze = generateMaze(37, createSeededRandom(20))
     let state = gameReducer(createGameState(20, maze), { type: 'START', now: 0 })
     expect(state.rescues).toHaveLength(5)
     for (const target of [...state.rescues]) state = walkTo(state, target)

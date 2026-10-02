@@ -15,7 +15,7 @@ function validSave(): SaveData {
   }
 }
 
-describe('save schema v4', () => {
+describe('save schema v5', () => {
   it('accepts time-only progress and sessions without movement statistics', () => {
     const save = validSave()
     expect(isSaveData(save)).toBe(true)
@@ -23,9 +23,19 @@ describe('save schema v4', () => {
     expect(save.stageRecords[1]).not.toHaveProperty('bestMoveCount')
   })
 
-  it('rejects v3 saves, invalid movement tiles, and invalid clear times', () => {
+  it.each([[5, 20], [20, 37]])('accepts a stage %i maze of size %i', (stage, size) => {
+    const state = createGameState(stage, generateMaze(size, createSeededRandom(stage)))
+    expect(isSaveData({
+      version: SAVE_VERSION,
+      unlockedStage: stage,
+      stageRecords: {},
+      currentSession: makeSavedSession(state, 20),
+    })).toBe(true)
+  })
+
+  it('rejects v4 saves, invalid movement tiles, and invalid clear times', () => {
     const save = validSave()
-    expect(isSaveData({ ...save, version: 3 })).toBe(false)
+    expect(isSaveData({ ...save, version: 4 })).toBe(false)
     expect(isSaveData({
       ...save,
       currentSession: save.currentSession && {
