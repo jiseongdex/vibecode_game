@@ -47,6 +47,17 @@ export function GameScreen({
     initialState,
     (provided) => provided ?? createGameState(1),
   )
+  const latestState = useRef<GameState>(state)
+  useLayoutEffect(() => {
+    latestState.current = state
+  }, [state])
+  const getTurnContext = useCallback(
+    (): Pick<GameState, 'player' | 'maze'> => ({
+      player: latestState.current.player,
+      maze: latestState.current.maze,
+    }),
+    [],
+  )
   const playing = state.status === 'playing'
   const [introStep, setIntroStep] = useState<IntroStep>(() =>
     state.status === 'ready' ? 'message' : null,
@@ -120,6 +131,7 @@ export function GameScreen({
   useKeyboardMovement({
     enabled: playing,
     onMove: handleKeyboardMove,
+    getTurnContext,
     onPressedDirectionsChange: setPressedDirections,
   })
 

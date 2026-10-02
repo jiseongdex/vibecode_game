@@ -2,7 +2,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 
 import { createGameState } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
-import type { Direction } from '../../game/types'
+import { isWalkableGridPosition } from '../../game/mazeGrid'
+import type { Direction, Maze, Position } from '../../game/types'
 import { formatTime } from '../Hud/GameHud'
 import { GameScreen } from './GameScreen'
 
@@ -11,6 +12,53 @@ function advanceIntro() {
   for (let count = 0; count < 3; count += 1) {
     act(() => vi.advanceTimersByTime(1000))
   }
+}
+
+const movementOffsets: Record<Direction, Position> = {
+  up: { row: -1, col: 0 },
+  right: { row: 0, col: 1 },
+  down: { row: 1, col: 0 },
+  left: { row: 0, col: -1 },
+}
+
+function step(position: Position, direction: Direction): Position {
+  return {
+    row: position.row + movementOffsets[direction].row,
+    col: position.col + movementOffsets[direction].col,
+  }
+}
+
+function findOneTileCorner(maze: Maze) {
+  const directions: Direction[] = ['up', 'right', 'down', 'left']
+  for (let row = 1; row < maze.size * 2; row += 1) {
+    for (let col = 1; col < maze.size * 2; col += 1) {
+      const start = { row, col }
+      if (!isWalkableGridPosition(maze, start)) continue
+      for (const approach of directions) {
+        const beforeEntry = step(start, approach)
+        const entry = step(beforeEntry, approach)
+        if (!isWalkableGridPosition(maze, beforeEntry) || !isWalkableGridPosition(maze, entry)) continue
+        for (const turn of directions) {
+          if (
+            movementOffsets[approach].row === movementOffsets[turn].row ||
+            movementOffsets[approach].col === movementOffsets[turn].col
+          ) continue
+          const target = step(entry, turn)
+          if (
+            !isWalkableGridPosition(maze, step(beforeEntry, turn)) &&
+            isWalkableGridPosition(maze, target)
+          ) return { start, beforeEntry, entry, target, approach, turn }
+        }
+      }
+    }
+  }
+  throw new Error('No one-tile corner found in deterministic maze.')
+}
+
+function expectPlayerAt(position: Position) {
+  const player = document.querySelector('[data-asset-slot="player"]')
+  expect(player).toHaveAttribute('data-grid-row', String(position.row))
+  expect(player).toHaveAttribute('data-grid-col', String(position.col))
 }
 
 describe('GameScreen', () => {
@@ -153,6 +201,47 @@ describe('GameScreen', () => {
     expect(
       screen.getByText(`남은 시간: ${formatTime(initialState.remainingSeconds - 2)}`),
     ).toBeInTheDocument()
+  })
+
+  it('turns through a one-tile opening with two held keys and keeps button movement direct', () => {
+    vi.useFakeTimers()
+    const base = createGameState(1, generateMaze(15, createSeededRandom(321)))
+    const corner = findOneTileCorner(base.maze)
+    const keyFor: Record<Direction, string> = {
+      up: 'ArrowUp', right: 'ArrowRight', down: 'ArrowDown', left: 'ArrowLeft',
+    }
+    const reverse: Record<Direction, Direction> = {
+      up: 'down', right: 'left', down: 'up', left: 'right',
+    }
+    const buttonFor: Record<Direction, string> = {
+      up: '위로 이동', right: '오른쪽으로 이동',
+      down: '아래로 이동', left: '왼쪽으로 이동',
+    }
+
+    render(<GameScreen initialState={{
+      ...base,
+      player: corner.start,
+      status: 'playing',
+      startedAt: 0,
+    }} />)
+
+    fireEvent.keyDown(window, { key: keyFor[corner.approach], code: keyFor[corner.approach] })
+    expectPlayerAt(corner.beforeEntry)
+    fireEvent.keyDown(window, { key: keyFor[corner.turn], code: keyFor[corner.turn] })
+    expectPlayerAt(corner.beforeEntry)
+
+    act(() => vi.advanceTimersByTime(110))
+    expectPlayerAt(corner.entry)
+    act(() => vi.advanceTimersByTime(110))
+    expectPlayerAt(corner.target)
+
+    fireEvent.keyUp(window, { key: keyFor[corner.turn], code: keyFor[corner.turn] })
+    fireEvent.keyUp(window, { key: keyFor[corner.approach], code: keyFor[corner.approach] })
+    act(() => vi.advanceTimersByTime(110))
+    expectPlayerAt(corner.target)
+
+    fireEvent.click(screen.getByRole('button', { name: buttonFor[reverse[corner.turn]] }))
+    expectPlayerAt(corner.entry)
   })
 
   it('walks in place while a blocked key is held and stops on release, blur, or pause', () => {
