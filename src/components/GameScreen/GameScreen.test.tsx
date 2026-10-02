@@ -58,14 +58,14 @@ describe('GameScreen', () => {
       const board = screen.getByTestId('maze-board')
       expect(Number.parseFloat(frame.style.width)).toBeCloseTo(1250 * 756 / 850)
       expect(frame.style.height).toBe('756px')
-      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(90 * 756 / 850)
+      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(80 * 756 / 850)
 
       advanceIntro()
       width = 625
       fireEvent(window, new Event('resize'))
       expect(frame.style.width).toBe('625px')
       expect(frame.style.height).toBe('425px')
-      expect(board.style.getPropertyValue('--cell-size')).toBe('45px')
+      expect(board.style.getPropertyValue('--cell-size')).toBe('40px')
       expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeEnabled()
 
       const opening = initialState.maze.cells[0][0].walls.right ? 'ArrowDown' : 'ArrowRight'
@@ -82,7 +82,7 @@ describe('GameScreen', () => {
       fireEvent(window, new Event('resize'))
       expect(Number.parseFloat(frame.style.width)).toBeCloseTo(1250 * 956 / 850)
       expect(frame.style.height).toBe('956px')
-      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(90 * 956 / 850)
+      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(80 * 956 / 850)
       expect([player.dataset.gridRow, player.dataset.gridCol]).toEqual(position)
       expect(onStateChange).toHaveBeenCalledTimes(stateChanges)
 
