@@ -12,15 +12,27 @@ describe('GameScreen', () => {
     vi.unstubAllGlobals()
   })
 
-  it('fills the available width without resetting the game when height changes', () => {
+  it('fits the frame to both width and remaining height without resetting the game', () => {
     vi.stubGlobal('ResizeObserver', undefined)
-    let width = 1250
-    let height = 850
+    vi.stubGlobal('innerHeight', 900)
+    let width = 1408
     const originalMeasure = HTMLElement.prototype.getBoundingClientRect
     const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.className?.includes?.('playfieldArea')) {
         return {
-          width, height, top: 0, left: 0, right: width, bottom: height,
+          width, height: 0, top: 86, left: 0, right: width, bottom: 86,
+          x: 0, y: 86, toJSON: () => ({}),
+        }
+      }
+      if (this.className?.includes?.('controlsArea')) {
+        return {
+          width: 0, height: 50, top: 0, left: 0, right: 0, bottom: 50,
+          x: 0, y: 0, toJSON: () => ({}),
+        }
+      }
+      if (this.className?.includes?.('screen')) {
+        return {
+          width: 0, height: 900, top: 0, left: 0, right: 0, bottom: 900,
           x: 0, y: 0, toJSON: () => ({}),
         }
       }
@@ -30,16 +42,18 @@ describe('GameScreen', () => {
     try {
       const initialState = createGameState(1, generateMaze(15, createSeededRandom(123)))
       const onStateChange = vi.fn()
-      render(<GameScreen initialState={initialState} onStateChange={onStateChange} />)
+      const { container } = render(<GameScreen initialState={initialState} onStateChange={onStateChange} />)
+      const gameScreen = container.firstElementChild as HTMLElement
+      gameScreen.style.paddingBottom = '8px'
+      fireEvent(window, new Event('resize'))
       const frame = screen.getByTestId('playfield')
       const board = screen.getByTestId('maze-board')
-      expect(frame.style.width).toBe('1250px')
-      expect(frame.style.height).toBe('850px')
-      expect(board.style.getPropertyValue('--cell-size')).toBe('120px')
+      expect(Number.parseFloat(frame.style.width)).toBeCloseTo(1250 * 756 / 850)
+      expect(frame.style.height).toBe('756px')
+      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(120 * 756 / 850)
 
       fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
       width = 625
-      height = 425
       fireEvent(window, new Event('resize'))
       expect(frame.style.width).toBe('625px')
       expect(frame.style.height).toBe('425px')
@@ -56,19 +70,18 @@ describe('GameScreen', () => {
       const position = [player.dataset.gridRow, player.dataset.gridCol]
       const stateChanges = onStateChange.mock.calls.length
       width = 1600
-      height = 1100
+      vi.stubGlobal('innerHeight', 1100)
       fireEvent(window, new Event('resize'))
-      expect(frame.style.width).toBe('1600px')
-      expect(frame.style.height).toBe('1088px')
-      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(153.6)
+      expect(Number.parseFloat(frame.style.width)).toBeCloseTo(1250 * 956 / 850)
+      expect(frame.style.height).toBe('956px')
+      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(120 * 956 / 850)
       expect([player.dataset.gridRow, player.dataset.gridCol]).toEqual(position)
       expect(onStateChange).toHaveBeenCalledTimes(stateChanges)
 
-      width = 1250
-      height = 650
+      vi.stubGlobal('innerHeight', 650)
       fireEvent(window, new Event('resize'))
-      expect(frame.style.width).toBe('1250px')
-      expect(frame.style.height).toBe('850px')
+      expect(Number.parseFloat(frame.style.width)).toBeCloseTo(1250 * 506 / 850)
+      expect(Number.parseFloat(frame.style.height)).toBeCloseTo(506)
       expect(onStateChange).toHaveBeenCalledTimes(stateChanges)
     } finally {
       measure.mockRestore()

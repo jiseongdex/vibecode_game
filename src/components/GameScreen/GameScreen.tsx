@@ -52,27 +52,50 @@ export function GameScreen({
   const [movementSource, setMovementSource] = useState<MovementSource>('button')
   const [pressedDirections, setPressedDirections] = useState<Direction[]>([])
   const [sceneScale, setSceneScale] = useState(1)
+  const screenRef = useRef<HTMLDivElement>(null)
   const playfieldAreaRef = useRef<HTMLDivElement>(null)
+  const controlsAreaRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
+    const screen = screenRef.current
     const area = playfieldAreaRef.current
-    if (!area) return
+    const controls = controlsAreaRef.current
+    if (!screen || !area || !controls) return
 
     const measure = () => {
-      const { width } = area.getBoundingClientRect()
-      if (!Number.isFinite(width) || width <= 0) return
-      const next = width / BASE_FRAME_WIDTH
+      const screenRect = screen.getBoundingClientRect()
+      const areaRect = area.getBoundingClientRect()
+      const controlsRect = controls.getBoundingClientRect()
+      const bottomPadding = Number.parseFloat(window.getComputedStyle(screen).paddingBottom) || 0
+      const availableHeight = window.innerHeight
+        - (areaRect.top - screenRect.top)
+        - controlsRect.height
+        - bottomPadding
+      if (
+        !Number.isFinite(areaRect.width) || areaRect.width <= 0 ||
+        !Number.isFinite(availableHeight)
+      ) return
+      const next = Math.max(0.1, Math.min(
+        areaRect.width / BASE_FRAME_WIDTH,
+        availableHeight / BASE_FRAME_HEIGHT,
+      ))
       setSceneScale((previous) => previous === next ? previous : next)
     }
 
     measure()
+    let observer: ResizeObserver | undefined
     if (typeof ResizeObserver !== 'undefined') {
-      const observer = new ResizeObserver(measure)
+      observer = new ResizeObserver(measure)
       observer.observe(area)
-      return () => observer.disconnect()
+      observer.observe(controls)
+      const hud = screen.firstElementChild
+      if (hud instanceof HTMLElement) observer.observe(hud)
     }
     window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', measure)
+    }
   }, [])
 
   const handleMove = useCallback((direction: Direction, source: MovementSource) => {
@@ -130,7 +153,7 @@ export function GameScreen({
   const rescuedCount = state.rescues.filter((target) => target.rescued).length
 
   return (
-    <div className={styles.screen}>
+    <div className={styles.screen} ref={screenRef}>
       <GameHud
         stage={state.stageConfig.stage}
         remainingSeconds={state.remainingSeconds}
@@ -181,7 +204,7 @@ export function GameScreen({
           </div>
         </div>
 
-        <div className={styles.controlsArea}>
+        <div className={styles.controlsArea} ref={controlsAreaRef}>
           <div className={styles.actions}>
             {state.status === 'ready' && (
               <button type="button" onClick={() => dispatch({ type: 'START', now: Date.now() })}>
