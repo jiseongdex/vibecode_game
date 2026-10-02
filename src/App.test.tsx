@@ -27,6 +27,8 @@ describe('App', () => {
       screen.getByRole('heading', { name: '동물 구출 대작전' }),
     ).toBeInTheDocument()
     expect(screen.getByTestId('game-container')).toBeInTheDocument()
+    expect(screen.getByText('동물들을 구하러 탐험을 떠나자!')).toBeInTheDocument()
+    expect(screen.getByText('동물 친구를 구출하고 탈출구를 찾으면 다음 단계가 열려요.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '2단계 잠김' })).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))

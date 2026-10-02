@@ -35,8 +35,13 @@
 
 .campaign p { margin: 6px 0 12px; }
 
-.intro, .progress, .pickerLabel {
+.progress, .pickerLabel {
   font-size: 27px;
+  line-height: 1.3;
+}
+
+.intro {
+  font-size: 21px;
   line-height: 1.3;
 }
 
@@ -198,7 +203,8 @@
   }
 
   .campaign h2 { font-size: 38px; }
-  .intro, .progress, .pickerLabel, .complete { font-size: 25px; }
+  .progress, .pickerLabel, .complete { font-size: 25px; }
+  .intro { font-size: 19px; }
   .grid {
     --route-column-gap: 18px;
     --route-row-gap: 18px;

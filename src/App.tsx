@@ -58,7 +58,7 @@ export function App() {
       {!session && (
         <header>
           <h1><StickerIcon kind="leaf" />동물 구출 대작전<StickerIcon kind="mushroom" /></h1>
-          <p>알록달록한 미로를 지나 친구들을 구해요</p>
+          <p>동물들을 구하러 탐험을 떠나자!</p>
         </header>
       )}
 

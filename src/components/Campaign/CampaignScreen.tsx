@@ -63,7 +63,7 @@ export function CampaignScreen({
           20단계 캠페인 완료! 모든 친구를 구출했습니다.
         </p>
       ) : (
-        <p className={styles.intro}>친구를 구출하고 탈출구에 닿으면 다음 길이 열려요.</p>
+        <p className={styles.intro}>동물 친구를 구출하고 탈출구를 찾으면 다음 단계가 열려요.</p>
       )}
       <p className={styles.progress}>완료 {completedCount}/20단계 · 해금 {progress.unlockedStage}/20단계</p>
 
