@@ -148,6 +148,13 @@
   filter: drop-shadow(0 2px 2px #65431177);
 }
 
+.cageOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .followerSprite {
   z-index: var(--foreground-depth);
   transition: top 120ms linear, left 120ms linear;
@@ -160,22 +167,31 @@
 }
 
 .exitSprite {
-  z-index: var(--foreground-depth);
-  inset: 0;
-  width: var(--cell-size);
-  height: var(--cell-size);
-  overflow: hidden;
+  inset: auto;
+  top: calc(var(--cell-size) * -0.3);
+  left: calc(var(--cell-size) * -0.3);
+  width: var(--sprite-size);
+  height: var(--sprite-size);
+  overflow: visible;
   transform: none;
   border-radius: 8px;
   filter: grayscale(0.75);
+}
+
+.exitImage { z-index: 0; }
+
+.exitSparkles {
+  z-index: 1;
+  pointer-events: none;
+  animation: exitTwinkle 1600ms ease-in-out infinite alternate;
 }
 
 .exitUnlocked {
   filter: none;
 }
 
-.exitUnlocked img {
-  filter: drop-shadow(0 0 4px #44804a);
+.exitUnlocked .exitImage {
+  filter: drop-shadow(0 0 6px #ffe5a0);
 }
 
 @keyframes walkLift {
@@ -193,6 +209,11 @@
   78% { transform: translateY(0) scale(1.03, 0.97); }
 }
 
+@keyframes exitTwinkle {
+  from { opacity: 0.72; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1.03); }
+}
+
 @media (max-width: 600px) {
   .viewport {
     border-radius: 20px;
@@ -203,4 +224,5 @@
   .board { transition: none; }
   .sprite, .spriteVisual { animation: none; transition: none; }
   .turnPrevious { display: none; }
+  .exitSparkles { animation: none; }
 }

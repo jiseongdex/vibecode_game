@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 
-import { getRescueAnimal } from '../../assets/assetManifest'
+import { gameAssets, getRescueAnimal } from '../../assets/assetManifest'
 import type { Direction, Position } from '../../game/types'
 import styles from '../MazeBoard/MazeBoard.module.css'
 
@@ -83,6 +83,16 @@ export function RescueSprite({
           {animal.fallback}
         </span>
       </span>
+      {!following && (
+        <span className={styles.cageOverlay} aria-hidden="true">
+          <img
+            src={gameAssets.rescueCage}
+            alt=""
+            data-testid="rescue-cage"
+            onError={(event) => { event.currentTarget.hidden = true }}
+          />
+        </span>
+      )}
     </span>
   )
 }

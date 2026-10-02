@@ -6,6 +6,7 @@ import { createGameState, gameReducer } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
 import { isWalkableGridPosition } from '../../game/mazeGrid'
 import type { Direction, Position } from '../../game/types'
+import { playerDepth, wallDepth } from './boardDepth'
 import { closedWallSlots } from './boardGeometry'
 import { MazeBoard } from './MazeBoard'
 
@@ -64,11 +65,23 @@ describe('MazeBoard', () => {
     )
     expect(screen.getByRole('img', { name: '탐험가' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: '잠긴 탈출구' })).toBeInTheDocument()
-    expect((container.querySelector('[data-asset-slot="exit"]') as HTMLElement).style.backgroundColor)
-      .toBe('transparent')
+    const exit = container.querySelector<HTMLElement>('[data-asset-slot="exit"]')!
+    expect(exit.style.backgroundColor).toBe('transparent')
+    expect(exit.style.getPropertyValue('--sprite-size')).toBe('calc(var(--cell-size) * 1.6)')
+    expect(exit.style.zIndex).toBe(String(playerDepth(state.exit.row)))
+    expect(exit.parentElement).toHaveAttribute('data-visual-row', String(state.exit.row))
+    expect(exit.parentElement).toHaveAttribute('data-visual-col', String(state.exit.col))
+    expect(wallDepth(state.exit.row)).toBeLessThan(Number(exit.style.zIndex))
+    expect(wallDepth(state.exit.row + 1)).toBeGreaterThan(Number(exit.style.zIndex))
+    expect(exit.querySelector('img')).toHaveAttribute('src', '/assets/maps/exit.png')
+    expect(screen.queryByTestId('exit-sparkles')).not.toBeInTheDocument()
     expect(screen.getAllByRole('img', { name: '구출 대상' })).toHaveLength(
       state.stageConfig.rescueCount,
     )
+    expect(screen.getAllByTestId('rescue-cage')).toHaveLength(state.stageConfig.rescueCount)
+    for (const cage of screen.getAllByTestId('rescue-cage')) {
+      expect(cage).toHaveAttribute('src', '/assets/animals/rescue-cage-overlay.png')
+    }
     const minimap = screen.getByRole('region', { name: /미니맵/ })
     expect(minimap.parentElement).toBe(screen.getByTestId('maze-viewport'))
     expect(screen.getByTestId('maze-board')).not.toContainElement(minimap)
@@ -117,11 +130,34 @@ describe('MazeBoard', () => {
 
     expect(screen.queryByRole('img', { name: '구출 대상' })).toBeNull()
     expect(screen.getByRole('img', { name: '구출한 동료 1' })).toBeInTheDocument()
+    expect(screen.queryByTestId('rescue-cage')).not.toBeInTheDocument()
     expect(screen.getByRole('img', { name: '열린 탈출구' })).toBeInTheDocument()
-    expect((container.querySelector('[data-asset-slot="exit"]') as HTMLElement).style.backgroundColor)
-      .toBe('transparent')
+    const exit = container.querySelector<HTMLElement>('[data-asset-slot="exit"]')!
+    expect(exit.style.backgroundColor).toBe('transparent')
+    expect(exit.querySelector('img')).toHaveAttribute('src', '/assets/maps/exit.png')
+    expect(screen.getByTestId('exit-sparkles')).toHaveAttribute('src', '/assets/maps/exit-sparkles.png')
     expect(screen.getByTestId('minimap').querySelectorAll('[data-minimap-animal]')).toHaveLength(0)
     expect(screen.getByTestId('minimap-exit')).toBeInTheDocument()
+  })
+
+  it('keeps the animal and door visible when overlay images fail to load', () => {
+    const state = stateFor(1, 15)
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const target = container.querySelector<HTMLElement>('[data-asset-slot="rescue-target"]')!
+    const cage = screen.getByTestId('rescue-cage')
+    fireEvent.error(cage)
+    expect(cage).toHaveAttribute('hidden')
+    expect(target.querySelector('img:not([data-testid="rescue-cage"])')).not.toHaveAttribute('hidden')
+
+    rerender(<MazeBoard
+      state={{ ...state, rescues: state.rescues.map((rescue) => ({ ...rescue, rescued: true })) }}
+      onMove={vi.fn()}
+    />)
+    const exit = container.querySelector<HTMLElement>('[data-asset-slot="exit"]')!
+    const sparkles = screen.getByTestId('exit-sparkles')
+    fireEvent.error(sparkles)
+    expect(sparkles).toHaveAttribute('hidden')
+    expect(exit.querySelector('img:not([data-testid="exit-sparkles"])')).not.toHaveAttribute('hidden')
   })
 
   it('renders open connectors as floor and positions followers directly on them', () => {

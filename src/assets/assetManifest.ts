@@ -7,6 +7,8 @@ export const gameAssets = {
     boy: '/assets/players/player-boy-front.png',
   },
   exit: '/assets/maps/exit.png',
+  rescueCage: '/assets/animals/rescue-cage-overlay.png',
+  exitSparkles: '/assets/maps/exit-sparkles.png',
 } as const
 
 export type PlayerAppearance = keyof typeof gameAssets.player

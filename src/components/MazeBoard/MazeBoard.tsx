@@ -224,7 +224,7 @@ export function MazeBoard({
                 seed={state.maze.seed}
                 theme={theme}
               >
-                {isExit && <ExitSprite unlocked={unlockedExit} />}
+                {isExit && <ExitSprite unlocked={unlockedExit} position={gridPosition} />}
               </MazeCell>
             )
           }),
