@@ -13,6 +13,8 @@ import { foregroundDepth } from './boardDepth'
 import { openPassageSlots, visualCell, visualSize } from './boardGeometry'
 import { MazeCell } from './MazeCell'
 import { WallLayer } from './MazeWall'
+import { MiniMap } from './MiniMap'
+import { getMinimapViewportBounds } from './minimapGeometry'
 import styles from './MazeBoard.module.css'
 
 export interface MazeBoardProps {
@@ -136,6 +138,9 @@ export function MazeBoard({
     cellSize,
     viewHeight,
   )
+  const minimapViewport = getMinimapViewportBounds({
+    boardTiles, cellSize, viewWidth, viewHeight, offsetX, offsetY,
+  })
   const themeId = getMazeTheme(state.maze.seed)
   const theme = mazeThemes[themeId]
   const boardStyle = {
@@ -255,6 +260,12 @@ export function MazeBoard({
         />
         <WallLayer maze={state.maze} theme={theme} />
       </div>
+      <MiniMap
+        maze={state.maze}
+        rescues={state.rescues}
+        exit={state.exit}
+        viewport={minimapViewport}
+      />
     </div>
   )
 }

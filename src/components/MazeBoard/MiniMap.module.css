@@ -1,0 +1,71 @@
+.minimap {
+  position: absolute;
+  right: clamp(6px, 1.5%, 18px);
+  bottom: clamp(6px, 1.5%, 18px);
+  z-index: 1;
+  box-sizing: border-box;
+  width: clamp(88px, 24%, 240px);
+  padding: 6px;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-paper);
+  box-shadow: 0 3px 12px rgb(36 52 43 / 24%);
+  pointer-events: none;
+}
+
+.map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #f5efd9;
+}
+
+.walls {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.wallLine {
+  fill: none;
+  stroke: var(--color-wall);
+  stroke-width: 1px;
+  stroke-linecap: square;
+  vector-effect: non-scaling-stroke;
+}
+
+.shade {
+  position: absolute;
+  background: rgb(36 52 43 / 22%);
+}
+
+.animal,
+.exit,
+.viewOutline {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.animal {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  box-shadow: 0 0 0 1px var(--color-paper);
+  transform: translate(-50%, -50%);
+}
+
+.exit {
+  width: 7px;
+  height: 7px;
+  background: var(--color-success);
+  box-shadow: 0 0 0 1px var(--color-paper);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.viewOutline {
+  border: 2px solid var(--color-focus);
+  box-shadow: 0 0 0 1px var(--color-paper);
+}

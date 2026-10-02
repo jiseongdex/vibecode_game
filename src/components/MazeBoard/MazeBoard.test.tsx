@@ -5,6 +5,7 @@ import { createGameState, gameReducer } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
 import { isWalkableGridPosition } from '../../game/mazeGrid'
 import type { Direction, Position } from '../../game/types'
+import { closedWallSlots } from './boardGeometry'
 import { MazeBoard } from './MazeBoard'
 
 function stateFor(stage: number, size: number) {
@@ -26,6 +27,29 @@ function openDirection(state: ReturnType<typeof stateFor>): Direction {
   )!
 }
 
+function expectMinimapView(left: number, top: number, right: number, bottom: number) {
+  const outline = screen.getByTestId('minimap-viewport')
+  const shadeTop = screen.getByTestId('minimap-shade-top')
+  const shadeBottom = screen.getByTestId('minimap-shade-bottom')
+  const shadeLeft = screen.getByTestId('minimap-shade-left')
+  const shadeRight = screen.getByTestId('minimap-shade-right')
+
+  expect(Number.parseFloat(outline.style.left)).toBeCloseTo(left * 100)
+  expect(Number.parseFloat(outline.style.top)).toBeCloseTo(top * 100)
+  expect(Number.parseFloat(outline.style.width)).toBeCloseTo((right - left) * 100)
+  expect(Number.parseFloat(outline.style.height)).toBeCloseTo((bottom - top) * 100)
+  expect(Number.parseFloat(shadeTop.style.height)).toBeCloseTo(top * 100)
+  expect(Number.parseFloat(shadeBottom.style.top)).toBeCloseTo(bottom * 100)
+  expect(Number.parseFloat(shadeBottom.style.height)).toBeCloseTo((1 - bottom) * 100)
+  expect(Number.parseFloat(shadeLeft.style.width)).toBeCloseTo(left * 100)
+  expect(Number.parseFloat(shadeLeft.style.top)).toBeCloseTo(top * 100)
+  expect(Number.parseFloat(shadeLeft.style.height)).toBeCloseTo((bottom - top) * 100)
+  expect(Number.parseFloat(shadeRight.style.left)).toBeCloseTo(right * 100)
+  expect(Number.parseFloat(shadeRight.style.width)).toBeCloseTo((1 - right) * 100)
+  expect(Number.parseFloat(shadeRight.style.top)).toBeCloseTo(top * 100)
+  expect(Number.parseFloat(shadeRight.style.height)).toBeCloseTo((bottom - top) * 100)
+}
+
 describe('MazeBoard', () => {
   it.each([
     [1, 15],
@@ -44,7 +68,30 @@ describe('MazeBoard', () => {
     expect(screen.getAllByRole('img', { name: '구출 대상' })).toHaveLength(
       state.stageConfig.rescueCount,
     )
-    expect(screen.queryByRole('region', { name: /미니맵/ })).toBeNull()
+    const minimap = screen.getByRole('region', { name: /미니맵/ })
+    expect(minimap.parentElement).toBe(screen.getByTestId('maze-viewport'))
+    expect(screen.getByTestId('maze-board')).not.toContainElement(minimap)
+    expect(screen.getByTestId('minimap-walls')).toHaveAttribute('viewBox', `0 0 ${size * 2 + 1} ${size * 2 + 1}`)
+    expect(screen.getByTestId('minimap-walls').querySelectorAll('line')).toHaveLength(
+      closedWallSlots(state.maze).length,
+    )
+    expect(minimap.querySelectorAll('[data-minimap-animal]')).toHaveLength(state.stageConfig.rescueCount)
+    const minimapExit = screen.getByTestId('minimap-exit')
+    expect(Number.parseFloat(minimapExit.style.left)).toBeCloseTo(
+      (state.exit.col + 0.5) / (size * 2 + 1) * 100,
+    )
+    expect(Number.parseFloat(minimapExit.style.top)).toBeCloseTo(
+      (state.exit.row + 0.5) / (size * 2 + 1) * 100,
+    )
+    const firstAnimal = minimap.querySelector<HTMLElement>('[data-minimap-animal]')!
+    expect(Number.parseFloat(firstAnimal.style.left)).toBeCloseTo(
+      (state.rescues[0].col + 0.5) / (size * 2 + 1) * 100,
+    )
+    expect(Number.parseFloat(firstAnimal.style.top)).toBeCloseTo(
+      (state.rescues[0].row + 0.5) / (size * 2 + 1) * 100,
+    )
+    expect(minimap.querySelectorAll('span')).toHaveLength(6 + state.stageConfig.rescueCount)
+    expect(minimap.querySelector('[data-minimap-player]')).toBeNull()
   })
 
   it('renders walls and changes rescued targets into visible followers', () => {
@@ -53,6 +100,7 @@ describe('MazeBoard', () => {
       <MazeBoard state={state} onMove={vi.fn()} />,
     )
     const firstCell = container.querySelector('[data-row="0"][data-col="0"]')
+    expect(screen.getByTestId('minimap').querySelectorAll('[data-minimap-animal]')).toHaveLength(1)
 
     expect(firstCell).toHaveAttribute('data-cell-type', 'player')
     expect(firstCell?.className).toContain('wallTop')
@@ -71,6 +119,8 @@ describe('MazeBoard', () => {
     expect(screen.getByRole('img', { name: '열린 탈출구' })).toBeInTheDocument()
     expect((container.querySelector('[data-asset-slot="exit"]') as HTMLElement).style.backgroundColor)
       .toBe('transparent')
+    expect(screen.getByTestId('minimap').querySelectorAll('[data-minimap-animal]')).toHaveLength(0)
+    expect(screen.getByTestId('minimap-exit')).toBeInTheDocument()
   })
 
   it('renders open connectors as floor and positions followers directly on them', () => {
@@ -169,12 +219,14 @@ describe('MazeBoard', () => {
     const { rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const board = screen.getByTestId('maze-board')
     const startTransform = board.style.transform
+    const boardPixels = 31 * 108
     expect(startTransform).toBe('translate3d(0px, 0px, 0)')
     expect(board.style.getPropertyValue('--cell-size')).toBe('108px')
     expect(1240 / 108).toBeGreaterThan(11.4)
     expect(1240 / 108).toBeLessThan(11.6)
     expect(840 / 108).toBeGreaterThan(7.7)
     expect(840 / 108).toBeLessThan(7.9)
+    expectMinimapView(0, 0, 1240 / boardPixels, 840 / boardPixels)
 
     rerender(
       <MazeBoard
@@ -184,6 +236,7 @@ describe('MazeBoard', () => {
     )
     expect(board.style.transform).not.toBe(startTransform)
     expect(board.style.transform).toBe('translate3d(-730px, -930px, 0)')
+    expectMinimapView(730 / boardPixels, 930 / boardPixels, 1970 / boardPixels, 1770 / boardPixels)
 
     rerender(
       <MazeBoard
@@ -192,6 +245,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).toBe('translate3d(-838px, -1038px, 0)')
+    expectMinimapView(838 / boardPixels, 1038 / boardPixels, 2078 / boardPixels, 1878 / boardPixels)
 
     rerender(
       <MazeBoard
@@ -200,6 +254,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).toBe('translate3d(-2108px, -2508px, 0)')
+    expectMinimapView(2108 / boardPixels, 2508 / boardPixels, 1, 1)
   })
 
   it('scales the frame, tiles, player, and camera together', () => {
@@ -210,6 +265,7 @@ describe('MazeBoard', () => {
     const viewport = screen.getByTestId('maze-viewport')
     const player = container.querySelector<HTMLElement>('[data-asset-slot="player"]')!
     const originalTranslate = player.style.translate
+    const originalAnimalPosition = container.querySelector<HTMLElement>('[data-minimap-animal]')?.getAttribute('style')
 
     expect(viewport.style.width).toBe('1240px')
     expect(viewport.style.height).toBe('840px')
@@ -225,6 +281,8 @@ describe('MazeBoard', () => {
     expect(Number.parseFloat(player.style.translate)).toBe(Number.parseFloat(originalTranslate) / 2)
     expect(620 / 54).toBe(1240 / 108)
     expect(420 / 54).toBe(840 / 108)
+    expectMinimapView(730 / (31 * 108), 930 / (31 * 108), 1970 / (31 * 108), 1770 / (31 * 108))
+    expect(container.querySelector<HTMLElement>('[data-minimap-animal]')?.getAttribute('style')).toBe(originalAnimalPosition)
 
     rerender(<MazeBoard state={state} onMove={vi.fn()} scale={1.28} />)
     expect(Number.parseFloat(viewport.style.width)).toBeCloseTo(1240 * 1.28)
@@ -235,6 +293,8 @@ describe('MazeBoard', () => {
     expect(Number(enlargedCamera?.[1])).toBeCloseTo(-730 * 1.28)
     expect(Number(enlargedCamera?.[2])).toBeCloseTo(-930 * 1.28)
     expect(Number.parseFloat(player.style.translate)).toBeCloseTo(Number.parseFloat(originalTranslate) * 1.28)
+    expectMinimapView(730 / (31 * 108), 930 / (31 * 108), 1970 / (31 * 108), 1770 / (31 * 108))
+    expect(container.querySelector<HTMLElement>('[data-minimap-animal]')?.getAttribute('style')).toBe(originalAnimalPosition)
 
     rerender(<MazeBoard state={{ ...state, player: { row: 29, col: 29 } }} onMove={vi.fn()} scale={0.5} />)
     expect(board.style.transform).toBe('translate3d(-1054px, -1254px, 0)')
