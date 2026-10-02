@@ -59,6 +59,9 @@ export function GameScreen({
     [],
   )
   const playing = state.status === 'playing'
+  const rescuedCount = state.rescues.filter((target) => target.rescued).length
+  const previousRescuedCount = useRef(rescuedCount)
+  const [showRescueNotice, setShowRescueNotice] = useState(false)
   const [introStep, setIntroStep] = useState<IntroStep>(() =>
     state.status === 'ready' ? 'message' : null,
   )
@@ -173,6 +176,22 @@ export function GameScreen({
   }, [playing])
 
   useEffect(() => {
+    const lastCount = previousRescuedCount.current
+    previousRescuedCount.current = rescuedCount
+    if (!playing) {
+      setShowRescueNotice(false)
+    } else if (lastCount < rescuedCount && rescuedCount === state.stageConfig.rescueCount) {
+      setShowRescueNotice(true)
+    }
+  }, [playing, rescuedCount, state.stageConfig.rescueCount])
+
+  useEffect(() => {
+    if (!showRescueNotice) return
+    const timer = window.setTimeout(() => setShowRescueNotice(false), 1500)
+    return () => window.clearTimeout(timer)
+  }, [showRescueNotice])
+
+  useEffect(() => {
     onStateChange?.(state)
   }, [state, onStateChange])
 
@@ -186,8 +205,6 @@ export function GameScreen({
       )
     }
   }, [state.status, state.stageConfig, state.remainingSeconds, onStageComplete])
-
-  const rescuedCount = state.rescues.filter((target) => target.rescued).length
 
   return (
     <div className={styles.screen} ref={screenRef}>
@@ -220,6 +237,11 @@ export function GameScreen({
               pressedDirections={pressedDirections}
               scale={sceneScale}
             />
+            {playing && showRescueNotice && (
+              <div className={styles.rescueNotice} role="status" aria-live="polite" data-testid="rescue-notice">
+                동물 구출 완료! 탈출구를 찾자
+              </div>
+            )}
             {state.status === 'ready' && introStep !== null && (
               <div className={styles.introOverlay} role="status" aria-live="polite" data-testid="intro-overlay">
                 {introStep === 'message' ? (

@@ -28,6 +28,27 @@
   flex: none;
 }
 
+.rescueNotice {
+  position: absolute;
+  top: calc(var(--frame-border) + 12px);
+  left: 50%;
+  z-index: 6;
+  max-width: calc(100% - 24px);
+  padding: 8px 16px;
+  border: 2px solid #e7bf58;
+  border-radius: 999px;
+  background: #fff8d9;
+  box-shadow: 0 4px 12px rgb(38 48 28 / 24%);
+  color: var(--color-ink);
+  font-family: var(--font-message);
+  font-size: clamp(16px, 2.4vw, 25px);
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
 .introOverlay {
   position: absolute;
   inset: var(--frame-border);

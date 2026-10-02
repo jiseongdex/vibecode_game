@@ -1,8 +1,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 
 import { createGameState } from '../../game/gameState'
+import type { GameState } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
 import { isWalkableGridPosition } from '../../game/mazeGrid'
+import { getStageConfig } from '../../game/stageConfig'
 import type { Direction, Maze, Position } from '../../game/types'
 import { formatTime } from '../Hud/GameHud'
 import { GameScreen } from './GameScreen'
@@ -61,10 +63,100 @@ function expectPlayerAt(position: Position) {
   expect(player).toHaveAttribute('data-grid-col', String(position.col))
 }
 
+function besideRescue(base: GameState, rescueIndex: number) {
+  const target = base.rescues[rescueIndex]
+  const directions: Direction[] = ['up', 'right', 'down', 'left']
+  for (const direction of directions) {
+    const player = {
+      row: target.row - movementOffsets[direction].row,
+      col: target.col - movementOffsets[direction].col,
+    }
+    if (isWalkableGridPosition(base.maze, player)) {
+      return { player, direction }
+    }
+  }
+  throw new Error('Rescue target has no walkable neighbor.')
+}
+
+const arrowFor: Record<Direction, string> = {
+  up: 'ArrowUp', right: 'ArrowRight', down: 'ArrowDown', left: 'ArrowLeft',
+}
+const oppositeDirection: Record<Direction, Direction> = {
+  up: 'down', right: 'left', down: 'up', left: 'right',
+}
+
 describe('GameScreen', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
+  })
+
+  it('shows the last-rescue notice for exactly 1.5 seconds while the game keeps ticking', () => {
+    vi.useFakeTimers()
+    const base = createGameState(1, generateMaze(15, createSeededRandom(42)))
+    const { player, direction } = besideRescue(base, 0)
+    const onStateChange = vi.fn()
+    render(<GameScreen initialState={{ ...base, player, status: 'playing' }} onStateChange={onStateChange} />)
+
+    fireEvent.keyDown(window, { key: arrowFor[direction], code: arrowFor[direction] })
+    fireEvent.keyUp(window, { key: arrowFor[direction], code: arrowFor[direction] })
+    expect(screen.getByTestId('rescue-notice')).toHaveTextContent('동물 구출 완료! 탈출구를 찾자')
+    expect(screen.getByTestId('rescue-notice').parentElement).toBe(screen.getByTestId('playfield'))
+    expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeEnabled()
+    const returnArrow = arrowFor[oppositeDirection[direction]]
+    fireEvent.keyDown(window, { key: returnArrow, code: returnArrow })
+    fireEvent.keyUp(window, { key: returnArrow, code: returnArrow })
+    expectPlayerAt(player)
+    expect(screen.getByTestId('rescue-notice')).toBeInTheDocument()
+
+    act(() => vi.advanceTimersByTime(1000))
+    expect(onStateChange.mock.lastCall?.[0].remainingSeconds).toBe(base.remainingSeconds - 1)
+    expect(screen.getByTestId('rescue-notice')).toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(499))
+    expect(screen.getByTestId('rescue-notice')).toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.queryByTestId('rescue-notice')).not.toBeInTheDocument()
+  })
+
+  it('waits until every animal is rescued and clears the notice on pause', () => {
+    vi.useFakeTimers()
+    const base = createGameState(5, generateMaze(getStageConfig(5).size, createSeededRandom(43)))
+    expect(base.rescues).toHaveLength(2)
+    const first = besideRescue(base, 0)
+    const firstRun = render(<GameScreen initialState={{ ...base, player: first.player, status: 'playing' }} />)
+    fireEvent.keyDown(window, { key: arrowFor[first.direction], code: arrowFor[first.direction] })
+    fireEvent.keyUp(window, { key: arrowFor[first.direction], code: arrowFor[first.direction] })
+    expect(screen.queryByTestId('rescue-notice')).not.toBeInTheDocument()
+    firstRun.unmount()
+
+    const second = besideRescue(base, 1)
+    render(<GameScreen initialState={{
+      ...base,
+      player: second.player,
+      status: 'playing',
+      rescues: base.rescues.map((target, index) => ({ ...target, rescued: index === 0 })),
+    }} />)
+    expect(screen.queryByTestId('rescue-notice')).not.toBeInTheDocument()
+    fireEvent.keyDown(window, { key: arrowFor[second.direction], code: arrowFor[second.direction] })
+    fireEvent.keyUp(window, { key: arrowFor[second.direction], code: arrowFor[second.direction] })
+    expect(screen.getByTestId('rescue-notice')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '잠깐 쉬기' }))
+    expect(screen.queryByTestId('rescue-notice')).not.toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(2000))
+    expect(screen.queryByTestId('rescue-notice')).not.toBeInTheDocument()
+  })
+
+  it('does not replay the notice for a restored game with all animals rescued', () => {
+    vi.useFakeTimers()
+    const base = createGameState(1, generateMaze(15, createSeededRandom(44)))
+    render(<GameScreen initialState={{
+      ...base,
+      status: 'playing',
+      rescues: base.rescues.map((target) => ({ ...target, rescued: true })),
+    }} />)
+    expect(screen.queryByTestId('rescue-notice')).not.toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(2000))
+    expect(screen.queryByTestId('rescue-notice')).not.toBeInTheDocument()
   })
 
   it('fits the frame to both width and remaining height without resetting the game', () => {
