@@ -170,10 +170,10 @@ describe('MazeBoard', () => {
     const board = screen.getByTestId('maze-board')
     const startTransform = board.style.transform
     expect(startTransform).toBe('translate3d(0px, 0px, 0)')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
-    expect(1240 / 140).toBeGreaterThan(8)
-    expect(1240 / 140).toBeLessThan(9)
-    expect(840 / 140).toBe(6)
+    expect(board.style.getPropertyValue('--cell-size')).toBe('120px')
+    expect(1240 / 120).toBeGreaterThan(10)
+    expect(1240 / 120).toBeLessThan(11)
+    expect(840 / 120).toBe(7)
 
     rerender(
       <MazeBoard
@@ -182,7 +182,7 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-1130px, -1330px, 0)')
+    expect(board.style.transform).toBe('translate3d(-880px, -1080px, 0)')
 
     rerender(
       <MazeBoard
@@ -190,7 +190,7 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-1270px, -1470px, 0)')
+    expect(board.style.transform).toBe('translate3d(-1000px, -1200px, 0)')
 
     rerender(
       <MazeBoard
@@ -198,7 +198,7 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-3100px, -3500px, 0)')
+    expect(board.style.transform).toBe('translate3d(-2480px, -2880px, 0)')
   })
 
   it('scales the frame, tiles, player, and camera together', () => {
@@ -212,31 +212,31 @@ describe('MazeBoard', () => {
 
     expect(viewport.style.width).toBe('1240px')
     expect(viewport.style.height).toBe('840px')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
-    expect(board.style.transform).toBe('translate3d(-1130px, -1330px, 0)')
+    expect(board.style.getPropertyValue('--cell-size')).toBe('120px')
+    expect(board.style.transform).toBe('translate3d(-880px, -1080px, 0)')
 
     rerender(<MazeBoard state={state} onMove={vi.fn()} scale={0.5} />)
     expect(viewport.style.width).toBe('620px')
     expect(viewport.style.height).toBe('420px')
     expect(viewport.style.borderWidth).toBe('2.5px')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('70px')
-    expect(board.style.transform).toBe('translate3d(-565px, -665px, 0)')
+    expect(board.style.getPropertyValue('--cell-size')).toBe('60px')
+    expect(board.style.transform).toBe('translate3d(-440px, -540px, 0)')
     expect(Number.parseFloat(player.style.translate)).toBe(Number.parseFloat(originalTranslate) / 2)
-    expect(620 / 70).toBe(1240 / 140)
-    expect(420 / 70).toBe(840 / 140)
+    expect(620 / 60).toBe(1240 / 120)
+    expect(420 / 60).toBe(840 / 120)
 
     rerender(<MazeBoard state={state} onMove={vi.fn()} scale={1.28} />)
     expect(Number.parseFloat(viewport.style.width)).toBeCloseTo(1240 * 1.28)
     expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(840 * 1.28)
     expect(Number.parseFloat(viewport.style.borderWidth)).toBeCloseTo(6.4)
-    expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(179.2)
+    expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(153.6)
     const enlargedCamera = board.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px, 0\)/)
-    expect(Number(enlargedCamera?.[1])).toBeCloseTo(-1130 * 1.28)
-    expect(Number(enlargedCamera?.[2])).toBeCloseTo(-1330 * 1.28)
+    expect(Number(enlargedCamera?.[1])).toBeCloseTo(-880 * 1.28)
+    expect(Number(enlargedCamera?.[2])).toBeCloseTo(-1080 * 1.28)
     expect(Number.parseFloat(player.style.translate)).toBeCloseTo(Number.parseFloat(originalTranslate) * 1.28)
 
     rerender(<MazeBoard state={{ ...state, player: { row: 29, col: 29 } }} onMove={vi.fn()} scale={0.5} />)
-    expect(board.style.transform).toBe('translate3d(-1550px, -1750px, 0)')
+    expect(board.style.transform).toBe('translate3d(-1240px, -1440px, 0)')
   })
 
   it('uses five distinct local animal images and keeps the animal in the follower line', () => {

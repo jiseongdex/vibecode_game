@@ -12,7 +12,7 @@ describe('GameScreen', () => {
     vi.unstubAllGlobals()
   })
 
-  it('fits the scene to its available space without resetting the game', () => {
+  it('fills the available width without resetting the game when height changes', () => {
     vi.stubGlobal('ResizeObserver', undefined)
     let width = 1250
     let height = 850
@@ -35,7 +35,7 @@ describe('GameScreen', () => {
       const board = screen.getByTestId('maze-board')
       expect(frame.style.width).toBe('1250px')
       expect(frame.style.height).toBe('850px')
-      expect(board.style.getPropertyValue('--cell-size')).toBe('140px')
+      expect(board.style.getPropertyValue('--cell-size')).toBe('120px')
 
       fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
       width = 625
@@ -43,7 +43,7 @@ describe('GameScreen', () => {
       fireEvent(window, new Event('resize'))
       expect(frame.style.width).toBe('625px')
       expect(frame.style.height).toBe('425px')
-      expect(board.style.getPropertyValue('--cell-size')).toBe('70px')
+      expect(board.style.getPropertyValue('--cell-size')).toBe('60px')
       expect(screen.getByRole('button', { name: '일시정지' })).toBeEnabled()
 
       const opening = initialState.maze.cells[0][0].walls.right ? 'ArrowDown' : 'ArrowRight'
@@ -60,15 +60,15 @@ describe('GameScreen', () => {
       fireEvent(window, new Event('resize'))
       expect(frame.style.width).toBe('1600px')
       expect(frame.style.height).toBe('1088px')
-      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(179.2)
+      expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(153.6)
       expect([player.dataset.gridRow, player.dataset.gridCol]).toEqual(position)
       expect(onStateChange).toHaveBeenCalledTimes(stateChanges)
 
       width = 1250
       height = 650
       fireEvent(window, new Event('resize'))
-      expect(Number.parseFloat(frame.style.width)).toBeCloseTo(1250 * 650 / 850)
-      expect(Number.parseFloat(frame.style.height)).toBeCloseTo(650)
+      expect(frame.style.width).toBe('1250px')
+      expect(frame.style.height).toBe('850px')
       expect(onStateChange).toHaveBeenCalledTimes(stateChanges)
     } finally {
       measure.mockRestore()

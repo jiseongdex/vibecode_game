@@ -59,10 +59,10 @@ export function GameScreen({
     if (!area) return
 
     const measure = () => {
-      const { width, height } = area.getBoundingClientRect()
-      if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return
-      const next = Math.min(width / BASE_FRAME_WIDTH, height / BASE_FRAME_HEIGHT)
-      if (next > 0) setSceneScale((previous) => previous === next ? previous : next)
+      const { width } = area.getBoundingClientRect()
+      if (!Number.isFinite(width) || width <= 0) return
+      const next = width / BASE_FRAME_WIDTH
+      setSceneScale((previous) => previous === next ? previous : next)
     }
 
     measure()

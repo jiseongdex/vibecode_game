@@ -1,5 +1,5 @@
 .overlay {
-  position: absolute;
+  position: fixed;
   z-index: 10;
   inset: 0;
   display: flex;
@@ -79,7 +79,7 @@
 }
 
 @media (max-width: 600px) {
-  .overlay { position: fixed; padding: 12px; }
+  .overlay { padding: 12px; }
   .panel { padding: 18px 14px 20px; }
   .panel h2 { font-size: 38px; }
   .panel p { font-size: 24px; }
@@ -88,7 +88,7 @@
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
-  .overlay { position: fixed; padding: 6px; }
+  .overlay { padding: 6px; }
   .panel { padding: 8px 12px 12px; }
   .decoration { width: 22px; height: 22px; margin: 0; }
   .panel h2 { margin-bottom: 2px; font-size: 32px; }

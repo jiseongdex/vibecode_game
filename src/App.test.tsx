@@ -24,6 +24,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
     expect(document.querySelector('main')).toHaveAttribute('data-game-active', 'true')
+    expect(screen.queryByRole('heading', { name: '동물 구출 대작전' })).toBeNull()
     expect(screen.getByRole('button', { name: '시작하기' })).toBeInTheDocument()
   })
 
@@ -67,6 +68,7 @@ describe('App', () => {
 
     render(<App />)
     expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '동물 구출 대작전' })).toBeNull()
     expect(screen.getByRole('img', { name: '탐험가' })).toHaveAttribute(
       'data-grid-row',
       String(saved?.state.player.row),
@@ -92,6 +94,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: '게임 버리고 단계 선택' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '게임 버리고 단계 선택' }))
     expect(document.querySelector('main')).not.toHaveAttribute('data-game-active')
+    expect(screen.getByRole('heading', { name: '동물 구출 대작전' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '1단계 도전 가능' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '여자 탐험가' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '남자 탐험가' })).toBeInTheDocument()
