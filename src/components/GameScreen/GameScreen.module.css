@@ -28,6 +28,39 @@
   flex: none;
 }
 
+.introOverlay {
+  position: absolute;
+  inset: var(--frame-border);
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: clamp(8px, 2.5vw, 30px);
+  box-sizing: border-box;
+  border-radius: 19px;
+  background: rgb(27 48 39 / 72%);
+  color: #fffdf4;
+  text-align: center;
+  pointer-events: none;
+}
+
+.introMessage,
+.introNumber {
+  font-family: var(--font-message);
+  font-weight: 400;
+  line-height: 1.15;
+  text-shadow: 0 2px 5px rgb(13 32 25 / 65%);
+}
+
+.introMessage {
+  max-width: 100%;
+  font-size: clamp(20px, 5vw, 58px);
+  overflow-wrap: keep-all;
+}
+
+.introNumber {
+  font-size: clamp(64px, 18vw, 164px);
+}
+
 .controlsArea {
   display: flex;
   flex: none;
@@ -40,58 +73,6 @@
   padding-top: 6px;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-  margin: 0;
-}
-
-.actions:empty {
-  display: none;
-}
-
-.actions button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 4px 18px;
-  border: 2px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-mint);
-  color: var(--color-ink);
-  box-shadow: var(--shadow-sticker);
-  font-family: var(--font-ui);
-  font-size: 24px;
-  line-height: 1.1;
-  cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease;
-}
-
-.actions button svg {
-  width: 22px;
-  height: 22px;
-  color: var(--color-leaf);
-}
-
-.actions button:hover,
-.actions button:focus-visible { transform: translateY(-2px); }
-
-.actions button:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 rgb(70 102 81 / 24%);
-}
-
-.actions button:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
 @media (max-width: 600px) {
   .screen {
     padding: 4px 8px;
@@ -100,15 +81,10 @@
 
 @media (min-width: 601px) {
   .controlsArea { padding-top: 0; }
-  .actions:not(:empty) { margin-top: 6px; }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
   .screen {
     padding: 2px 8px;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .actions button { transition: none; }
 }

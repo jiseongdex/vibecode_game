@@ -6,6 +6,13 @@ import type { Direction } from '../../game/types'
 import { formatTime } from '../Hud/GameHud'
 import { GameScreen } from './GameScreen'
 
+function advanceIntro() {
+  act(() => vi.advanceTimersByTime(3000))
+  for (let count = 0; count < 3; count += 1) {
+    act(() => vi.advanceTimersByTime(1000))
+  }
+}
+
 describe('GameScreen', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -13,6 +20,7 @@ describe('GameScreen', () => {
   })
 
   it('fits the frame to both width and remaining height without resetting the game', () => {
+    vi.useFakeTimers()
     vi.stubGlobal('ResizeObserver', undefined)
     vi.stubGlobal('innerHeight', 900)
     let width = 1408
@@ -52,7 +60,7 @@ describe('GameScreen', () => {
       expect(frame.style.height).toBe('756px')
       expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(108 * 756 / 850)
 
-      fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+      advanceIntro()
       width = 625
       fireEvent(window, new Event('resize'))
       expect(frame.style.width).toBe('625px')
@@ -104,7 +112,7 @@ describe('GameScreen', () => {
     for (const button of screen.getAllByRole('button', { name: /이동/ })) {
       expect(button).toBeDisabled()
     }
-    fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+    advanceIntro()
     fireEvent.keyDown(window, { key: arrow })
     const playerSprite = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
     const cellSize = Number.parseInt(
@@ -151,7 +159,7 @@ describe('GameScreen', () => {
     vi.useFakeTimers()
     const initialState = createGameState(1, generateMaze(15, createSeededRandom(123)))
     render(<GameScreen initialState={initialState} />)
-    fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+    advanceIntro()
 
     const player = document.querySelector<HTMLElement>('[data-asset-slot="player"]')!
     const image = player.querySelector('img')!
@@ -234,7 +242,8 @@ describe('GameScreen', () => {
     expect(onNextStage).toHaveBeenCalledWith(2)
   })
 
-  it('returns to the ready state after choosing a timeout retry', () => {
+  it('retries the same maze after a numbers-only countdown', () => {
+    vi.useFakeTimers()
     const base = createGameState(1, generateMaze(15, createSeededRandom(89)))
     render(
       <GameScreen initialState={{ ...base, status: 'lost', remainingSeconds: 0 }} />,
@@ -243,7 +252,89 @@ describe('GameScreen', () => {
     expect(screen.getByRole('dialog', { name: '시간 초과!' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '같은 미로 재도전' }))
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(screen.getByRole('button', { name: '시작하기' })).toBeInTheDocument()
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
+    expect(screen.queryByText('동물을 구출해서 탈출해줘!')).not.toBeInTheDocument()
     expect(screen.getByText(`남은 시간: ${formatTime(base.remainingSeconds)}`)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeDisabled()
+    expect(document.querySelectorAll('[data-asset-slot^="rescue-"]')).toHaveLength(base.rescues.length)
+    for (let count = 0; count < 3; count += 1) act(() => vi.advanceTimersByTime(1000))
+    expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeEnabled()
+  })
+
+  it('shows the message and each countdown number before starting without moving or ticking', () => {
+    vi.useFakeTimers()
+    const base = createGameState(1, generateMaze(15, createSeededRandom(123)))
+    const onStateChange = vi.fn()
+    render(<GameScreen initialState={base} onStateChange={onStateChange} />)
+
+    expect(screen.getByTestId('maze-board')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '시작하기' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('동물을 구출해서 탈출해줘!')
+    const opening = base.maze.cells[0][0].walls.right ? 'ArrowDown' : 'ArrowRight'
+    fireEvent.keyDown(window, { key: opening })
+    expect(document.querySelector('[data-asset-slot="player"]')).toHaveAttribute('data-grid-row', '1')
+    expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeDisabled()
+    act(() => vi.advanceTimersByTime(2999))
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('동물을 구출해서 탈출해줘!')
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
+    act(() => vi.advanceTimersByTime(1000))
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('2')
+    act(() => vi.advanceTimersByTime(1000))
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('1')
+    expect(screen.getByText(`남은 시간: ${formatTime(base.remainingSeconds)}`)).toBeInTheDocument()
+    expect(onStateChange.mock.lastCall?.[0].status).toBe('ready')
+    act(() => vi.advanceTimersByTime(1000))
+    expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeEnabled()
+    expect(onStateChange.mock.lastCall?.[0].status).toBe('playing')
+    act(() => vi.advanceTimersByTime(1000))
+    expect(screen.getByText(`남은 시간: ${formatTime(base.remainingSeconds - 1)}`)).toBeInTheDocument()
+  })
+
+  it('starts a new maze retry after numbers only', () => {
+    vi.useFakeTimers()
+    const base = createGameState(1, generateMaze(15, createSeededRandom(89)))
+    const onStateChange = vi.fn()
+    render(<GameScreen initialState={{ ...base, status: 'lost', remainingSeconds: 0 }} onStateChange={onStateChange} />)
+
+    fireEvent.click(screen.getByRole('button', { name: '새 미로로 재시작' }))
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
+    expect(screen.queryByText('동물을 구출해서 탈출해줘!')).not.toBeInTheDocument()
+    expect(onStateChange.mock.lastCall?.[0].maze.seed).not.toBe(base.maze.seed)
+    for (let count = 0; count < 3; count += 1) act(() => vi.advanceTimersByTime(1000))
+    expect(onStateChange.mock.lastCall?.[0].status).toBe('playing')
+  })
+
+  it('freezes the intro while the tab is hidden and resumes the current step when visible', () => {
+    vi.useFakeTimers()
+    const original = Object.getOwnPropertyDescriptor(document, 'visibilityState')
+    let visibility = 'visible'
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility })
+    try {
+      const onStateChange = vi.fn()
+      render(<GameScreen onStateChange={onStateChange} />)
+      act(() => vi.advanceTimersByTime(3000))
+      expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
+      act(() => vi.advanceTimersByTime(400))
+      visibility = 'hidden'
+      fireEvent(document, new Event('visibilitychange'))
+      act(() => vi.advanceTimersByTime(10000))
+      expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
+      expect(onStateChange.mock.lastCall?.[0].status).toBe('ready')
+      visibility = 'visible'
+      fireEvent(document, new Event('visibilitychange'))
+      act(() => vi.advanceTimersByTime(999))
+      expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
+      act(() => vi.advanceTimersByTime(1))
+      act(() => vi.advanceTimersByTime(1000))
+      expect(screen.getByTestId('intro-overlay')).toHaveTextContent('1')
+      act(() => vi.advanceTimersByTime(1000))
+      expect(onStateChange.mock.lastCall?.[0].status).toBe('playing')
+    } finally {
+      if (original) Object.defineProperty(document, 'visibilityState', original)
+      else Reflect.deleteProperty(document, 'visibilityState')
+    }
   })
 })

@@ -5,6 +5,13 @@ import { formatTime } from './components/Hud/GameHud'
 import { loadSave, saveSave } from './persistence/saveStore'
 import { SAVE_VERSION } from './persistence/saveSchema'
 
+function advanceIntro() {
+  act(() => vi.advanceTimersByTime(3000))
+  for (let count = 0; count < 3; count += 1) {
+    act(() => vi.advanceTimersByTime(1000))
+  }
+}
+
 describe('App', () => {
   beforeEach(() => window.localStorage.clear())
   afterEach(() => {
@@ -25,7 +32,8 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
     expect(document.querySelector('main')).toHaveAttribute('data-game-active', 'true')
     expect(screen.queryByRole('heading', { name: '동물 구출 대작전' })).toBeNull()
-    expect(screen.getByRole('button', { name: '시작하기' })).toBeInTheDocument()
+    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('동물을 구출해서 탈출해줘!')
+    expect(screen.queryByRole('button', { name: '시작하기' })).not.toBeInTheDocument()
   })
 
   it('sets the explorer on stage selection and hides the picker during a game', () => {
@@ -50,9 +58,10 @@ describe('App', () => {
   })
 
   it('restores the same maze and position in a paused state after leaving', () => {
+    vi.useFakeTimers()
     const { unmount } = render(<App />)
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+    advanceIntro()
 
     const startCell = document.querySelector('[data-row="0"][data-col="0"]')
     const direction = startCell?.className.includes('wallRight') ? 'ArrowDown' : 'ArrowRight'
@@ -68,6 +77,7 @@ describe('App', () => {
 
     render(<App />)
     expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
+    expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: '동물 구출 대작전' })).toBeNull()
     expect(screen.getByRole('img', { name: '탐험가' })).toHaveAttribute(
       'data-grid-row',
@@ -137,7 +147,7 @@ describe('App', () => {
     try {
       render(<App />)
       fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-      fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+      advanceIntro()
       act(() => vi.advanceTimersByTime(1000))
 
       visibility = 'hidden'

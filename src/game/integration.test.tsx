@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 
 import { App } from '../App'
 import { completeStage, createCampaignProgress } from './campaignProgress'
@@ -58,7 +58,10 @@ function walkTo(state: GameState, destination: Position): GameState {
 
 describe('gameplay integration', () => {
   beforeEach(() => window.localStorage.clear())
-  afterEach(() => window.localStorage.clear())
+  afterEach(() => {
+    vi.useRealTimers()
+    window.localStorage.clear()
+  })
 
   it('starts, rescues everyone, exits, and unlocks the next stage', () => {
     const maze = generateMaze(15, createSeededRandom(42))
@@ -94,10 +97,14 @@ describe('gameplay integration', () => {
   })
 
   it('saves a moving game, restores it paused, and resumes explicitly', () => {
+    vi.useFakeTimers()
     const { unmount } = render(<App />)
     expect(screen.getByRole('button', { name: '20단계 잠김' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    fireEvent.click(screen.getByRole('button', { name: '시작하기' }))
+    act(() => vi.advanceTimersByTime(3000))
+    for (let count = 0; count < 3; count += 1) {
+      act(() => vi.advanceTimersByTime(1000))
+    }
 
     const startCell = document.querySelector('[data-row="0"][data-col="0"]')
     fireEvent.click(screen.getByRole('button', {

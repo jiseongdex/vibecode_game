@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 import type { PlayerAppearance } from '../../assets/assetManifest'
 import { createGameState, gameReducer } from '../../game/gameState'
@@ -8,7 +9,6 @@ import type { Direction } from '../../game/types'
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement'
 import { usePageVisibilityPause } from '../../hooks/usePageVisibilityPause'
 import { DirectionControls } from '../Controls/DirectionControls'
-import { StickerIcon } from '../Decorations/StickerIcon'
 import { GameHud } from '../Hud/GameHud'
 import { MazeBoard } from '../MazeBoard/MazeBoard'
 import { PauseOverlay } from '../Overlays/PauseOverlay'
@@ -27,6 +27,7 @@ interface GameScreenProps {
 }
 
 type MovementSource = 'keyboard' | 'button'
+type IntroStep = 'message' | 3 | 2 | 1 | null
 
 const BASE_FRAME_WIDTH = 1250
 const BASE_FRAME_HEIGHT = 850
@@ -47,6 +48,10 @@ export function GameScreen({
     (provided) => provided ?? createGameState(1),
   )
   const playing = state.status === 'playing'
+  const [introStep, setIntroStep] = useState<IntroStep>(() =>
+    state.status === 'ready' ? 'message' : null,
+  )
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== 'hidden')
   const reportedWin = useRef(false)
   const [movementAttempt, setMovementAttempt] = useState(0)
   const [movementSource, setMovementSource] = useState<MovementSource>('button')
@@ -130,6 +135,26 @@ export function GameScreen({
   usePageVisibilityPause({ enabled: playing, onPause: pauseAndSave })
 
   useEffect(() => {
+    const updateVisibility = () => setPageVisible(document.visibilityState !== 'hidden')
+    document.addEventListener('visibilitychange', updateVisibility)
+    return () => document.removeEventListener('visibilitychange', updateVisibility)
+  }, [])
+
+  useEffect(() => {
+    if (state.status !== 'ready' || introStep === null || !pageVisible) return
+    const timer = window.setTimeout(() => {
+      if (document.visibilityState === 'hidden') return
+      if (introStep === 'message') setIntroStep(3)
+      else if (introStep > 1) setIntroStep((introStep - 1) as IntroStep)
+      else {
+        dispatch({ type: 'START', now: Date.now() })
+        setIntroStep(null)
+      }
+    }, introStep === 'message' ? 3000 : 1000)
+    return () => window.clearTimeout(timer)
+  }, [state.status, introStep, pageVisible])
+
+  useEffect(() => {
     if (!playing) return
     const timer = window.setInterval(() => dispatch({ type: 'TICK' }), 1000)
     return () => window.clearInterval(timer)
@@ -167,7 +192,11 @@ export function GameScreen({
         <div className={styles.playfieldArea} ref={playfieldAreaRef}>
           <div
             className={styles.playfield}
-            style={{ width: BASE_FRAME_WIDTH * sceneScale, height: BASE_FRAME_HEIGHT * sceneScale }}
+            style={{
+              width: BASE_FRAME_WIDTH * sceneScale,
+              height: BASE_FRAME_HEIGHT * sceneScale,
+              '--frame-border': `${5 * sceneScale}px`,
+            } as CSSProperties}
             data-testid="playfield"
           >
             <MazeBoard
@@ -179,6 +208,15 @@ export function GameScreen({
               pressedDirections={pressedDirections}
               scale={sceneScale}
             />
+            {state.status === 'ready' && introStep !== null && (
+              <div className={styles.introOverlay} role="status" aria-live="polite" data-testid="intro-overlay">
+                {introStep === 'message' ? (
+                  <span className={styles.introMessage}>동물을 구출해서 탈출해줘!</span>
+                ) : (
+                  <span className={styles.introNumber}>{introStep}</span>
+                )}
+              </div>
+            )}
             {state.status === 'paused' && (
               <PauseOverlay
                 onResume={() => dispatch({ type: 'RESUME', now: Date.now() })}
@@ -190,13 +228,17 @@ export function GameScreen({
                 status={state.status}
                 stage={state.stageConfig.stage}
                 clearTimeSeconds={state.stageConfig.timeLimitSeconds - state.remainingSeconds}
-                onRetrySameMaze={() => dispatch({ type: 'RETRY_SAME_MAZE' })}
-                onRestartNewMaze={() =>
+                onRetrySameMaze={() => {
+                  dispatch({ type: 'RETRY_SAME_MAZE' })
+                  setIntroStep(3)
+                }}
+                onRestartNewMaze={() => {
                   dispatch({
                     type: 'RESTART_NEW_MAZE',
                     maze: generateMaze(state.stageConfig.size),
                   })
-                }
+                  setIntroStep(3)
+                }}
                 onNextStage={onNextStage ? () => onNextStage(state.stageConfig.stage + 1) : undefined}
                 onCampaign={onCampaign}
               />
@@ -205,15 +247,6 @@ export function GameScreen({
         </div>
 
         <div className={styles.controlsArea} ref={controlsAreaRef}>
-          <div className={styles.actions}>
-            {state.status === 'ready' && (
-              <button type="button" onClick={() => dispatch({ type: 'START', now: Date.now() })}>
-                <StickerIcon kind="footprint" />
-                시작하기
-              </button>
-            )}
-          </div>
-
           <DirectionControls disabled={!playing} onMove={handleButtonMove} />
         </div>
       </div>
