@@ -21,6 +21,10 @@
   will-change: transform;
 }
 
+.boardWindowed {
+  will-change: auto;
+}
+
 .cell {
   position: relative;
   width: var(--cell-size);

@@ -55,7 +55,7 @@ function expectMinimapView(left: number, top: number, right: number, bottom: num
 describe('MazeBoard', () => {
   it.each([
     [1, 15],
-    [20, 37],
+    [5, 30],
   ])('renders stage %i as a %ix%i board', (stage, size) => {
     const state = stateFor(stage, size)
     const { container } = render(<MazeBoard state={state} onMove={vi.fn()} />)
@@ -86,7 +86,7 @@ describe('MazeBoard', () => {
     expect(minimap.parentElement).toBe(screen.getByTestId('maze-viewport'))
     expect(screen.getByTestId('maze-board')).not.toContainElement(minimap)
     expect(screen.getByTestId('minimap-walls')).toHaveAttribute('viewBox', `0 0 ${size * 2 + 1} ${size * 2 + 1}`)
-    expect(screen.getByTestId('minimap-walls').querySelectorAll('line')).toHaveLength(
+    expect(screen.getByTestId('minimap-walls').querySelector('path')?.getAttribute('d')?.match(/M/g)).toHaveLength(
       closedWallSlots(state.maze).length,
     )
     expect(minimap.querySelectorAll('[data-minimap-animal]')).toHaveLength(state.stageConfig.rescueCount)
@@ -106,6 +106,21 @@ describe('MazeBoard', () => {
     )
     expect(minimap.querySelectorAll('span')).toHaveLength(6 + state.stageConfig.rescueCount)
     expect(minimap.querySelector('[data-minimap-player]')).toBeNull()
+  })
+
+  it('renders only nearby tiles in a 100x100 maze and follows the camera to the exit', () => {
+    const state = stateFor(20, 100)
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const initialCells = container.querySelectorAll('[data-row][data-col]')
+    expect(initialCells.length).toBeGreaterThan(0)
+    expect(initialCells.length).toBeLessThan(200)
+    expect(screen.getByTestId('minimap-walls')).toHaveAttribute('viewBox', '0 0 201 201')
+    expect(screen.getByTestId('minimap-walls').querySelectorAll('path')).toHaveLength(1)
+    expect(screen.queryByRole('img', { name: '잠긴 탈출구' })).not.toBeInTheDocument()
+
+    rerender(<MazeBoard state={{ ...state, player: state.exit }} onMove={vi.fn()} />)
+    expect(screen.getByRole('img', { name: '잠긴 탈출구' })).toBeInTheDocument()
+    expect(container.querySelectorAll('[data-row][data-col]').length).toBeLessThan(200)
   })
 
   it('renders walls and changes rescued targets into visible followers', () => {
@@ -338,7 +353,7 @@ describe('MazeBoard', () => {
   })
 
   it('uses five distinct local animal images and keeps the animal in the follower line', () => {
-    const state = stateFor(20, 37)
+    const state = stateFor(20, 100)
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const waiting = Array.from(container.querySelectorAll('[data-asset-slot="rescue-target"]'))
     expect(new Set(waiting.map((element) => element.getAttribute('data-animal'))))
@@ -619,7 +634,7 @@ describe('MazeBoard', () => {
   })
 
   it('keeps the same follower image through rapid moves and direction changes', () => {
-    const base = stateFor(5, 20)
+    const base = stateFor(5, 30)
     const state = {
       ...base,
       rescues: base.rescues.map((rescue, index) => ({ ...rescue, rescued: index === 0 })),

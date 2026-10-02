@@ -31,7 +31,7 @@ function countOpenEdges(maze: Maze): number {
 }
 
 describe('generateMaze', () => {
-  it.each([15, 33])('creates a %ix%i maze with reset visit flags', (size) => {
+  it.each([15, 100])('creates a %ix%i maze with reset visit flags', (size) => {
     const maze = generateMaze(size, createSeededRandom(101))
 
     expect(maze.size).toBe(size)

@@ -46,14 +46,16 @@ export function loadSave(): SaveData {
     const current = parseStoredSave(window.localStorage.getItem(SAVE_KEY))
     if (isSaveData(current)) return current
 
-    const previous = parseStoredSave(window.localStorage.getItem('maze-rescue-game.save.v4'))
-    if (
-      previous && typeof previous === 'object' && !Array.isArray(previous) &&
-      'version' in previous && previous.version === 4
-    ) {
-      // A changed stage size cannot safely resume an old maze. Preserve campaign progress.
-      const migrated = { ...previous, version: SAVE_VERSION, currentSession: null }
-      if (isSaveData(migrated)) return migrated
+    for (const version of [5, 4]) {
+      const previous = parseStoredSave(window.localStorage.getItem(`maze-rescue-game.save.v${version}`))
+      if (
+        previous && typeof previous === 'object' && !Array.isArray(previous) &&
+        'version' in previous && previous.version === version
+      ) {
+        // A changed stage size cannot safely resume an old maze. Preserve campaign progress.
+        const migrated = { ...previous, version: SAVE_VERSION, currentSession: null }
+        if (isSaveData(migrated)) return migrated
+      }
     }
     return createEmptySave()
   } catch {
@@ -75,6 +77,7 @@ export function clearSave(): void {
   if (typeof window === 'undefined') return
   for (const key of [
     SAVE_KEY,
+    'maze-rescue-game.save.v5',
     'maze-rescue-game.save.v4',
     'maze-rescue-game.save.v3',
     'maze-rescue-game.save.v2',

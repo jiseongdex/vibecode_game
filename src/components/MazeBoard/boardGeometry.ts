@@ -11,6 +11,37 @@ export interface PassageSlot {
   position: Position
 }
 
+export interface GridBounds {
+  minRow: number
+  maxRow: number
+  minCol: number
+  maxCol: number
+}
+
+export function visibleGridBounds(
+  boardTiles: number,
+  cellSize: number,
+  viewWidth: number,
+  viewHeight: number,
+  offsetX: number,
+  offsetY: number,
+): GridBounds {
+  const overscan = 3
+  return {
+    minRow: Math.max(0, Math.floor(-offsetY / cellSize) - overscan),
+    maxRow: Math.min(boardTiles - 1, Math.ceil((viewHeight - offsetY) / cellSize) + overscan),
+    minCol: Math.max(0, Math.floor(-offsetX / cellSize) - overscan),
+    maxCol: Math.min(boardTiles - 1, Math.ceil((viewWidth - offsetX) / cellSize) + overscan),
+  }
+}
+
+export function isWithinGridBounds(position: Position, bounds: GridBounds | null): boolean {
+  return bounds === null || (
+    position.row >= bounds.minRow && position.row <= bounds.maxRow &&
+    position.col >= bounds.minCol && position.col <= bounds.maxCol
+  )
+}
+
 export function visualSize(mazeSize: number): number {
   return mazeSize * 2 + 1
 }

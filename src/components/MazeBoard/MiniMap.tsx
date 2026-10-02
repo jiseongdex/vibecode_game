@@ -25,7 +25,9 @@ function markerStyle(position: Position, boardTiles: number): CSSProperties {
 
 export function MiniMap({ maze, rescues, exit, viewport }: MiniMapProps): ReactElement {
   const boardTiles = visualSize(maze.size)
-  const wallSegments = useMemo(() => getMinimapWallSegments(maze), [maze])
+  const wallPath = useMemo(() => getMinimapWallSegments(maze)
+    .map(({ x1, y1, x2, y2 }) => `M${x1} ${y1}L${x2} ${y2}`)
+    .join(' '), [maze])
   const waiting = rescues.filter((target) => !target.rescued)
   const left = viewport.left * 100
   const top = viewport.top * 100
@@ -49,16 +51,7 @@ export function MiniMap({ maze, rescues, exit, viewport }: MiniMapProps): ReactE
           aria-hidden="true"
           data-testid="minimap-walls"
         >
-          {wallSegments.map(({ key, x1, y1, x2, y2 }) => (
-            <line
-              key={key}
-              className={styles.wallLine}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-            />
-          ))}
+          <path className={styles.wallLine} d={wallPath} />
         </svg>
 
         <span

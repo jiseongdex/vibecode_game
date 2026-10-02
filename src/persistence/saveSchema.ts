@@ -5,8 +5,8 @@ import { gridToLogicalPosition, isWalkableGridPosition } from '../game/mazeGrid'
 import { getMazeSize, getStageConfig, MAX_STAGE, MIN_STAGE } from '../game/stageConfig'
 import type { Cell, CellWalls, Direction, Maze, Position } from '../game/types'
 
-export const SAVE_VERSION = 5 as const
-export const SAVE_KEY = 'maze-rescue-game.save.v5'
+export const SAVE_VERSION = 6 as const
+export const SAVE_KEY = 'maze-rescue-game.save.v6'
 
 export type { StageRecord } from '../game/campaignProgress'
 

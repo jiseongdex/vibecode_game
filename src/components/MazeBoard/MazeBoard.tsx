@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
 import { mazeThemes } from '../../assets/assetManifest'
@@ -10,7 +10,7 @@ import { ExitSprite } from '../Exit/ExitSprite'
 import { PlayerSprite } from '../Player/PlayerSprite'
 import { RescueSprite } from '../Rescue/RescueSprite'
 import { foregroundDepth } from './boardDepth'
-import { openPassageSlots, visualCell, visualSize } from './boardGeometry'
+import { isWithinGridBounds, openPassageSlots, visibleGridBounds, visualCell, visualSize } from './boardGeometry'
 import { MazeCell } from './MazeCell'
 import { WallLayer } from './MazeWall'
 import { MiniMap } from './MiniMap'
@@ -44,6 +44,7 @@ const VIEWPORT_WIDTH = 1240
 const VIEWPORT_HEIGHT = 840
 const TARGET_VISIBLE_COLUMNS = 15.4
 const TARGET_VISIBLE_ROWS = 10.4
+const MAX_FULL_RENDER_MAZE_SIZE = 37
 const CELL_SIZE = Math.floor(Math.min(
   VIEWPORT_WIDTH / TARGET_VISIBLE_COLUMNS,
   VIEWPORT_HEIGHT / TARGET_VISIBLE_ROWS,
@@ -128,6 +129,19 @@ export function MazeBoard({
     cellSize,
     viewHeight,
   )
+  const visibleBounds = state.maze.size > MAX_FULL_RENDER_MAZE_SIZE
+    ? visibleGridBounds(boardTiles, cellSize, viewWidth, viewHeight, offsetX, offsetY)
+    : null
+  const passages = useMemo(() => openPassageSlots(state.maze), [state.maze])
+  const visibleRows = visibleBounds
+    ? state.maze.cells.slice(
+      Math.max(0, Math.ceil((visibleBounds.minRow - 1) / 2)),
+      Math.min(state.maze.size, Math.floor((visibleBounds.maxRow - 1) / 2) + 1),
+    )
+    : state.maze.cells
+  const visibleCells = visibleRows.flatMap((row) =>
+    row.filter((cell) => isWithinGridBounds(visualCell(cell), visibleBounds)),
+  )
   const minimapViewport = getMinimapViewportBounds({
     boardTiles, cellSize, viewWidth, viewHeight, offsetX, offsetY,
   })
@@ -138,7 +152,7 @@ export function MazeBoard({
     '--visual-size': boardTiles,
     '--foreground-depth': foregroundDepth(boardTiles),
     backgroundColor: theme.floorColor,
-    backgroundImage: `url("${theme.floor[0]}")`,
+    backgroundImage: visibleBounds ? undefined : `url("${theme.floor[0]}")`,
     transform: `translate3d(${offsetX}px, ${offsetY}px, 0)`,
   } as CSSProperties
   const unlockedExit = state.rescues.every((target) => target.rescued)
@@ -164,12 +178,12 @@ export function MazeBoard({
       style={{ width: viewWidth, height: viewHeight, borderWidth: 5 * sceneScale }}
     >
       <div
-        className={styles.board}
+        className={`${styles.board} ${visibleBounds ? styles.boardWindowed : ''}`}
         style={boardStyle}
         data-testid="maze-board"
         data-theme={themeId}
       >
-        {openPassageSlots(state.maze).map(({ cell, position }) => {
+        {passages.filter(({ position }) => isWithinGridBounds(position, visibleBounds)).map(({ cell, position }) => {
           const floorVariant = getFloorVariant(state.maze.seed, cell.row, cell.col)
           return (
             <span
@@ -187,38 +201,36 @@ export function MazeBoard({
             />
           )
         })}
-        {state.maze.cells.flatMap((row) =>
-          row.map((cell) => {
-            const position = { row: cell.row, col: cell.col }
-            const gridPosition = visualCell(position)
-            const isPlayer = samePosition(gridPosition, state.player)
-            const isExit = samePosition(gridPosition, state.exit)
-            const waiting = state.rescues.filter(
-              (target) => !target.rescued && samePosition(gridPosition, target),
-            )
-            const type = isPlayer
-              ? 'player'
-              : waiting.length > 0
-                ? 'rescue'
-                : state.followers.some((follower) => samePosition(gridPosition, follower))
-                  ? 'follower'
-                  : isExit
-                    ? 'exit'
-                    : 'floor'
+        {visibleCells.map((cell) => {
+          const position = { row: cell.row, col: cell.col }
+          const gridPosition = visualCell(position)
+          const isPlayer = samePosition(gridPosition, state.player)
+          const isExit = samePosition(gridPosition, state.exit)
+          const waiting = state.rescues.filter(
+            (target) => !target.rescued && samePosition(gridPosition, target),
+          )
+          const type = isPlayer
+            ? 'player'
+            : waiting.length > 0
+              ? 'rescue'
+              : state.followers.some((follower) => samePosition(gridPosition, follower))
+                ? 'follower'
+                : isExit
+                  ? 'exit'
+                  : 'floor'
 
-            return (
-              <MazeCell
-                key={`${cell.row}:${cell.col}`}
-                cell={cell}
-                type={type}
-                seed={state.maze.seed}
-                theme={theme}
-              >
-                {isExit && <ExitSprite unlocked={unlockedExit} position={gridPosition} />}
-              </MazeCell>
-            )
-          }),
-        )}
+          return (
+            <MazeCell
+              key={`${cell.row}:${cell.col}`}
+              cell={cell}
+              type={type}
+              seed={state.maze.seed}
+              theme={theme}
+            >
+              {isExit && <ExitSprite unlocked={unlockedExit} position={gridPosition} />}
+            </MazeCell>
+          )
+        })}
         {state.rescues.filter((target) => !target.rescued).map((target) => (
           <RescueSprite
             key={target.id}
@@ -246,7 +258,7 @@ export function MazeBoard({
           movementAttempt={movementAttempt}
           animateMove={animatePlayer}
         />
-        <WallLayer maze={state.maze} theme={theme} />
+        <WallLayer maze={state.maze} theme={theme} bounds={visibleBounds} />
       </div>
       <MiniMap
         maze={state.maze}

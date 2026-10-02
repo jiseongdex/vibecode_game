@@ -5,12 +5,14 @@ import type { MazeThemeAssets } from '../../assets/assetManifest'
 import { getWallVariant } from '../../assets/mazeTheme'
 import type { Maze } from '../../game/types'
 import { wallDepth } from './boardDepth'
-import { closedWallSlots } from './boardGeometry'
+import { closedWallSlots, isWithinGridBounds } from './boardGeometry'
+import type { GridBounds } from './boardGeometry'
 import styles from './MazeBoard.module.css'
 
 interface WallLayerProps {
   maze: Maze
   theme: MazeThemeAssets
+  bounds?: GridBounds | null
 }
 
 interface ObstacleTileProps {
@@ -56,7 +58,7 @@ function ObstacleTile({ row, col, variant, theme, side }: ObstacleTileProps) {
   )
 }
 
-export const WallLayer = memo(function WallLayer({ maze, theme }: WallLayerProps) {
+export const WallLayer = memo(function WallLayer({ maze, theme, bounds = null }: WallLayerProps) {
   const walls = useMemo(() => closedWallSlots(maze), [maze])
   const junctions = useMemo(() => {
     const adjacent = new Set<string>()
@@ -77,7 +79,7 @@ export const WallLayer = memo(function WallLayer({ maze, theme }: WallLayerProps
 
   return (
     <>
-      {walls.map(({ cell, side, position }) => (
+      {walls.filter(({ position }) => isWithinGridBounds(position, bounds)).map(({ cell, side, position }) => (
         <ObstacleTile
           key={`${position.row}:${position.col}`}
           row={position.row}
@@ -87,7 +89,7 @@ export const WallLayer = memo(function WallLayer({ maze, theme }: WallLayerProps
           side={side}
         />
       ))}
-      {junctions.map(({ row, col }) => (
+      {junctions.filter((position) => isWithinGridBounds(position, bounds)).map(({ row, col }) => (
         <ObstacleTile
           key={`${row}:${col}`}
           row={row}

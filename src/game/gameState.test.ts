@@ -48,8 +48,8 @@ function pathTo(from: Position, destination: Position, maze: ReturnType<typeof g
 describe('gameReducer', () => {
   it.each([
     [1, 15, 1],
-    [5, 20, 2],
-    [20, 37, 5],
+    [5, 30, 2],
+    [20, 100, 5],
   ])('assigns %i-stage targets from distinct animal types', (stage, size, rescueCount) => {
     const maze = generateMaze(size, createSeededRandom(stage))
     const state = createGameState(stage, maze)
@@ -195,7 +195,7 @@ describe('gameReducer', () => {
   })
 
   it('keeps followers in a line when rescuing more than one target', () => {
-    const maze = generateMaze(20, createSeededRandom(123))
+    const maze = generateMaze(30, createSeededRandom(123))
     let state = gameReducer(createGameState(5, maze), { type: 'START', now: 0 })
     for (const target of state.rescues) {
       const route = pathTo(state.player, target, state.maze)
@@ -231,7 +231,7 @@ describe('gameReducer', () => {
   })
 
   it('keeps rescued targets in pickup order for their matching follower sprites', () => {
-    const maze = generateMaze(20, createSeededRandom(123))
+    const maze = generateMaze(30, createSeededRandom(123))
     let state = gameReducer(createGameState(5, maze), { type: 'START', now: 0 })
     const targets = [...state.rescues].reverse()
     for (const target of targets) {
@@ -285,7 +285,7 @@ describe('gameReducer', () => {
   })
 
   it('preserves animal IDs by position when an old save is retried after rescue reordering', () => {
-    const state = createGameState(20, generateMaze(37, createSeededRandom(20)))
+    const state = createGameState(20, generateMaze(100, createSeededRandom(20)))
     const legacyTargets = state.rescues.map((target, index) => ({
       ...target,
       id: `rescue-${index + 1}`,
