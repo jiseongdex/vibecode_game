@@ -4,8 +4,8 @@
   bottom: clamp(6px, 1.5%, 18px);
   z-index: 1;
   box-sizing: border-box;
-  width: 24%;
-  padding: 6px;
+  width: 16%;
+  padding: 2px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background: var(--color-paper);
@@ -50,8 +50,8 @@
 }
 
 .animal {
-  width: 6px;
-  height: 6px;
+  width: clamp(2px, 1.6%, 4px);
+  height: clamp(2px, 1.6%, 4px);
   border-radius: 50%;
   background: var(--color-danger);
   box-shadow: 0 0 0 1px var(--color-paper);
@@ -59,8 +59,8 @@
 }
 
 .exit {
-  width: 7px;
-  height: 7px;
+  width: clamp(3px, 2%, 5px);
+  height: clamp(3px, 2%, 5px);
   background: var(--color-success);
   box-shadow: 0 0 0 1px var(--color-paper);
   transform: translate(-50%, -50%) rotate(45deg);

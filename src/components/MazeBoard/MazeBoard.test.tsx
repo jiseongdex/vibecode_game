@@ -220,13 +220,13 @@ describe('MazeBoard', () => {
     const { rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const board = screen.getByTestId('maze-board')
     const startTransform = board.style.transform
-    const boardPixels = 31 * 108
+    const boardPixels = 31 * 90
     expect(startTransform).toBe('translate3d(0px, 0px, 0)')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('108px')
-    expect(1240 / 108).toBeGreaterThan(11.4)
-    expect(1240 / 108).toBeLessThan(11.6)
-    expect(840 / 108).toBeGreaterThan(7.7)
-    expect(840 / 108).toBeLessThan(7.9)
+    expect(board.style.getPropertyValue('--cell-size')).toBe('90px')
+    expect(1240 / 90).toBeGreaterThan(13.7)
+    expect(1240 / 90).toBeLessThan(13.9)
+    expect(840 / 90).toBeGreaterThan(9.3)
+    expect(840 / 90).toBeLessThan(9.4)
     expectMinimapView(0, 0, 1240 / boardPixels, 840 / boardPixels)
 
     rerender(
@@ -236,8 +236,8 @@ describe('MazeBoard', () => {
       />,
     )
     expect(board.style.transform).not.toBe(startTransform)
-    expect(board.style.transform).toBe('translate3d(-730px, -930px, 0)')
-    expectMinimapView(730 / boardPixels, 930 / boardPixels, 1970 / boardPixels, 1770 / boardPixels)
+    expect(board.style.transform).toBe('translate3d(-505px, -705px, 0)')
+    expectMinimapView(505 / boardPixels, 705 / boardPixels, 1745 / boardPixels, 1545 / boardPixels)
 
     rerender(
       <MazeBoard
@@ -245,8 +245,8 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-838px, -1038px, 0)')
-    expectMinimapView(838 / boardPixels, 1038 / boardPixels, 2078 / boardPixels, 1878 / boardPixels)
+    expect(board.style.transform).toBe('translate3d(-595px, -795px, 0)')
+    expectMinimapView(595 / boardPixels, 795 / boardPixels, 1835 / boardPixels, 1635 / boardPixels)
 
     rerender(
       <MazeBoard
@@ -254,8 +254,8 @@ describe('MazeBoard', () => {
         onMove={vi.fn()}
       />,
     )
-    expect(board.style.transform).toBe('translate3d(-2108px, -2508px, 0)')
-    expectMinimapView(2108 / boardPixels, 2508 / boardPixels, 1, 1)
+    expect(board.style.transform).toBe('translate3d(-1550px, -1950px, 0)')
+    expectMinimapView(1550 / boardPixels, 1950 / boardPixels, 1, 1)
   })
 
   it('scales the frame, tiles, player, and camera together', () => {
@@ -270,35 +270,35 @@ describe('MazeBoard', () => {
 
     expect(viewport.style.width).toBe('1240px')
     expect(viewport.style.height).toBe('840px')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('108px')
-    expect(board.style.transform).toBe('translate3d(-730px, -930px, 0)')
+    expect(board.style.getPropertyValue('--cell-size')).toBe('90px')
+    expect(board.style.transform).toBe('translate3d(-505px, -705px, 0)')
 
     rerender(<MazeBoard state={state} onMove={vi.fn()} scale={0.5} />)
     expect(viewport.style.width).toBe('620px')
     expect(viewport.style.height).toBe('420px')
     expect(viewport.style.borderWidth).toBe('2.5px')
-    expect(board.style.getPropertyValue('--cell-size')).toBe('54px')
-    expect(board.style.transform).toBe('translate3d(-365px, -465px, 0)')
+    expect(board.style.getPropertyValue('--cell-size')).toBe('45px')
+    expect(board.style.transform).toBe('translate3d(-252.5px, -352.5px, 0)')
     expect(Number.parseFloat(player.style.translate)).toBe(Number.parseFloat(originalTranslate) / 2)
-    expect(620 / 54).toBe(1240 / 108)
-    expect(420 / 54).toBe(840 / 108)
-    expectMinimapView(730 / (31 * 108), 930 / (31 * 108), 1970 / (31 * 108), 1770 / (31 * 108))
+    expect(620 / 45).toBe(1240 / 90)
+    expect(420 / 45).toBe(840 / 90)
+    expectMinimapView(505 / (31 * 90), 705 / (31 * 90), 1745 / (31 * 90), 1545 / (31 * 90))
     expect(container.querySelector<HTMLElement>('[data-minimap-animal]')?.getAttribute('style')).toBe(originalAnimalPosition)
 
     rerender(<MazeBoard state={state} onMove={vi.fn()} scale={1.28} />)
     expect(Number.parseFloat(viewport.style.width)).toBeCloseTo(1240 * 1.28)
     expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(840 * 1.28)
     expect(Number.parseFloat(viewport.style.borderWidth)).toBeCloseTo(6.4)
-    expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(138.24)
+    expect(Number.parseFloat(board.style.getPropertyValue('--cell-size'))).toBeCloseTo(115.2)
     const enlargedCamera = board.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px, 0\)/)
-    expect(Number(enlargedCamera?.[1])).toBeCloseTo(-730 * 1.28)
-    expect(Number(enlargedCamera?.[2])).toBeCloseTo(-930 * 1.28)
+    expect(Number(enlargedCamera?.[1])).toBeCloseTo(-505 * 1.28)
+    expect(Number(enlargedCamera?.[2])).toBeCloseTo(-705 * 1.28)
     expect(Number.parseFloat(player.style.translate)).toBeCloseTo(Number.parseFloat(originalTranslate) * 1.28)
-    expectMinimapView(730 / (31 * 108), 930 / (31 * 108), 1970 / (31 * 108), 1770 / (31 * 108))
+    expectMinimapView(505 / (31 * 90), 705 / (31 * 90), 1745 / (31 * 90), 1545 / (31 * 90))
     expect(container.querySelector<HTMLElement>('[data-minimap-animal]')?.getAttribute('style')).toBe(originalAnimalPosition)
 
     rerender(<MazeBoard state={{ ...state, player: { row: 29, col: 29 } }} onMove={vi.fn()} scale={0.5} />)
-    expect(board.style.transform).toBe('translate3d(-1054px, -1254px, 0)')
+    expect(board.style.transform).toBe('translate3d(-775px, -975px, 0)')
   })
 
   it('uses five distinct local animal images and keeps the animal in the follower line', () => {
