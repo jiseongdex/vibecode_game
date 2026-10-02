@@ -56,7 +56,7 @@
   width: var(--wall-image-size, 185%);
   height: var(--wall-image-size, 185%);
   object-fit: contain;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) rotate(var(--wall-image-rotation, 0deg));
   filter: drop-shadow(0 2px 2px #24331e55);
 }
 

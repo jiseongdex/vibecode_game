@@ -67,6 +67,7 @@ export interface MazeThemeAssets {
   floor: readonly [string, string]
   wall: readonly [string, string, string]
   wallDisplaySize: readonly [number, number, number]
+  wallRotateOnVertical: readonly [boolean, boolean, boolean]
   floorColor: string
   wallColor: string
 }
@@ -76,12 +77,14 @@ function themeAssets(
   floorColor: string,
   wallColor: string,
   wallDisplaySize: readonly [number, number, number] = [185, 185, 185],
+  wallRotateOnVertical: readonly [boolean, boolean, boolean] = [false, false, false],
 ): MazeThemeAssets {
   const base = `/assets/maps/maze-${theme}`
   return {
     floor: [`${base}-floor-01.png`, `${base}-floor-02.png`],
     wall: [`${base}-wall-01.png`, `${base}-wall-02.png`, `${base}-wall-03.png`],
     wallDisplaySize,
+    wallRotateOnVertical,
     floorColor,
     wallColor,
   }
@@ -89,9 +92,9 @@ function themeAssets(
 
 export const mazeThemes: Record<MazeThemeId, MazeThemeAssets> = {
   forest: themeAssets('forest', '#dce9b5', '#557b4a'),
-  candy: themeAssets('candy', '#ffe1ed', '#d3578a', [185, 135, 185]),
-  ice: themeAssets('ice', '#dff5fb', '#5da9ca', [185, 185, 135]),
-  desert: themeAssets('desert', '#f6dca8', '#b47a3c', [185, 185, 135]),
+  candy: themeAssets('candy', '#ffe1ed', '#d3578a', [185, 135, 185], [false, true, false]),
+  ice: themeAssets('ice', '#dff5fb', '#5da9ca', [185, 185, 135], [false, false, true]),
+  desert: themeAssets('desert', '#f6dca8', '#b47a3c', [185, 185, 135], [false, false, true]),
 }
 
 export function getRescueAnimal(id: string) {

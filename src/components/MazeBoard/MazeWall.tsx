@@ -23,12 +23,14 @@ interface ObstacleTileProps {
 
 function ObstacleTile({ row, col, variant, theme, side }: ObstacleTileProps) {
   const src = theme.wall[variant]
+  const rotate = (side === 'left' || side === 'right') && theme.wallRotateOnVertical[variant]
   const style = {
     gridRow: row + 1,
     gridColumn: col + 1,
     zIndex: wallDepth(row),
     '--wall-color': theme.wallColor,
     '--wall-image-size': `${theme.wallDisplaySize[variant]}%`,
+    '--wall-image-rotation': rotate ? '90deg' : '0deg',
   } as CSSProperties
 
   return (
