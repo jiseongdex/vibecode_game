@@ -32,14 +32,12 @@ interface MotionSnapshot {
   seed: number
   player: Position
   playerFacing: Direction
-  followers: Position[]
 }
 
 interface MotionState {
   movementAttempt: number
   playerFacing: Direction
   playerMoved: boolean
-  followerMoved: boolean[]
 }
 
 const VIEWPORT_WIDTH = 1240
@@ -81,7 +79,6 @@ export function MazeBoard({
     seed: state.maze.seed,
     player: { ...state.player },
     playerFacing: state.playerFacing,
-    followers: state.followers.map((follower) => ({ ...follower })),
   })
   const [motion, setMotion] = useState<MotionState | null>(null)
 
@@ -92,7 +89,6 @@ export function MazeBoard({
       seed: state.maze.seed,
       player: { ...state.player },
       playerFacing: state.playerFacing,
-      followers: state.followers.map((follower) => ({ ...follower })),
     }
     previous.current = next
 
@@ -104,12 +100,6 @@ export function MazeBoard({
         movementAttempt: next.movementAttempt,
         playerFacing: next.playerFacing,
         playerMoved: !samePosition(last.player, next.player),
-        followerMoved: next.followers.map((follower, index) =>
-          Boolean(
-            last.followers[index] &&
-            !samePosition(last.followers[index], follower),
-          ),
-        ),
       })
     } else if (
       next.seed !== last.seed ||
@@ -246,8 +236,6 @@ export function MazeBoard({
             following
             order={index + 1}
             facing={state.followerFacings[index] ?? 'down'}
-            movementAttempt={movementAttempt}
-            animateMove={currentMotion?.followerMoved[index] ?? false}
           />
         ))}
         <PlayerSprite

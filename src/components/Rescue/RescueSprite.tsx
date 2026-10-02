@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 
 import { gameAssets, getRescueAnimal } from '../../assets/assetManifest'
@@ -12,8 +11,6 @@ interface RescueSpriteProps {
   facing?: Direction
   following?: boolean
   order?: number
-  movementAttempt?: number
-  animateMove?: boolean
 }
 
 export function RescueSprite({
@@ -23,29 +20,11 @@ export function RescueSprite({
   facing = 'down',
   following = false,
   order,
-  movementAttempt = 0,
-  animateMove = false,
 }: RescueSpriteProps) {
-  const [hopping, setHopping] = useState(false)
   const animal = getRescueAnimal(animalId)
   const src = animal.sprites[facing]
   const spriteLeft = Math.round((position.col - 0.2) * cellSize * 100) / 100
   const spriteTop = Math.round((position.row - 0.2) * cellSize * 100) / 100
-
-  useEffect(() => {
-    if (
-      !following ||
-      !animateMove ||
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    ) {
-      setHopping(false)
-      return
-    }
-
-    setHopping(true)
-    const stop = window.setTimeout(() => setHopping(false), 220)
-    return () => window.clearTimeout(stop)
-  }, [following, animateMove, movementAttempt])
 
   return (
     <span
@@ -64,13 +43,9 @@ export function RescueSprite({
       data-facing={facing}
       data-grid-row={position.row}
       data-grid-col={position.col}
-      data-motion={hopping ? 'hop' : 'none'}
       title={animal.name}
     >
-      <span
-        key={movementAttempt}
-        className={`${styles.spriteVisual} ${hopping ? styles.hopping : ''}`}
-      >
+      <span className={styles.spriteVisual}>
         <img
           key={src}
           src={src}

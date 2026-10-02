@@ -616,38 +616,44 @@ describe('MazeBoard', () => {
     }
   })
 
-  it('hops only existing followers that changed cells', () => {
-    vi.useFakeTimers()
-    try {
-      const state = {
-        ...stateFor(1, 15),
-        rescues: [{ ...stateFor(1, 15).rescues[0], rescued: true }],
-        followers: [{ row: 1, col: 1 }],
-        followerFacings: ['down' as const],
-      }
-      const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
-      expect(container.querySelector('[data-asset-slot="follower"]')).toHaveAttribute('data-motion', 'none')
-
-      const moved = {
-        ...state,
-        player: { row: 1, col: 2 },
-        followers: [{ row: 1, col: 2 }, { row: 1, col: 3 }],
-        followerFacings: ['right' as const, 'down' as const],
-      }
-      rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
-      const followers = container.querySelectorAll('[data-asset-slot="follower"]')
-      expect(followers[0]).toHaveAttribute('data-motion', 'hop')
-      expect(followers[0]).toHaveAttribute('data-facing', 'right')
-      expect(followers[0].querySelector('img')).toHaveAttribute(
-        'src',
-        getRescueAnimal(state.rescues[0].id).sprites.right,
-      )
-      expect(followers[1]).toHaveAttribute('data-motion', 'none')
-      act(() => vi.advanceTimersByTime(220))
-      expect(container.querySelector('[data-asset-slot="follower"]')).toHaveAttribute('data-motion', 'none')
-    } finally {
-      vi.useRealTimers()
+  it('keeps a follower in place in the DOM while updating position and facing without hopping', () => {
+    const base = stateFor(5, 19)
+    const state = {
+      ...base,
+      rescues: base.rescues.map((rescue, index) => ({ ...rescue, rescued: index === 0 })),
+      followers: [{ row: 1, col: 1 }],
+      followerFacings: ['down' as const],
     }
+    const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
+    const firstFollower = container.querySelector<HTMLElement>('[data-asset-slot="follower"]')!
+    const firstVisual = firstFollower.firstElementChild
+    const cellSize = Number.parseFloat(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size'))
+
+    const moved = {
+      ...state,
+      player: { row: 1, col: 2 },
+      rescues: base.rescues.map((rescue) => ({ ...rescue, rescued: true })),
+      followers: [{ row: 1, col: 2 }, { row: 1, col: 3 }],
+      followerFacings: ['right' as const, 'down' as const],
+    }
+    rerender(<MazeBoard state={moved} onMove={vi.fn()} movementAttempt={1} />)
+    const followers = container.querySelectorAll<HTMLElement>('[data-asset-slot="follower"]')
+    expect(followers).toHaveLength(2)
+    expect(followers[0]).toBe(firstFollower)
+    expect(followers[0].firstElementChild).toBe(firstVisual)
+    expect(followers[0]).toHaveAttribute('data-grid-row', '1')
+    expect(followers[0]).toHaveAttribute('data-grid-col', '2')
+    expect(followers[0].style.top).toBe(`${Math.round(0.8 * cellSize * 100) / 100}px`)
+    expect(followers[0].style.left).toBe(`${Math.round(1.8 * cellSize * 100) / 100}px`)
+    expect(followers[0]).toHaveAttribute('data-facing', 'right')
+    expect(followers[0].querySelector('img')).toHaveAttribute(
+      'src',
+      getRescueAnimal(state.rescues[0].id).sprites.right,
+    )
+    expect(followers[1]).toHaveAttribute('data-follower-order', '2')
+    expect(followers[1]).toHaveAttribute('data-animal', getRescueAnimal(base.rescues[1].id).name)
+    expect(followers[0]).not.toHaveAttribute('data-motion')
+    expect(followers[1]).not.toHaveAttribute('data-motion')
   })
 
   it('shows stable themed floors and one obstacle per closed boundary', () => {
