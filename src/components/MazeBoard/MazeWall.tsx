@@ -28,6 +28,7 @@ function ObstacleTile({ row, col, variant, theme, side }: ObstacleTileProps) {
     gridColumn: col + 1,
     zIndex: wallDepth(row),
     '--wall-color': theme.wallColor,
+    '--wall-image-size': `${theme.wallDisplaySize[variant]}%`,
   } as CSSProperties
 
   return (
