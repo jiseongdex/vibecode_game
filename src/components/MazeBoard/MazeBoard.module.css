@@ -157,7 +157,8 @@
 
 .followerSprite {
   z-index: var(--foreground-depth);
-  transition: top 120ms linear, left 120ms linear;
+  transition: translate 120ms linear;
+  will-change: translate;
   font-size: calc(var(--cell-size) * 0.5);
   filter: drop-shadow(0 2px 2px #31542377);
 }

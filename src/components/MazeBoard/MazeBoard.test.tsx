@@ -196,8 +196,9 @@ describe('MazeBoard', () => {
       `${Math.round((state.player.col - 0.3) * cellSize * 100) / 100}px ${Math.round((state.player.row - 0.3) * cellSize * 100) / 100}px`,
     )
     for (const target of targets) {
-      expect(target.style.top).toBe(`${Math.round((Number(target.dataset.gridRow) - 0.2) * cellSize * 100) / 100}px`)
-      expect(target.style.left).toBe(`${Math.round((Number(target.dataset.gridCol) - 0.2) * cellSize * 100) / 100}px`)
+      expect(target.style.translate).toBe(
+        `${Math.round((Number(target.dataset.gridCol) - 0.2) * cellSize * 100) / 100}px ${Math.round((Number(target.dataset.gridRow) - 0.2) * cellSize * 100) / 100}px`,
+      )
     }
 
     rerender(<MazeBoard
@@ -212,8 +213,9 @@ describe('MazeBoard', () => {
     const follower = container.querySelector<HTMLElement>('[data-asset-slot="follower"]')!
     expect(follower.dataset.gridRow).toBe(String(connector.row))
     expect(follower.dataset.gridCol).toBe(String(connector.col))
-    expect(follower.style.top).toBe(`${Math.round((connector.row - 0.2) * cellSize * 100) / 100}px`)
-    expect(follower.style.left).toBe(`${Math.round((connector.col - 0.2) * cellSize * 100) / 100}px`)
+    expect(follower.style.translate).toBe(
+      `${Math.round((connector.col - 0.2) * cellSize * 100) / 100}px ${Math.round((connector.row - 0.2) * cellSize * 100) / 100}px`,
+    )
     expect(follower.parentElement).toBe(screen.getByTestId('maze-board'))
   })
 
@@ -616,7 +618,7 @@ describe('MazeBoard', () => {
     }
   })
 
-  it('keeps a follower in place in the DOM while updating position and facing without hopping', () => {
+  it('keeps the same follower image through rapid moves and direction changes', () => {
     const base = stateFor(5, 19)
     const state = {
       ...base,
@@ -627,6 +629,7 @@ describe('MazeBoard', () => {
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const firstFollower = container.querySelector<HTMLElement>('[data-asset-slot="follower"]')!
     const firstVisual = firstFollower.firstElementChild
+    const firstImage = firstFollower.querySelector('img')!
     const cellSize = Number.parseFloat(screen.getByTestId('maze-board').style.getPropertyValue('--cell-size'))
 
     const moved = {
@@ -641,10 +644,12 @@ describe('MazeBoard', () => {
     expect(followers).toHaveLength(2)
     expect(followers[0]).toBe(firstFollower)
     expect(followers[0].firstElementChild).toBe(firstVisual)
+    expect(followers[0].querySelector('img')).toBe(firstImage)
     expect(followers[0]).toHaveAttribute('data-grid-row', '1')
     expect(followers[0]).toHaveAttribute('data-grid-col', '2')
-    expect(followers[0].style.top).toBe(`${Math.round(0.8 * cellSize * 100) / 100}px`)
-    expect(followers[0].style.left).toBe(`${Math.round(1.8 * cellSize * 100) / 100}px`)
+    expect(followers[0].style.translate).toBe(
+      `${Math.round(1.8 * cellSize * 100) / 100}px ${Math.round(0.8 * cellSize * 100) / 100}px`,
+    )
     expect(followers[0]).toHaveAttribute('data-facing', 'right')
     expect(followers[0].querySelector('img')).toHaveAttribute(
       'src',
@@ -654,6 +659,27 @@ describe('MazeBoard', () => {
     expect(followers[1]).toHaveAttribute('data-animal', getRescueAnimal(base.rescues[1].id).name)
     expect(followers[0]).not.toHaveAttribute('data-motion')
     expect(followers[1]).not.toHaveAttribute('data-motion')
+
+    const next = {
+      ...moved,
+      player: { row: 2, col: 2 },
+      followers: [{ row: 2, col: 2 }, { row: 1, col: 2 }],
+      followerFacings: ['down' as const, 'left' as const],
+    }
+    rerender(<MazeBoard state={next} onMove={vi.fn()} movementAttempt={2} />)
+    expect(firstFollower.querySelector('img')).toBe(firstImage)
+    expect(firstFollower.style.translate).toBe(
+      `${Math.round(1.8 * cellSize * 100) / 100}px ${Math.round(1.8 * cellSize * 100) / 100}px`,
+    )
+    expect(firstFollower).toHaveAttribute('data-facing', 'down')
+    expect(firstImage).toHaveAttribute('src', getRescueAnimal(state.rescues[0].id).sprites.down)
+
+    fireEvent.error(firstImage)
+    expect(firstImage).toHaveAttribute('hidden')
+    rerender(<MazeBoard state={{ ...next, followerFacings: ['right', 'left'] }} onMove={vi.fn()} movementAttempt={3} />)
+    expect(firstFollower.querySelector('img')).toBe(firstImage)
+    fireEvent.load(firstImage)
+    expect(firstImage).not.toHaveAttribute('hidden')
   })
 
   it('shows stable themed floors and one obstacle per closed boundary', () => {
