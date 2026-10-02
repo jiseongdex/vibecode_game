@@ -1,4 +1,5 @@
 import { createGameState, gameReducer } from './gameState'
+import { rescueAnimals } from '../assets/assetManifest'
 import { createSeededRandom, generateMaze, getReachablePositions } from './mazeGenerator'
 import { isWalkableGridPosition, logicalToGridPosition } from './mazeGrid'
 import type { Direction, Position } from './types'
@@ -45,6 +46,34 @@ function pathTo(from: Position, destination: Position, maze: ReturnType<typeof g
 }
 
 describe('gameReducer', () => {
+  it.each([
+    [1, 15, 1],
+    [5, 19, 2],
+    [20, 33, 5],
+  ])('assigns %i-stage targets from distinct animal types', (stage, size, rescueCount) => {
+    const maze = generateMaze(size, createSeededRandom(stage))
+    const state = createGameState(stage, maze)
+    const ids = state.rescues.map((target) => target.id)
+
+    expect(ids).toHaveLength(rescueCount)
+    expect(new Set(ids).size).toBe(rescueCount)
+    expect(ids.every((id) => /^rescue-[1-5]$/.test(id))).toBe(true)
+    expect(createGameState(stage, maze).rescues).toEqual(state.rescues)
+    if (stage === 20) {
+      expect(new Set(ids)).toEqual(new Set(
+        rescueAnimals.map((_, index) => `rescue-${index + 1}`),
+      ))
+    }
+  })
+
+  it('varies animal assignments across newly generated mazes', () => {
+    const assignments = Array.from({ length: 12 }, (_, seed) =>
+      createGameState(1, generateMaze(15, createSeededRandom(seed + 1)))
+        .rescues[0].id,
+    )
+    expect(new Set(assignments).size).toBeGreaterThan(1)
+  })
+
   it('places distinct targets and a farthest exit, and starts only once', () => {
     const ready = setup()
     const reachable = getReachablePositions(ready.maze, { row: 0, col: 0 })
@@ -253,5 +282,28 @@ describe('gameReducer', () => {
     expect(restarted.playerFacing).toBe('down')
     expect(restarted.followerFacings).toEqual([])
     expect(gameReducer(original, { type: 'RETRY_SAME_MAZE' })).toBe(original)
+  })
+
+  it('preserves animal IDs by position when an old save is retried after rescue reordering', () => {
+    const state = createGameState(20, generateMaze(33, createSeededRandom(20)))
+    const legacyTargets = state.rescues.map((target, index) => ({
+      ...target,
+      id: `rescue-${index + 1}`,
+    }))
+    const lost = {
+      ...state,
+      status: 'lost' as const,
+      rescues: [...legacyTargets].reverse(),
+      remainingSeconds: 0,
+    }
+    const retry = gameReducer(lost, { type: 'RETRY_SAME_MAZE' })
+    const idsByPosition = new Map(
+      legacyTargets.map((target) => [`${target.row}:${target.col}`, target.id]),
+    )
+
+    expect(retry.rescues.map((target) => target.id)).toEqual(
+      retry.rescues.map((target) => idsByPosition.get(`${target.row}:${target.col}`)),
+    )
+    expect(retry.rescues.every((target) => !target.rescued)).toBe(true)
   })
 })

@@ -1,5 +1,6 @@
+import { rescueAnimals } from '../assets/assetManifest'
 import { placeEntities, moveFollowers } from './entityPlacement'
-import { generateMaze } from './mazeGenerator'
+import { createSeededRandom, generateMaze } from './mazeGenerator'
 import { getStageConfig } from './stageConfig'
 import { isWalkableGridPosition, logicalToGridPosition } from './mazeGrid'
 import type {
@@ -59,6 +60,18 @@ function directionFromStep(from: Position, to: Position): Direction | null {
   return null
 }
 
+function shuffledRescueIds(seed: number): string[] {
+  const ids = rescueAnimals.map((_, index) => `rescue-${index + 1}`)
+  const random = createSeededRandom(seed ^ 0x51a3c7d2)
+
+  for (let index = ids.length - 1; index > 0; index -= 1) {
+    const pick = Math.floor(random() * (index + 1))
+    ;[ids[index], ids[pick]] = [ids[pick], ids[index]]
+  }
+
+  return ids
+}
+
 export function createGameState(stage: number, maze?: Maze): GameState {
   const stageConfig = getStageConfig(stage)
   const selectedMaze = maze ?? generateMaze(stageConfig.size)
@@ -66,18 +79,23 @@ export function createGameState(stage: number, maze?: Maze): GameState {
   if (selectedMaze.size !== stageConfig.size) {
     throw new RangeError('Maze size does not match the stage configuration.')
   }
+  if (stageConfig.rescueCount > rescueAnimals.length) {
+    throw new RangeError('Rescue count exceeds the available animal types.')
+  }
 
   const { exit, rescues } = placeEntities(
     selectedMaze,
     stageConfig.rescueCount,
   )
+  const animalIds = shuffledRescueIds(selectedMaze.seed)
   return {
     stageConfig,
     maze: selectedMaze,
     player: logicalToGridPosition({ row: 0, col: 0 }),
     exit: logicalToGridPosition(exit),
-    rescues: rescues.map((target) => ({
+    rescues: rescues.map((target, index) => ({
       ...target,
+      id: animalIds[index],
       ...logicalToGridPosition(target),
     })),
     followers: [],
@@ -179,9 +197,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         pausedAt: null,
       }
 
-    case 'RETRY_SAME_MAZE':
+    case 'RETRY_SAME_MAZE': {
       if (state.status !== 'lost' && state.status !== 'won') return state
-      return createGameState(state.stageConfig.stage, state.maze)
+      const retry = createGameState(state.stageConfig.stage, state.maze)
+      const previousIds = new Map(
+        state.rescues.map((target) => [`${target.row}:${target.col}`, target.id]),
+      )
+      return {
+        ...retry,
+        rescues: retry.rescues.map((target) => ({
+          ...target,
+          id: previousIds.get(`${target.row}:${target.col}`) ?? target.id,
+        })),
+      }
+    }
 
     case 'RESTART_NEW_MAZE':
       return createGameState(state.stageConfig.stage, action.maze)

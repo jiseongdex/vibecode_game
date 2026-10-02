@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 
+import { getRescueAnimal, rescueAnimals } from '../../assets/assetManifest'
 import { getMazeTheme } from '../../assets/mazeTheme'
 import { createGameState, gameReducer } from '../../game/gameState'
 import { createSeededRandom, generateMaze } from '../../game/mazeGenerator'
@@ -304,9 +305,8 @@ describe('MazeBoard', () => {
     const state = stateFor(20, 33)
     const { container, rerender } = render(<MazeBoard state={state} onMove={vi.fn()} />)
     const waiting = Array.from(container.querySelectorAll('[data-asset-slot="rescue-target"]'))
-    expect(waiting.map((element) => element.getAttribute('data-animal'))).toEqual([
-      '토끼', '여우', '곰', '흰 고양이', '강아지',
-    ])
+    expect(new Set(waiting.map((element) => element.getAttribute('data-animal'))))
+      .toEqual(new Set(rescueAnimals.map((animal) => animal.name)))
     expect(new Set(waiting.map((element) => element.querySelector('img')?.getAttribute('src'))).size).toBe(5)
 
     const rescued = state.rescues[4]
@@ -317,8 +317,9 @@ describe('MazeBoard', () => {
       followerFacings: ['down'],
     }} onMove={vi.fn()} />)
     const follower = container.querySelector('[data-asset-slot="follower"]')
-    expect(follower).toHaveAttribute('data-animal', '강아지')
-    expect(follower?.querySelector('img')).toHaveAttribute('src', '/assets/animals/rescue-dog-front.png')
+    const rescuedAnimal = getRescueAnimal(rescued.id)
+    expect(follower).toHaveAttribute('data-animal', rescuedAnimal.name)
+    expect(follower?.querySelector('img')).toHaveAttribute('src', rescuedAnimal.sprites.down)
   })
 
   it('keeps emoji fallback visible when a local image fails to load', () => {
@@ -603,7 +604,10 @@ describe('MazeBoard', () => {
       const followers = container.querySelectorAll('[data-asset-slot="follower"]')
       expect(followers[0]).toHaveAttribute('data-motion', 'hop')
       expect(followers[0]).toHaveAttribute('data-facing', 'right')
-      expect(followers[0].querySelector('img')).toHaveAttribute('src', '/assets/animals/rescue-rabbit-right.png')
+      expect(followers[0].querySelector('img')).toHaveAttribute(
+        'src',
+        getRescueAnimal(state.rescues[0].id).sprites.right,
+      )
       expect(followers[1]).toHaveAttribute('data-motion', 'none')
       act(() => vi.advanceTimersByTime(220))
       expect(container.querySelector('[data-asset-slot="follower"]')).toHaveAttribute('data-motion', 'none')

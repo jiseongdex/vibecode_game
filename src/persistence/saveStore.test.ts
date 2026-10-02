@@ -59,6 +59,32 @@ describe('saveStore', () => {
     expect(loadSave()).toEqual(createEmptySave())
   })
 
+  it('restores randomized and legacy animal IDs without changing the save version', () => {
+    const maze = generateMaze(19, createSeededRandom(51))
+    const ready = createGameState(5, maze)
+    const save: SaveData = {
+      version: SAVE_VERSION,
+      unlockedStage: 5,
+      stageRecords: {},
+      currentSession: makeSavedSession(ready, 100),
+    }
+
+    saveSave(save)
+    expect(loadSave().currentSession?.state.rescues.map((target) => target.id))
+      .toEqual(ready.rescues.map((target) => target.id))
+
+    const legacyTargets = ready.rescues.map((target, index) => ({
+      ...target,
+      id: `rescue-${index + 1}`,
+    }))
+    saveSave({
+      ...save,
+      currentSession: makeSavedSession({ ...ready, rescues: legacyTargets }, 200),
+    })
+    expect(loadSave().currentSession?.state.rescues.map((target) => target.id))
+      .toEqual(legacyTargets.map((target) => target.id))
+  })
+
   it('ignores malformed, old-version, and structurally invalid saves', () => {
     window.localStorage.setItem(SAVE_KEY, '{broken json')
     expect(loadSave()).toEqual(createEmptySave())
