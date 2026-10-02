@@ -46,6 +46,7 @@
   border-color: var(--color-danger);
   background: #ffe5e2;
   color: var(--color-danger);
+  font-family: var(--font-message);
 }
 
 .badge.urgent {

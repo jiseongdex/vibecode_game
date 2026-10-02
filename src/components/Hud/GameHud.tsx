@@ -44,7 +44,7 @@ export function GameHud({
         </span>
       </div>
       <button type="button" onClick={onPause} disabled={!canPause}>
-        일시정지
+        잠깐 쉬기
       </button>
     </header>
   )

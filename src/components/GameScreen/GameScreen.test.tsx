@@ -58,7 +58,7 @@ describe('GameScreen', () => {
       expect(frame.style.width).toBe('625px')
       expect(frame.style.height).toBe('425px')
       expect(board.style.getPropertyValue('--cell-size')).toBe('54px')
-      expect(screen.getByRole('button', { name: '일시정지' })).toBeEnabled()
+      expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeEnabled()
 
       const opening = initialState.maze.cells[0][0].walls.right ? 'ArrowDown' : 'ArrowRight'
       fireEvent.keyDown(window, { key: opening })
@@ -133,7 +133,7 @@ describe('GameScreen', () => {
       screen.getByText(`남은 시간: ${formatTime(initialState.remainingSeconds - 1)}`),
     ).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: '일시정지' }))
+    fireEvent.click(screen.getByRole('button', { name: '잠깐 쉬기' }))
     act(() => vi.advanceTimersByTime(2000))
     expect(
       screen.getByText(`남은 시간: ${formatTime(initialState.remainingSeconds - 1)}`),
@@ -180,7 +180,7 @@ describe('GameScreen', () => {
 
     fireEvent.keyDown(window, { key: 'ArrowUp', code: 'ArrowUp' })
     expect(player).toHaveAttribute('data-motion', 'walk')
-    fireEvent.click(screen.getByRole('button', { name: '일시정지' }))
+    fireEvent.click(screen.getByRole('button', { name: '잠깐 쉬기' }))
     expect(player).toHaveAttribute('data-motion', 'none')
     expect(player.style.translate).toBe(startPosition)
   })

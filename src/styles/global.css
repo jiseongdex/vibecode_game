@@ -9,6 +9,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Jua';
+  src: url('/assets/fonts/Jua-Regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -49,6 +57,7 @@ body > #root > main > header {
 body > #root > main > header p {
   margin: 0;
   color: var(--color-muted);
+  font-family: var(--font-message);
   font-size: clamp(26px, 3vw, 32px);
   line-height: 1.3;
 }

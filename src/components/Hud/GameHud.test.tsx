@@ -23,7 +23,7 @@ describe('GameHud and overlays', () => {
     expect(screen.getByRole('timer')).toHaveAttribute('aria-live', 'polite')
     expect(screen.getByRole('status')).toHaveTextContent('구출: 1/2')
     expect(screen.queryByText(/이동:/)).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '일시정지' }))
+    fireEvent.click(screen.getByRole('button', { name: '잠깐 쉬기' }))
     expect(onPause).toHaveBeenCalledTimes(1)
     expect(formatTime(0)).toBe('00:00')
   })
@@ -42,7 +42,7 @@ describe('GameHud and overlays', () => {
 
     expect(screen.getByText('남은 시간: 00:10')).toHaveAttribute('data-urgent', 'true')
     expect(screen.getByText('⚠️ 시간 부족')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '일시정지' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '잠깐 쉬기' })).toBeDisabled()
   })
 
   it('resumes from pause and offers both timeout retry choices', () => {
