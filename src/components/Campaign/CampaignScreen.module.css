@@ -1,7 +1,11 @@
 .campaign {
-  width: min(100%, 1020px);
-  margin: 18px auto 30px;
-  padding: 24px 30px 32px;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  margin: 0;
+  padding: 14px 18px 18px;
   border: 2px solid rgb(70 102 81 / 54%);
   border-radius: 32px;
   background:
@@ -28,20 +32,20 @@
 
 .campaign h2 {
   margin: 0;
-  font-size: 44px;
+  font-size: 34px;
   font-weight: 400;
   line-height: 1.15;
 }
 
-.campaign p { margin: 6px 0 12px; }
+.campaign p { margin: 4px 0 6px; }
 
 .progress, .pickerLabel {
-  font-size: 27px;
+  font-size: 21px;
   line-height: 1.3;
 }
 
 .intro {
-  font-size: 21px;
+  font-size: 17px;
   line-height: 1.3;
 }
 
@@ -56,45 +60,32 @@
   background: var(--color-mint);
 }
 
-.leaderboardButton {
-  display: block;
-  min-height: 44px;
-  margin: 8px 0 12px;
-  padding: 6px 18px;
-  border: 2px solid var(--color-border);
-  border-radius: 999px;
-  background: #fff0dc;
-  color: var(--color-ink);
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.leaderboardButton:hover { background: var(--color-mint); }
-
 .campaign .pickerLabel {
-  margin-top: 14px;
+  margin-top: 4px;
   margin-bottom: 2px;
   text-align: center;
 }
 
 .complete {
-  padding: 8px 14px;
+  padding: 5px 10px;
   border-radius: 18px;
   background: var(--color-mint);
   color: var(--color-success);
-  font-size: 27px;
+  font-size: 20px;
   line-height: 1.3;
 }
 
 .grid {
-  --route-column-gap: 28px;
-  --route-row-gap: 26px;
+  --route-column-gap: 8px;
+  --route-row-gap: 8px;
   display: grid;
+  min-height: 0;
+  flex: 1;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: 116px;
+  grid-template-rows: repeat(4, minmax(44px, 1fr));
   column-gap: var(--route-column-gap);
   row-gap: var(--route-row-gap);
-  margin-top: 20px;
+  margin-top: 8px;
   isolation: isolate;
 }
 
@@ -139,9 +130,9 @@
   align-items: flex-start;
   justify-content: center;
   gap: 1px;
-  padding: 12px 16px;
+  padding: 5px 7px;
   border: 2px solid var(--color-border);
-  border-radius: 24px;
+  border-radius: 16px;
   background: #fff0dc;
   box-shadow: var(--shadow-sticker);
   color: var(--color-ink);
@@ -160,22 +151,22 @@
 
 .stageIcon {
   position: absolute;
-  top: 11px;
-  right: 11px;
-  width: 23px;
-  height: 23px;
+  top: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
   color: var(--color-strawberry);
   pointer-events: none;
 }
 
 .stage strong {
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 400;
   line-height: 1.1;
 }
 
 .stage span {
-  font-size: 24px;
+  font-size: 16px;
   line-height: 1.2;
 }
 
@@ -201,18 +192,10 @@
   outline-offset: 3px;
 }
 
-@media (max-width: 800px) {
-  .campaign { padding-inline: 18px; }
-  .grid { --route-column-gap: 18px; }
-  .stage { padding-inline: 10px; }
-  .stage strong { font-size: 28px; }
-  .stage span { font-size: 21px; }
-}
-
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .campaign {
-    width: calc(100% - 16px);
-    margin-top: 12px;
+    height: auto;
+    min-height: auto;
     padding: 18px 16px 24px;
     border-radius: 26px;
   }
@@ -223,7 +206,10 @@
   .grid {
     --route-column-gap: 18px;
     --route-row-gap: 18px;
+    min-height: auto;
+    flex: none;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
     grid-auto-rows: 104px;
     margin-top: 16px;
   }
@@ -256,6 +242,12 @@
   .stage { border-radius: 21px; }
   .stage strong { font-size: 30px; }
   .stage span { font-size: 23px; }
+  .stageIcon { top: 11px; right: 11px; width: 23px; height: 23px; }
+}
+
+@media (min-width: 901px) and (max-height: 650px) {
+  .campaign { height: auto; }
+  .grid { flex: none; grid-template-rows: repeat(4, 90px); }
 }
 
 @media (max-width: 360px) {

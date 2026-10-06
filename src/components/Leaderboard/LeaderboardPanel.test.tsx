@@ -16,7 +16,7 @@ const current: LeaderboardEntry = {
 const other: LeaderboardEntry = {
   rank: 1, userId: 'other', displayName: '친구', highestStage: 8, bestTimeSeconds: 75,
 }
-const callbacks = { onBack: vi.fn(), onUnauthorized: vi.fn().mockResolvedValue(undefined) }
+const callbacks = { onUnauthorized: vi.fn().mockResolvedValue(undefined) }
 
 describe('LeaderboardPanel', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -55,13 +55,12 @@ describe('LeaderboardPanel', () => {
     expect(screen.queryByText(/실명일 수 있어요/)).not.toBeInTheDocument()
   })
 
-  it('shows empty and unranked states and returns to stage selection', async () => {
+  it('shows empty and unranked states without a return button', async () => {
     mockedGetLeaderboard.mockResolvedValue({ top: [], current: null })
     render(<LeaderboardPanel authType="simple" currentUserId="current" {...callbacks} />)
     expect(await screen.findByText(/아직 랭킹 기록이 없어요/)).toBeInTheDocument()
     expect(screen.getByText('아직 완료한 단계가 없어 순위가 없습니다.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '단계 선택으로 돌아가기' }))
-    expect(callbacks.onBack).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', { name: '단계 선택으로 돌아가기' })).not.toBeInTheDocument()
   })
 
   it('retries a failed request without reusing previous rows', async () => {

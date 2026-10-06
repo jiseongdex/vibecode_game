@@ -90,7 +90,8 @@ describe('App authentication and account game', () => {
     expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
     await act(async () => request.resolve({ attemptId, stage: 1, startedAtMs: Date.now() }))
     expect(await screen.findByTestId('intro-overlay')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '랭킹 보기' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '단계 선택' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '간편 계정 랭킹' })).not.toBeInTheDocument()
   })
 
   it('keeps stage selection open when the start request fails', async () => {
@@ -99,6 +100,7 @@ describe('App authentication and account game', () => {
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('새 도전을 시작하지 못했어요')
     expect(screen.getByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
     expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
   })
 
@@ -141,7 +143,7 @@ describe('App authentication and account game', () => {
     expect(screen.queryByRole('button', { name: '진행 새로고침' })).not.toBeInTheDocument()
   })
 
-  it('opens and closes the simple leaderboard and fetches it again on reopening', async () => {
+  it('shows the simple leaderboard beside stage selection without navigation buttons', async () => {
     mockedGetLeaderboard.mockResolvedValue({
       top: [{ rank: 2, userId: account.user.id, displayName: '테스터',
         highestStage: 3, bestTimeSeconds: 80 }],
@@ -149,16 +151,27 @@ describe('App authentication and account game', () => {
         highestStage: 3, bestTimeSeconds: 80 },
     })
     await renderAccount()
-    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
     expect(await screen.findByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
     expect(await screen.findByText('최단 01:20')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: '단계 선택' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '단계 선택으로 돌아가기' }))
     expect(screen.getByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
-    await waitFor(() => expect(mockedGetLeaderboard).toHaveBeenCalledTimes(2))
-    expect(screen.getByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '랭킹 보기' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '단계 선택으로 돌아가기' })).not.toBeInTheDocument()
+    expect(mockedGetLeaderboard).toHaveBeenCalledExactlyOnceWith()
+    expect(screen.getByTestId('leaderboard-pane').compareDocumentPosition(screen.getByTestId('stages-pane')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
+
+  it('fetches the ranking again after leaving a game', async () => {
+    await renderAccount()
+    expect(mockedGetLeaderboard).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
+    await screen.findByTestId('intro-overlay')
+    const pause = screen.getByRole('button', { name: '잠깐 쉬기' })
+    await waitFor(() => expect(pause).toBeEnabled(), { timeout: 7500 })
+    fireEvent.click(pause)
+    fireEvent.click(screen.getByRole('button', { name: '게임 버리고 단계 선택' }))
+    expect(await screen.findByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
+    await waitFor(() => expect(mockedGetLeaderboard).toHaveBeenCalledTimes(2))
+  }, 12000)
 
   it('shows the Microsoft ranking only on its matching authenticated route', async () => {
     window.history.replaceState({}, '', '/microsoft')
@@ -167,17 +180,17 @@ describe('App authentication and account game', () => {
     } })
     render(<App />)
     await screen.findByRole('heading', { name: '단계 선택' })
-    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
     expect(await screen.findByRole('heading', { name: 'Microsoft 랭킹' })).toBeInTheDocument()
     expect(screen.getByText(/실명일 수 있어요/)).toBeInTheDocument()
     expect(mockedGetLeaderboard).toHaveBeenCalledExactlyOnceWith()
   })
 
   it('closes the leaderboard when its request finds an expired session', async () => {
-    mockedGetLeaderboard.mockRejectedValue(new ApiClientError(401, 'unauthorized', '로그인 필요'))
+    const request = deferred<Awaited<ReturnType<typeof getLeaderboard>>>()
+    mockedGetLeaderboard.mockReturnValue(request.promise)
     await renderAccount()
     mockedGetSession.mockRejectedValue(new ApiClientError(401, 'unauthorized', '로그인 필요'))
-    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
+    await act(async () => request.reject(new ApiClientError(401, 'unauthorized', '로그인 필요')))
     expect(await screen.findByRole('heading', { name: '간편 로그인' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: '간편 계정 랭킹' })).not.toBeInTheDocument()
   })

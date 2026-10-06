@@ -2,8 +2,8 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
-  margin: 5px auto 18px;
+  gap: 8px;
+  margin: 3px auto 8px;
 }
 
 .picker button {
@@ -11,15 +11,15 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-width: 150px;
-  min-height: 64px;
-  padding: 6px 16px 6px 8px;
+  min-width: 130px;
+  min-height: 48px;
+  padding: 4px 12px 4px 6px;
   border: 2px solid var(--color-border);
   border-radius: 999px;
   background: #fff0dc;
   color: var(--color-ink);
   box-shadow: var(--shadow-sticker);
-  font-size: 25px;
+  font-size: 21px;
   line-height: 1.1;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease;
@@ -56,8 +56,8 @@
 }
 
 .picker img {
-  width: 46px;
-  height: 46px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 

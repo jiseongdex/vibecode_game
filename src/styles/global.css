@@ -43,6 +43,38 @@ main[data-game-active='true'] > section {
   min-width: 0;
 }
 
+main[data-campaign-active='true'] {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+main[data-campaign-active='true'] > header { flex: none; }
+
+main[data-campaign-active='true'] > section {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+main[data-campaign-active='true'] .account-error,
+main[data-campaign-active='true'] .account-pending { flex: none; }
+
+@media (max-width: 900px), (max-height: 650px) {
+  main[data-campaign-active='true'] {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  main[data-campaign-active='true'] > section {
+    flex: auto;
+    overflow: visible;
+  }
+}
+
 body > #root > main > header {
   width: min(calc(100% - 32px), 1240px);
   margin: 14px auto 0;

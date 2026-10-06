@@ -1,0 +1,43 @@
+.workspace {
+  display: grid;
+  width: min(calc(100% - 32px), 1500px);
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 10px auto 16px;
+}
+
+.pane {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.leaderboardPane {
+  overflow-y: auto;
+  border-radius: 28px;
+}
+
+.stagesPane { overflow: visible; }
+
+@media (max-width: 900px), (max-height: 650px) {
+  .workspace {
+    display: flex;
+    width: calc(100% - 20px);
+    flex: none;
+    flex-direction: column;
+  }
+
+  .pane {
+    height: auto;
+    min-height: auto;
+  }
+
+  .stagesPane { order: 0; }
+  .leaderboardPane {
+    order: 1;
+    max-height: min(70dvh, 720px);
+    overflow-y: auto;
+  }
+}

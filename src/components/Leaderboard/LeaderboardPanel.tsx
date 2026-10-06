@@ -30,12 +30,10 @@ function RankingRow({ entry, currentUserId }: {
 export function LeaderboardPanel({
   authType,
   currentUserId,
-  onBack,
   onUnauthorized,
 }: {
   authType: AuthType
   currentUserId: string
-  onBack: () => void
   onUnauthorized: () => Promise<void>
 }): ReactElement {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' })
@@ -70,7 +68,6 @@ export function LeaderboardPanel({
           </h2>
           <p>전체 기간 · 최고 완료 단계 우선, 같은 단계에서는 최단 시간 우선</p>
         </div>
-        <button type="button" className={styles.back} onClick={onBack}>단계 선택으로 돌아가기</button>
       </div>
       {authType === 'microsoft' && (
         <p className={styles.privacy}>Microsoft 계정의 표시 이름이 랭킹에 공개됩니다. 실명일 수 있어요.</p>
