@@ -8,6 +8,8 @@
   margin: 10px auto 16px;
 }
 
+.tabs { display: none; }
+
 .pane {
   min-width: 0;
   min-height: 0;
@@ -37,7 +39,43 @@
   .stagesPane { order: 0; }
   .leaderboardPane {
     order: 1;
-    max-height: min(70dvh, 720px);
+    max-height: min(75dvh, 780px);
     overflow-y: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tab {
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 2px solid var(--color-border);
+    border-radius: 16px;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font: inherit;
+    font-size: clamp(17px, 4vw, 23px);
+    cursor: pointer;
+  }
+
+  .tab[aria-pressed='true'] {
+    border-color: var(--color-success);
+    background: var(--color-mint);
+  }
+
+  .tab:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  .workspace[data-active-tab='stages'] .leaderboardPane,
+  .workspace[data-active-tab='leaderboard'] .stagesPane {
+    display: none;
   }
 }

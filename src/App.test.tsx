@@ -160,16 +160,47 @@ describe('App authentication and account game', () => {
     expect(screen.getByTestId('leaderboard-pane').compareDocumentPosition(screen.getByTestId('stages-pane')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
+  it('defaults to stages and switches mobile tabs without refetching the ranking', async () => {
+    await renderAccount()
+    await waitFor(() => expect(mockedGetLeaderboard).toHaveBeenCalledTimes(1))
+    const workspace = screen.getByTestId('campaign-workspace')
+    const tabs = screen.getByRole('group', { name: '화면 선택' })
+    const stages = within(tabs).getByRole('button', { name: '단계 선택' })
+    const leaderboard = within(tabs).getByRole('button', { name: '랭킹' })
+
+    expect(workspace).toHaveAttribute('data-active-tab', 'stages')
+    expect(stages).toHaveAttribute('aria-pressed', 'true')
+    expect(leaderboard).toHaveAttribute('aria-pressed', 'false')
+    expect(stages).toHaveAttribute('aria-controls', 'campaign-stages-panel')
+    expect(leaderboard).toHaveAttribute('aria-controls', 'campaign-leaderboard-panel')
+
+    fireEvent.click(leaderboard)
+    expect(workspace).toHaveAttribute('data-active-tab', 'leaderboard')
+    expect(stages).toHaveAttribute('aria-pressed', 'false')
+    expect(leaderboard).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('stages-pane')).toBeInTheDocument()
+    expect(screen.getByTestId('leaderboard-pane')).toBeInTheDocument()
+
+    fireEvent.click(stages)
+    expect(workspace).toHaveAttribute('data-active-tab', 'stages')
+    expect(mockedGetLeaderboard).toHaveBeenCalledTimes(1)
+  })
+
   it('fetches the ranking again after leaving a game', async () => {
     await renderAccount()
     expect(mockedGetLeaderboard).toHaveBeenCalledTimes(1)
+    fireEvent.click(within(screen.getByRole('group', { name: '화면 선택' })).getByRole('button', { name: '랭킹' }))
+    expect(screen.getByTestId('campaign-workspace')).toHaveAttribute('data-active-tab', 'leaderboard')
+    fireEvent.click(within(screen.getByRole('group', { name: '화면 선택' })).getByRole('button', { name: '단계 선택' }))
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
     await screen.findByTestId('intro-overlay')
+    expect(screen.queryByRole('group', { name: '화면 선택' })).not.toBeInTheDocument()
     const pause = screen.getByRole('button', { name: '잠깐 쉬기' })
     await waitFor(() => expect(pause).toBeEnabled(), { timeout: 7500 })
     fireEvent.click(pause)
     fireEvent.click(screen.getByRole('button', { name: '게임 버리고 단계 선택' }))
     expect(await screen.findByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
+    expect(screen.getByTestId('campaign-workspace')).toHaveAttribute('data-active-tab', 'stages')
     await waitFor(() => expect(mockedGetLeaderboard).toHaveBeenCalledTimes(2))
   }, 12000)
 

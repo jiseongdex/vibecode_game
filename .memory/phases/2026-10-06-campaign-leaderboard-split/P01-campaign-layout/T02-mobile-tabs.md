@@ -1,6 +1,6 @@
 # Task: T02 모바일 단계 선택·랭킹 탭
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -55,10 +55,10 @@
 
 ## Acceptance Criteria
 
-- [ ] 900px 이하에서는 단계 선택이 기본으로 보이고 탭에 따라 한 패널만 보인다.
-- [ ] 900px 초과에서는 탭이 숨겨지고 랭킹 왼쪽·단계 오른쪽이 함께 보인다.
-- [ ] 탭 전환은 랭킹을 재조회하지 않으며 게임 복귀는 새 랭킹을 조회한다.
-- [ ] 320px 폭에서 텍스트·버튼이 잘리지 않고 키보드로 탭을 조작할 수 있다.
+- [x] 900px 이하에서는 단계 선택이 기본으로 보이고 탭에 따라 한 패널만 보인다.
+- [x] 900px 초과에서는 탭이 숨겨지고 랭킹 왼쪽·단계 오른쪽이 함께 보인다.
+- [x] 탭 전환은 랭킹을 재조회하지 않으며 게임 복귀는 새 랭킹을 조회한다.
+- [x] 320px 폭에서 텍스트·버튼이 잘리지 않고 키보드로 탭을 조작할 수 있다.
 
 ## Validation
 
@@ -83,9 +83,9 @@ Task: T02-mobile-tabs
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
-- commit: pending
+- [x] 구현 완료
+- [x] 검증 통과
+- commit: see `feat(campaign): add mobile stages and ranking tabs`
 
 ## Commit Isolation
 
