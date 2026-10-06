@@ -11,6 +11,11 @@ export interface ProgressDto {
   stageRecords: Record<number, { bestTimeSeconds: number }>
 }
 
+export interface SessionDto {
+  user: PublicUser
+  progress: ProgressDto
+}
+
 export interface LeaderboardEntry {
   rank: number
   userId: string

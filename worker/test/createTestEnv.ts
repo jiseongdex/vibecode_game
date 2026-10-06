@@ -10,7 +10,7 @@ export interface TestEnv {
   dispose: () => Promise<void>
 }
 
-export async function createTestEnv(): Promise<TestEnv> {
+export async function createTestEnv(options: { pinPepper?: string | null } = {}): Promise<TestEnv> {
   const entryPoint = fileURLToPath(new URL('../index.ts', import.meta.url))
   const migrationPath = fileURLToPath(new URL('../../migrations/0001_initial.sql', import.meta.url))
   const bundle = await build({
@@ -27,6 +27,9 @@ export async function createTestEnv(): Promise<TestEnv> {
     modules: true,
     compatibilityDate: '2026-10-02',
     d1Databases: { DB: crypto.randomUUID() },
+    bindings: options.pinPepper === null
+      ? {}
+      : { PIN_PEPPER: options.pinPepper ?? 'test-only-pepper-never-use-in-production' },
   }))
 
   try {
@@ -37,7 +40,12 @@ export async function createTestEnv(): Promise<TestEnv> {
     }
 
     return {
-      env: { DB: db } as Env,
+      env: {
+        DB: db,
+        PIN_PEPPER: options.pinPepper === null
+          ? undefined
+          : options.pinPepper ?? 'test-only-pepper-never-use-in-production',
+      } as Env,
       fetch: async (request) => {
         const response = await mf.dispatchFetch(request.url, {
           method: request.method,
