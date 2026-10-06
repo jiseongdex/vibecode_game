@@ -10,6 +10,7 @@ import {
   requireSession,
 } from './auth/session'
 import type { Env } from './types'
+import { finishRun, startRun } from './game/runs'
 
 const noStoreHeaders = { 'Cache-Control': 'no-store' }
 
@@ -58,6 +59,18 @@ export default {
       if (pathname === '/api/me' && request.method === 'GET') {
         const principal = await requireSession(request, env, Date.now())
         return jsonResponse(await getSessionDto(env, principal))
+      }
+
+      if (pathname === '/api/runs/start' && request.method === 'POST') {
+        const nowMs = Date.now()
+        const principal = await requireSession(request, env, nowMs)
+        return await startRun(request, env, principal, nowMs)
+      }
+
+      if (pathname === '/api/runs/finish' && request.method === 'POST') {
+        const nowMs = Date.now()
+        const principal = await requireSession(request, env, nowMs)
+        return await finishRun(request, env, principal, nowMs)
       }
 
       if (pathname.startsWith('/api/')) {

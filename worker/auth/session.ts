@@ -1,5 +1,6 @@
 import type { SessionDto } from '../../src/api/contracts'
 import type { Env, SessionPrincipal } from '../types'
+import { readProgress } from '../game/runs'
 
 const COOKIE_NAME = '__Host-maze_session'
 const SESSION_SECONDS = 7 * 24 * 60 * 60
@@ -102,27 +103,13 @@ export async function requireSession(
 }
 
 export async function getSessionDto(env: Env, principal: SessionPrincipal): Promise<SessionDto> {
-  const user = await env.DB.prepare('SELECT unlocked_stage FROM users WHERE id = ?')
-    .bind(principal.userId).first<{ unlocked_stage: number }>()
-  if (!user) throw new ApiFailure(401, 'unauthorized', 'Sign in to continue.')
-
-  const records = await env.DB.prepare(
-    'SELECT stage, best_time_seconds FROM stage_records WHERE user_id = ? ORDER BY stage',
-  ).bind(principal.userId).all<{ stage: number; best_time_seconds: number }>()
-
   return {
     user: {
       id: principal.userId,
       authType: principal.authType,
       displayName: principal.displayName,
     },
-    progress: {
-      unlockedStage: user.unlocked_stage,
-      stageRecords: Object.fromEntries(records.results.map((record) => [
-        record.stage,
-        { bestTimeSeconds: record.best_time_seconds },
-      ])),
-    },
+    progress: await readProgress(env.DB, principal.userId),
   }
 }
 

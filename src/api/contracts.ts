@@ -16,6 +16,25 @@ export interface SessionDto {
   progress: ProgressDto
 }
 
+export interface StartRunRequest {
+  stage: number
+}
+
+export interface StartRunDto {
+  attemptId: string
+  stage: number
+  startedAtMs: number
+}
+
+export interface FinishRunRequest {
+  attemptId: string
+  clearTimeSeconds: number
+}
+
+export interface FinishRunDto {
+  progress: ProgressDto
+}
+
 export interface LeaderboardEntry {
   rank: number
   userId: string
