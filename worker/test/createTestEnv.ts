@@ -12,7 +12,21 @@ export interface TestEnv {
   dispose: () => Promise<void>
 }
 
-export async function createTestEnv(options: { pinPepper?: string | null } = {}): Promise<TestEnv> {
+export async function createTestEnv(options: {
+  pinPepper?: string | null
+  microsoft?: {
+    clientId: string
+    clientSecret: string
+    publicOrigin: string
+  } | null
+} = {}): Promise<TestEnv> {
+  const microsoft = options.microsoft === undefined
+    ? {
+      clientId: '00000000-0000-4000-8000-000000000001',
+      clientSecret: 'test-only-microsoft-secret',
+      publicOrigin: 'http://localhost',
+    }
+    : options.microsoft
   const entryPoint = fileURLToPath(new URL('../index.ts', import.meta.url))
   const migrationDirectory = fileURLToPath(new URL('../../migrations/', import.meta.url))
   const bundle = await build({
@@ -30,9 +44,18 @@ export async function createTestEnv(options: { pinPepper?: string | null } = {})
     compatibilityDate: '2026-10-02',
     d1Databases: { DB: crypto.randomUUID() },
     cronTriggers: ['0 0 * * *'],
-    bindings: options.pinPepper === null
-      ? {}
-      : { PIN_PEPPER: options.pinPepper ?? 'test-only-pepper-never-use-in-production' },
+    bindings: {
+      ...(options.pinPepper === null
+        ? {}
+        : { PIN_PEPPER: options.pinPepper ?? 'test-only-pepper-never-use-in-production' }),
+      ...(microsoft
+        ? {
+          MICROSOFT_CLIENT_ID: microsoft.clientId,
+          MICROSOFT_CLIENT_SECRET: microsoft.clientSecret,
+          PUBLIC_ORIGIN: microsoft.publicOrigin,
+        }
+        : {}),
+    },
   }))
 
   try {
@@ -53,11 +76,15 @@ export async function createTestEnv(options: { pinPepper?: string | null } = {})
         PIN_PEPPER: options.pinPepper === null
           ? undefined
           : options.pinPepper ?? 'test-only-pepper-never-use-in-production',
+        MICROSOFT_CLIENT_ID: microsoft?.clientId,
+        MICROSOFT_CLIENT_SECRET: microsoft?.clientSecret,
+        PUBLIC_ORIGIN: microsoft?.publicOrigin,
       } as Env,
       fetch: async (request) => {
         const response = await mf.dispatchFetch(request.url, {
           method: request.method,
           headers: Object.fromEntries(request.headers.entries()),
+          redirect: 'manual',
           body: request.method === 'GET' || request.method === 'HEAD'
             ? undefined
             : await request.arrayBuffer(),

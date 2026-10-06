@@ -1,5 +1,6 @@
 import type { ApiError } from '../src/api/contracts'
 import { loginSimple, registerSimple } from './auth/simple'
+import { finishMicrosoftLogin, startMicrosoftLogin } from './auth/microsoft'
 import {
   ApiFailure,
   assertSameOriginJson,
@@ -40,6 +41,14 @@ export default {
 
       if (pathname === '/api/auth/simple/login' && request.method === 'POST') {
         return await loginSimple(request, env)
+      }
+
+      if (pathname === '/api/auth/microsoft/start' && request.method === 'GET') {
+        return await startMicrosoftLogin(request, env, Date.now())
+      }
+
+      if (pathname === '/api/auth/microsoft/callback' && request.method === 'GET') {
+        return await finishMicrosoftLogin(request, env, Date.now())
       }
 
       if (pathname === '/api/auth/logout' && request.method === 'POST') {

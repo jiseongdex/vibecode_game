@@ -5,6 +5,7 @@ export interface Env {
   ASSETS: Fetcher
   MICROSOFT_CLIENT_ID?: string
   MICROSOFT_CLIENT_SECRET?: string
+  PUBLIC_ORIGIN?: string
   PIN_PEPPER?: string
 }
 
