@@ -42,9 +42,7 @@ function AuthenticatedGame({
 }): ReactElement {
   const [appearance, setAppearance] = useState<PlayerAppearance>(loadAppearance)
   const [startError, setStartError] = useState<string | null>(null)
-  const [syncError, setSyncError] = useState<string | null>(null)
   const [pendingError, setPendingError] = useState<string | null>(null)
-  const [syncing, setSyncing] = useState(false)
   const [retryingPending, setRetryingPending] = useState(false)
   const [campaignView, setCampaignView] = useState<CampaignView>('stages')
   const starting = useRef(false)
@@ -54,7 +52,6 @@ function AuthenticatedGame({
     startSession,
     captureSession,
     recordStageResult,
-    refreshProgress,
     discardSession,
     persistNow,
     pendingResult,
@@ -111,20 +108,6 @@ function AuthenticatedGame({
     }
   }, [])
 
-  const syncFromServer = async () => {
-    if (syncing) return
-    setSyncing(true)
-    setSyncError(null)
-    try {
-      await refreshProgress()
-    } catch (error) {
-      setSyncError('계정 진행을 다시 읽지 못했어요. 다시 시도해주세요.')
-      handleUnauthorized(error, onRefreshAuth)
-    } finally {
-      setSyncing(false)
-    }
-  }
-
   const retryResult = async () => {
     if (retryingPending) return
     setRetryingPending(true)
@@ -141,18 +124,14 @@ function AuthenticatedGame({
 
   return (
     <main data-game-active={session ? 'true' : undefined}>
-      <div className="account-toolbar">
-        <span>{account.user.displayName} 님</span>
-        <button type="button" disabled={syncing} onClick={() => { void syncFromServer() }}>
-          {syncing ? '확인 중…' : '진행 새로고침'}
-        </button>
-        <button type="button" onClick={() => { void onSignOut() }}>로그아웃</button>
-      </div>
-      {syncError && <p className="account-error" role="alert">{syncError}</p>}
       {!session && (
         <header>
           <h1><StickerIcon kind="leaf" />동물 구출 대작전<StickerIcon kind="mushroom" /></h1>
           <p>동물들을 구하러 탐험을 떠나자!</p>
+          <div className="account-toolbar">
+            <span>{account.user.displayName}</span>
+            <button type="button" onClick={() => { void onSignOut() }}>로그아웃</button>
+          </div>
         </header>
       )}
       <section aria-label="게임 화면" data-testid="game-container">

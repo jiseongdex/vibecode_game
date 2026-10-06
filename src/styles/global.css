@@ -96,7 +96,6 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
-.account-toolbar,
 .account-pending,
 .auth-gate {
   width: min(calc(100% - 20px), 1020px);
@@ -112,10 +111,14 @@ button:focus-visible {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  margin-top: 6px;
+  text-align: right;
+  font-size: clamp(16px, 2vw, 20px);
 }
 
-.account-toolbar span { margin-right: auto; }
+.account-toolbar span { overflow-wrap: anywhere; }
 
 .account-toolbar button,
 .account-pending button,
@@ -129,7 +132,8 @@ button:focus-visible {
   cursor: pointer;
 }
 
-.account-toolbar button:disabled,
+.account-toolbar button { flex: none; }
+
 .account-pending button:disabled { opacity: 0.6; cursor: wait; }
 
 .account-error {

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { ApiClientError, getLeaderboard, getSession, startRun } from './api/client'
 import type { SessionDto } from './api/contracts'
@@ -131,15 +131,14 @@ describe('App authentication and account game', () => {
     expect(loadAccountSave(other.user.id, other.progress).currentSession).toBeNull()
   })
 
-  it('refreshes unlocked stages and best times from the server', async () => {
+  it('shows only the display name and logout beneath the title', async () => {
     await renderAccount()
-    mockedGetSession.mockResolvedValue({
-      ...account,
-      progress: { unlockedStage: 2, stageRecords: { 1: { bestTimeSeconds: 80 } } },
-    })
-    fireEvent.click(screen.getByRole('button', { name: '진행 새로고침' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled())
-    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
+    const header = screen.getByRole('heading', { name: '동물 구출 대작전' }).closest('header')
+    expect(header).not.toBeNull()
+    expect(within(header!).getByText('테스터')).toBeInTheDocument()
+    expect(within(header!).getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: '로그아웃' })).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: '진행 새로고침' })).not.toBeInTheDocument()
   })
 
   it('opens and closes the simple leaderboard and fetches it again on reopening', async () => {
