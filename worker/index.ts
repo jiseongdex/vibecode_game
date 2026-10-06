@@ -11,6 +11,7 @@ import {
 } from './auth/session'
 import type { Env } from './types'
 import { finishRun, startRun } from './game/runs'
+import { getLeaderboard } from './game/leaderboard'
 
 const noStoreHeaders = { 'Cache-Control': 'no-store' }
 
@@ -59,6 +60,11 @@ export default {
       if (pathname === '/api/me' && request.method === 'GET') {
         const principal = await requireSession(request, env, Date.now())
         return jsonResponse(await getSessionDto(env, principal))
+      }
+
+      if (pathname === '/api/leaderboard' && request.method === 'GET') {
+        const principal = await requireSession(request, env, Date.now())
+        return jsonResponse(await getLeaderboard(env, principal))
       }
 
       if (pathname === '/api/runs/start' && request.method === 'POST') {
