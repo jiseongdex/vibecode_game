@@ -13,6 +13,7 @@ interface CampaignScreenProps {
   appearance: PlayerAppearance
   onAppearanceChange: (appearance: PlayerAppearance) => void
   onStartStage: (stage: number) => Promise<void>
+  onShowLeaderboard: () => void
 }
 
 type RouteDirection = 'left' | 'right' | 'down' | 'end'
@@ -39,6 +40,7 @@ export function CampaignScreen({
   appearance,
   onAppearanceChange,
   onStartStage,
+  onShowLeaderboard,
 }: CampaignScreenProps) {
   const [startingStage, setStartingStage] = useState<number | null>(null)
   const starting = useRef(false)
@@ -74,6 +76,8 @@ export function CampaignScreen({
         <p className={styles.intro}>동물 친구를 구출하고 탈출구를 찾으면 다음 단계가 열려요.</p>
       )}
       <p className={styles.progress}>완료 {completedCount}/20단계 · 해금 {progress.unlockedStage}/20단계</p>
+
+      <button type="button" className={styles.leaderboardButton} onClick={onShowLeaderboard}>랭킹 보기</button>
 
       <p className={styles.pickerLabel}>함께 떠날 탐험가를 골라요</p>
       <PlayerAppearancePicker value={appearance} onChange={onAppearanceChange} />

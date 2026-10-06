@@ -1,0 +1,84 @@
+.panel {
+  width: min(calc(100% - 20px), 1020px);
+  margin: 18px auto 30px;
+  padding: 24px 30px 32px;
+  border: 2px solid rgb(70 102 81 / 54%);
+  border-radius: 32px;
+  background: var(--color-paper);
+  box-shadow: var(--shadow-panel);
+  color: var(--color-ink);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.header h2 { margin: 0; font-size: clamp(30px, 5vw, 44px); font-weight: 400; }
+.header p { margin: 4px 0 0; font-size: clamp(17px, 2vw, 21px); }
+.back, .message button {
+  min-height: 44px;
+  padding: 6px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-mint);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.privacy {
+  margin: 18px 0 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fff0dc;
+  font-size: 18px;
+}
+
+.message {
+  margin: 20px 0 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--color-mint);
+  font-size: 20px;
+}
+.message p { margin: 0 0 10px; }
+
+.list { display: grid; gap: 9px; margin: 20px 0 0; padding: 0; list-style: none; }
+.row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px 18px;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: #fffaf0;
+  font-size: 20px;
+}
+.currentUser { border: 2px solid var(--color-success); background: var(--color-mint); }
+.rank { font-weight: 700; }
+.name { min-width: 0; overflow-wrap: anywhere; }
+.stage, .time { white-space: nowrap; }
+.myBadge { padding: 2px 8px; border-radius: 999px; background: var(--color-paper); font-size: 16px; white-space: nowrap; }
+.outsideTop { margin-top: 26px; padding-top: 15px; border-top: 2px dashed var(--color-border); }
+.outsideTop h3 { margin: 0; font-size: 27px; font-weight: 400; }
+.outsideTop .list { margin-top: 10px; }
+
+@media (max-width: 700px) {
+  .panel { padding: 18px 14px 24px; border-radius: 26px; }
+  .row { grid-template-columns: 54px minmax(0, 1fr) auto; gap: 5px 10px; font-size: 18px; }
+  .rank { grid-row: span 2; }
+  .name { grid-column: 2 / -1; }
+  .stage { grid-column: 2; }
+  .time { grid-column: 3; }
+  .myBadge { grid-column: 2 / -1; justify-self: start; }
+}
+
+@media (max-width: 360px) {
+  .row { grid-template-columns: 48px minmax(0, 1fr); }
+  .name, .stage, .time, .myBadge { grid-column: 2; }
+}

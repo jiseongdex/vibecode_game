@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-import { ApiClientError, getSession, startRun } from './api/client'
+import { ApiClientError, getLeaderboard, getSession, startRun } from './api/client'
 import type { SessionDto } from './api/contracts'
 import { App } from './App'
 import { accountSaveKey, loadAccountSave } from './persistence/accountSaveStore'
@@ -9,7 +9,7 @@ import { SAVE_VERSION } from './persistence/saveSchema'
 
 vi.mock('./api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api/client')>()
-  return { ...actual, getSession: vi.fn(), startRun: vi.fn(), logout: vi.fn() }
+  return { ...actual, getSession: vi.fn(), getLeaderboard: vi.fn(), startRun: vi.fn(), logout: vi.fn() }
 })
 
 const account: SessionDto = {
@@ -18,6 +18,7 @@ const account: SessionDto = {
 }
 const attemptId = '01234567-89ab-4cde-8fab-0123456789ab'
 const mockedGetSession = vi.mocked(getSession)
+const mockedGetLeaderboard = vi.mocked(getLeaderboard)
 const mockedStartRun = vi.mocked(startRun)
 
 function deferred<T>() {
@@ -40,6 +41,7 @@ describe('App authentication and account game', () => {
     window.history.replaceState({}, '', '/')
     vi.clearAllMocks()
     mockedStartRun.mockResolvedValue({ attemptId, stage: 1, startedAtMs: Date.now() })
+    mockedGetLeaderboard.mockResolvedValue({ top: [], current: null })
   })
 
   afterEach(() => {
@@ -88,6 +90,7 @@ describe('App authentication and account game', () => {
     expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
     await act(async () => request.resolve({ attemptId, stage: 1, startedAtMs: Date.now() }))
     expect(await screen.findByTestId('intro-overlay')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '랭킹 보기' })).not.toBeInTheDocument()
   })
 
   it('keeps stage selection open when the start request fails', async () => {
@@ -137,5 +140,46 @@ describe('App authentication and account game', () => {
     fireEvent.click(screen.getByRole('button', { name: '진행 새로고침' }))
     await waitFor(() => expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled())
     expect(screen.getByText('최고 01:20')).toBeInTheDocument()
+  })
+
+  it('opens and closes the simple leaderboard and fetches it again on reopening', async () => {
+    mockedGetLeaderboard.mockResolvedValue({
+      top: [{ rank: 2, userId: account.user.id, displayName: '테스터',
+        highestStage: 3, bestTimeSeconds: 80 }],
+      current: { rank: 2, userId: account.user.id, displayName: '테스터',
+        highestStage: 3, bestTimeSeconds: 80 },
+    })
+    await renderAccount()
+    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
+    expect(await screen.findByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
+    expect(await screen.findByText('최단 01:20')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '단계 선택' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '단계 선택으로 돌아가기' }))
+    expect(screen.getByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
+    await waitFor(() => expect(mockedGetLeaderboard).toHaveBeenCalledTimes(2))
+    expect(screen.getByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
+  })
+
+  it('shows the Microsoft ranking only on its matching authenticated route', async () => {
+    window.history.replaceState({}, '', '/microsoft')
+    mockedGetSession.mockResolvedValue({ ...account, user: {
+      id: 'microsoft-user', authType: 'microsoft', displayName: 'Microsoft 사용자',
+    } })
+    render(<App />)
+    await screen.findByRole('heading', { name: '단계 선택' })
+    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
+    expect(await screen.findByRole('heading', { name: 'Microsoft 랭킹' })).toBeInTheDocument()
+    expect(screen.getByText(/실명일 수 있어요/)).toBeInTheDocument()
+    expect(mockedGetLeaderboard).toHaveBeenCalledExactlyOnceWith()
+  })
+
+  it('closes the leaderboard when its request finds an expired session', async () => {
+    mockedGetLeaderboard.mockRejectedValue(new ApiClientError(401, 'unauthorized', '로그인 필요'))
+    await renderAccount()
+    mockedGetSession.mockRejectedValue(new ApiClientError(401, 'unauthorized', '로그인 필요'))
+    fireEvent.click(screen.getByRole('button', { name: '랭킹 보기' }))
+    expect(await screen.findByRole('heading', { name: '간편 로그인' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '간편 계정 랭킹' })).not.toBeInTheDocument()
   })
 })

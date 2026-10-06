@@ -7,6 +7,7 @@ import { LoginScreen, RouteChoice, getAuthRoute } from './components/Auth/LoginS
 import { CampaignScreen } from './components/Campaign/CampaignScreen'
 import { StickerIcon } from './components/Decorations/StickerIcon'
 import { GameScreen } from './components/GameScreen/GameScreen'
+import { LeaderboardPanel } from './components/Leaderboard/LeaderboardPanel'
 import { createGameState } from './game/gameState'
 import type { GameState } from './game/gameState'
 import { generateMaze } from './game/mazeGenerator'
@@ -16,6 +17,7 @@ import { useAuthSession } from './hooks/useAuthSession'
 import { usePersistedGame } from './hooks/usePersistedGame'
 
 const APPEARANCE_KEY = 'maze-rescue-game.appearance.v1'
+type CampaignView = 'stages' | 'leaderboard'
 
 function loadAppearance(): PlayerAppearance {
   try {
@@ -44,6 +46,7 @@ function AuthenticatedGame({
   const [pendingError, setPendingError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [retryingPending, setRetryingPending] = useState(false)
+  const [campaignView, setCampaignView] = useState<CampaignView>('stages')
   const starting = useRef(false)
   const {
     progress,
@@ -163,10 +166,10 @@ function AuthenticatedGame({
             onStageComplete={handleStageComplete}
             onRetryStage={(stage, maze) => startStage(stage, maze, true)}
             onNextStage={(stage) => startStage(stage)}
-            onCampaign={discardSession}
+            onCampaign={() => { setCampaignView('stages'); discardSession() }}
             onStateChange={handleSessionChange}
             onPersistNow={persistNow}
-            onDiscardSession={discardSession}
+            onDiscardSession={() => { setCampaignView('stages'); discardSession() }}
           />
         ) : (
           <>
@@ -180,12 +183,22 @@ function AuthenticatedGame({
                 </button>
               </div>
             )}
-            <CampaignScreen
-              progress={progress}
-              appearance={appearance}
-              onAppearanceChange={chooseAppearance}
-              onStartStage={(stage) => startStage(stage)}
-            />
+            {campaignView === 'leaderboard' ? (
+              <LeaderboardPanel
+                authType={account.user.authType}
+                currentUserId={account.user.id}
+                onBack={() => setCampaignView('stages')}
+                onUnauthorized={onRefreshAuth}
+              />
+            ) : (
+              <CampaignScreen
+                progress={progress}
+                appearance={appearance}
+                onAppearanceChange={chooseAppearance}
+                onStartStage={(stage) => startStage(stage)}
+                onShowLeaderboard={() => setCampaignView('leaderboard')}
+              />
+            )}
           </>
         )}
       </section>
@@ -219,7 +232,7 @@ function AuthGate({ authType }: { authType: AuthType }): ReactElement {
   }
   return (
     <AuthenticatedGame
-      key={auth.session.user.id}
+      key={`${auth.session.user.authType}:${auth.session.user.id}`}
       account={auth.session}
       onSignOut={auth.signOut}
       onRefreshAuth={auth.refresh}

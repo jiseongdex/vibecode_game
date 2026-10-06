@@ -56,6 +56,21 @@
   background: var(--color-mint);
 }
 
+.leaderboardButton {
+  display: block;
+  min-height: 44px;
+  margin: 8px 0 12px;
+  padding: 6px 18px;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: #fff0dc;
+  color: var(--color-ink);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.leaderboardButton:hover { background: var(--color-mint); }
+
 .campaign .pickerLabel {
   margin-top: 14px;
   margin-bottom: 2px;
