@@ -95,3 +95,55 @@ button:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
+
+.account-toolbar,
+.account-pending,
+.auth-gate {
+  width: min(calc(100% - 20px), 1020px);
+  margin: 12px auto;
+  padding: 12px 18px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-sticker);
+}
+
+.account-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.account-toolbar span { margin-right: auto; }
+
+.account-toolbar button,
+.account-pending button,
+.auth-gate button {
+  min-height: 42px;
+  padding: 5px 14px;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-mint);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.account-toolbar button:disabled,
+.account-pending button:disabled { opacity: 0.6; cursor: wait; }
+
+.account-error {
+  width: min(calc(100% - 20px), 1020px);
+  margin: 10px auto;
+  padding: 9px 14px;
+  border: 1px solid var(--color-danger);
+  border-radius: 12px;
+  background: #ffe5e2;
+  color: var(--color-danger);
+  font-family: var(--font-message);
+  font-size: 20px;
+}
+
+.account-pending p { margin: 0 0 8px; }
+
+.auth-gate { text-align: center; }

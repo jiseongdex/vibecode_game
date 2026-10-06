@@ -1,11 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { completeStage, createCampaignProgress } from '../../game/campaignProgress'
 import { CampaignScreen } from './CampaignScreen'
 
 describe('CampaignScreen', () => {
   it('keeps stage order while the visual route snakes across desktop and mobile columns', () => {
-    render(<CampaignScreen progress={createCampaignProgress()} appearance="girl" onAppearanceChange={vi.fn()} onStartSession={vi.fn()} />)
+    render(<CampaignScreen progress={createCampaignProgress()} appearance="girl" onAppearanceChange={vi.fn()} onStartStage={vi.fn().mockResolvedValue(undefined)} />)
 
     const stages = screen.getAllByRole('button', { name: /단계/ })
     expect(stages.map((button) => button.getAttribute('aria-label')?.split('단계')[0])).toEqual(
@@ -26,15 +26,15 @@ describe('CampaignScreen', () => {
     expect(routeNode(20)).toHaveAttribute('data-mobile-next', 'end')
   })
 
-  it('locks future stages and creates a new game for an unlocked stage', () => {
-    const onStartSession = vi.fn()
+  it('locks future stages and creates a new game for an unlocked stage', async () => {
+    const onStartStage = vi.fn().mockResolvedValue(undefined)
     const onAppearanceChange = vi.fn()
     render(
       <CampaignScreen
         progress={createCampaignProgress()}
         appearance="girl"
         onAppearanceChange={onAppearanceChange}
-        onStartSession={onStartSession}
+        onStartStage={onStartStage}
       />,
     )
 
@@ -44,31 +44,29 @@ describe('CampaignScreen', () => {
     expect(onAppearanceChange).toHaveBeenCalledWith('boy')
     expect(screen.getByRole('button', { name: '2단계 잠김' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    expect(onStartSession).toHaveBeenCalledTimes(1)
-    expect(onStartSession.mock.calls[0][0]).toMatchObject({
-      stageConfig: { stage: 1, size: 15, rescueCount: 1 },
-      maze: { size: 15 },
-      status: 'ready',
-    })
+    expect(onStartStage).toHaveBeenCalledExactlyOnceWith(1)
+    await waitFor(() => expect(screen.getByRole('button', { name: '1단계 도전 가능' })).toBeEnabled())
   })
 
-  it('unlocks the next stage and lets completed stages start again', () => {
-    const onStartSession = vi.fn()
+  it('unlocks the next stage and lets completed stages start again', async () => {
+    const onStartStage = vi.fn().mockResolvedValue(undefined)
     const initial = createCampaignProgress()
     const progress = completeStage(initial, 1, 80)
     const { rerender } = render(
-      <CampaignScreen progress={progress} appearance="girl" onAppearanceChange={vi.fn()} onStartSession={onStartSession} />,
+      <CampaignScreen progress={progress} appearance="girl" onAppearanceChange={vi.fn()} onStartStage={onStartStage} />,
     )
 
     expect(initial.unlockedStage).toBe(1)
     expect(progress.unlockedStage).toBe(2)
     expect(screen.getByText('최고 01:20')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '1단계 완료, 재플레이 가능' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: '2단계 도전 가능' }))
-    expect(onStartSession.mock.calls.map(([session]) => session.stageConfig.stage)).toEqual([1, 2])
+    expect(onStartStage.mock.calls.map(([stage]) => stage)).toEqual([1, 2])
+    await waitFor(() => expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled())
 
     const improved = completeStage(progress, 1, 95)
-    rerender(<CampaignScreen progress={improved} appearance="girl" onAppearanceChange={vi.fn()} onStartSession={onStartSession} />)
+    rerender(<CampaignScreen progress={improved} appearance="girl" onAppearanceChange={vi.fn()} onStartStage={onStartStage} />)
     expect(improved.stageRecords[1]).toEqual({ bestTimeSeconds: 80 })
     expect(screen.getByText('최고 01:20')).toBeInTheDocument()
   })
@@ -78,7 +76,7 @@ describe('CampaignScreen', () => {
     for (let stage = 1; stage <= 20; stage += 1) {
       progress = completeStage(progress, stage, stage * 10)
     }
-    render(<CampaignScreen progress={progress} appearance="girl" onAppearanceChange={vi.fn()} onStartSession={vi.fn()} />)
+    render(<CampaignScreen progress={progress} appearance="girl" onAppearanceChange={vi.fn()} onStartStage={vi.fn().mockResolvedValue(undefined)} />)
 
     expect(screen.getByRole('status')).toHaveTextContent('20단계 캠페인 완료!')
     expect(screen.getByText('완료 20/20단계 · 해금 20/20단계')).toBeInTheDocument()

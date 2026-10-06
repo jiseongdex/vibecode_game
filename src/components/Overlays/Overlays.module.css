@@ -47,6 +47,22 @@
   line-height: 1.3;
 }
 
+.panel .resultStatus {
+  padding: 5px 9px;
+  border-radius: 12px;
+  background: var(--color-mint);
+  color: var(--color-success);
+  font-size: 21px;
+}
+
+.panel .resultError {
+  padding: 5px 9px;
+  border-radius: 12px;
+  background: #ffe5e2;
+  color: var(--color-danger);
+  font-size: 21px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -72,6 +88,8 @@
 
 .actions button:hover,
 .actions button:focus-visible { transform: translateY(-2px); }
+
+.actions button:disabled { opacity: 0.55; cursor: wait; transform: none; }
 
 .actions button:active { transform: translateY(2px); }
 

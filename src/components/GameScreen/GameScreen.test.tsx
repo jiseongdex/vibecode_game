@@ -391,9 +391,11 @@ describe('GameScreen', () => {
     },
   )
 
-  it('reports a win once and offers the next stage', () => {
-    const onStageComplete = vi.fn()
-    const onNextStage = vi.fn()
+  it('reports a win once and offers the next stage after saving', async () => {
+    let resolveSave!: () => void
+    const onStageComplete = vi.fn().mockReturnValue(new Promise<void>((resolve) => { resolveSave = resolve }))
+    const onNextStage = vi.fn().mockResolvedValue(undefined)
+    const attemptId = '01234567-89ab-4cde-8fab-0123456789ab'
     const base = createGameState(1, generateMaze(15, createSeededRandom(88)))
     const won = {
       ...base,
@@ -404,34 +406,76 @@ describe('GameScreen', () => {
     const { rerender } = render(
       <GameScreen
         initialState={won}
+        attemptId={attemptId}
         onStageComplete={onStageComplete}
         onNextStage={onNextStage}
       />,
     )
 
     expect(onStageComplete).toHaveBeenCalledTimes(1)
-    expect(onStageComplete).toHaveBeenCalledWith(1, 45)
+    expect(onStageComplete).toHaveBeenCalledWith(1, 45, attemptId)
+    expect(screen.getByRole('button', { name: '다음 단계' })).toBeDisabled()
+    await act(async () => resolveSave())
+    expect(screen.getByText('기록이 저장됐어요.')).toBeInTheDocument()
     rerender(
       <GameScreen
         initialState={won}
+        attemptId={attemptId}
         onStageComplete={onStageComplete}
         onNextStage={onNextStage}
       />,
     )
     expect(onStageComplete).toHaveBeenCalledTimes(1)
-    fireEvent.click(screen.getByRole('button', { name: '다음 단계' }))
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '다음 단계' })) })
     expect(onNextStage).toHaveBeenCalledWith(2)
   })
 
-  it('retries the same maze after a numbers-only countdown', () => {
+  it('keeps a failed result pending and retries the same attempt', async () => {
+    const attemptId = '01234567-89ab-4cde-8fab-0123456789ab'
+    const base = createGameState(1, generateMaze(15, createSeededRandom(88)))
+    let rejectSave!: (error: Error) => void
+    let resolveRetry!: () => void
+    const onStageComplete = vi.fn()
+      .mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject }))
+      .mockReturnValueOnce(new Promise<void>((resolve) => { resolveRetry = resolve }))
+    render(<GameScreen initialState={{ ...base, status: 'won', remainingSeconds: base.remainingSeconds - 45 }}
+      attemptId={attemptId} onStageComplete={onStageComplete} onNextStage={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: '다음 단계' })).toBeDisabled()
+    await act(async () => rejectSave(new Error('network')))
+    expect(screen.getByRole('alert')).toHaveTextContent('기록을 확인하지 못했어요')
+    fireEvent.click(screen.getByRole('button', { name: '기록 다시 보내기' }))
+    expect(onStageComplete).toHaveBeenCalledTimes(2)
+    expect(onStageComplete).toHaveBeenLastCalledWith(1, 45, attemptId)
+    await act(async () => resolveRetry())
+    expect(screen.getByRole('button', { name: '다음 단계' })).toBeEnabled()
+  })
+
+  it('keeps the result visible when starting another server run fails', async () => {
+    const base = createGameState(1, generateMaze(15, createSeededRandom(89)))
+    const onRetryStage = vi.fn().mockRejectedValue(new Error('network'))
+    render(<GameScreen initialState={{ ...base, status: 'lost', remainingSeconds: 0 }}
+      onRetryStage={onRetryStage} />)
+    fireEvent.click(screen.getByRole('button', { name: '같은 미로 재도전' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('새 도전을 시작하지 못했어요')
+    expect(screen.getByRole('dialog', { name: '시간 초과!' })).toBeInTheDocument()
+  })
+
+  it('requests a new server run before retrying the same maze', () => {
     vi.useFakeTimers()
     const base = createGameState(1, generateMaze(15, createSeededRandom(89)))
-    render(
-      <GameScreen initialState={{ ...base, status: 'lost', remainingSeconds: 0 }} />,
+    const onRetryStage = vi.fn().mockResolvedValue(undefined)
+    const { rerender } = render(
+      <GameScreen key="lost" initialState={{ ...base, status: 'lost', remainingSeconds: 0 }}
+        onRetryStage={onRetryStage} />,
     )
 
     expect(screen.getByRole('dialog', { name: '시간 초과!' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '같은 미로 재도전' }))
+    expect(onRetryStage).toHaveBeenCalledWith(1, base.maze)
+    expect(screen.getByRole('dialog', { name: '시간 초과!' })).toBeInTheDocument()
+    rerender(<GameScreen key="retry" initialState={createGameState(1, base.maze)}
+      skipIntroMessage onRetryStage={onRetryStage} />)
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
     expect(screen.queryByText('동물을 구출해서 탈출해줘!')).not.toBeInTheDocument()
@@ -474,16 +518,23 @@ describe('GameScreen', () => {
     expect(screen.getByText(`남은 시간: ${formatTime(base.remainingSeconds - 1)}`)).toBeInTheDocument()
   })
 
-  it('starts a new maze retry after numbers only', () => {
+  it('requests a new server run before starting a different maze', () => {
     vi.useFakeTimers()
     const base = createGameState(1, generateMaze(15, createSeededRandom(89)))
     const onStateChange = vi.fn()
-    render(<GameScreen initialState={{ ...base, status: 'lost', remainingSeconds: 0 }} onStateChange={onStateChange} />)
+    const onRetryStage = vi.fn().mockResolvedValue(undefined)
+    const { rerender } = render(<GameScreen key="lost" initialState={{ ...base, status: 'lost', remainingSeconds: 0 }}
+      onStateChange={onStateChange} onRetryStage={onRetryStage} />)
 
     fireEvent.click(screen.getByRole('button', { name: '새 미로로 재시작' }))
+    expect(onRetryStage).toHaveBeenCalledWith(1, undefined)
+    expect(screen.getByRole('dialog', { name: '시간 초과!' })).toBeInTheDocument()
+    const newMaze = generateMaze(15, createSeededRandom(90))
+    rerender(<GameScreen key="retry" initialState={createGameState(1, newMaze)}
+      onStateChange={onStateChange} skipIntroMessage onRetryStage={onRetryStage} />)
     expect(screen.getByTestId('intro-overlay')).toHaveTextContent('3')
     expect(screen.queryByText('동물을 구출해서 탈출해줘!')).not.toBeInTheDocument()
-    expect(onStateChange.mock.lastCall?.[0].maze.seed).not.toBe(base.maze.seed)
+    expect(onStateChange.mock.lastCall?.[0].maze.seed).toBe(newMaze.seed)
     for (let count = 0; count < 3; count += 1) act(() => vi.advanceTimersByTime(1000))
     expect(onStateChange.mock.lastCall?.[0].status).toBe('playing')
   })

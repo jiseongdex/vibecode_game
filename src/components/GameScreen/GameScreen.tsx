@@ -4,8 +4,7 @@ import type { CSSProperties } from 'react'
 import type { PlayerAppearance } from '../../assets/assetManifest'
 import { createGameState, gameReducer } from '../../game/gameState'
 import type { GameState } from '../../game/gameState'
-import { generateMaze } from '../../game/mazeGenerator'
-import type { Direction } from '../../game/types'
+import type { Direction, Maze } from '../../game/types'
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement'
 import { usePageVisibilityPause } from '../../hooks/usePageVisibilityPause'
 import { DirectionControls } from '../Controls/DirectionControls'
@@ -18,8 +17,11 @@ import styles from './GameScreen.module.css'
 interface GameScreenProps {
   appearance?: PlayerAppearance
   initialState?: GameState
-  onStageComplete?: (stage: number, clearTimeSeconds: number) => void
-  onNextStage?: (stage: number) => void
+  attemptId?: string
+  skipIntroMessage?: boolean
+  onStageComplete?: (stage: number, clearTimeSeconds: number, attemptId: string) => Promise<void>
+  onRetryStage?: (stage: number, maze?: Maze) => Promise<void>
+  onNextStage?: (stage: number) => Promise<void>
   onCampaign?: () => void
   onStateChange?: (state: GameState) => void
   onPersistNow?: () => void
@@ -28,6 +30,7 @@ interface GameScreenProps {
 
 type MovementSource = 'keyboard' | 'button'
 type IntroStep = 'message' | 3 | 2 | 1 | null
+type RecordStatus = 'saving' | 'saved' | 'error'
 
 const BASE_FRAME_WIDTH = 1250
 const BASE_FRAME_HEIGHT = 850
@@ -35,7 +38,10 @@ const BASE_FRAME_HEIGHT = 850
 export function GameScreen({
   appearance = 'girl',
   initialState,
+  attemptId,
+  skipIntroMessage = false,
   onStageComplete,
+  onRetryStage,
   onNextStage,
   onCampaign,
   onStateChange,
@@ -63,10 +69,16 @@ export function GameScreen({
   const previousRescuedCount = useRef(rescuedCount)
   const [showRescueNotice, setShowRescueNotice] = useState(false)
   const [introStep, setIntroStep] = useState<IntroStep>(() =>
-    state.status === 'ready' ? 'message' : null,
+    state.status === 'ready' ? (skipIntroMessage ? 3 : 'message') : null,
   )
   const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== 'hidden')
   const reportedWin = useRef(false)
+  const startingResultRun = useRef(false)
+  const [recordStatus, setRecordStatus] = useState<RecordStatus>(
+    state.status === 'won' ? 'saving' : 'saved',
+  )
+  const [resultBusy, setResultBusy] = useState(false)
+  const [resultError, setResultError] = useState<string | null>(null)
   const [movementAttempt, setMovementAttempt] = useState(0)
   const [movementSource, setMovementSource] = useState<MovementSource>('button')
   const [pressedDirections, setPressedDirections] = useState<Direction[]>([])
@@ -199,12 +211,50 @@ export function GameScreen({
     if (state.status === 'ready') reportedWin.current = false
     if (state.status === 'won' && !reportedWin.current) {
       reportedWin.current = true
-      onStageComplete?.(
-        state.stageConfig.stage,
-        state.stageConfig.timeLimitSeconds - state.remainingSeconds,
-      )
+      setRecordStatus('saving')
+      if (!onStageComplete || !attemptId) {
+        setRecordStatus('error')
+        return
+      }
+      void onStageComplete(state.stageConfig.stage,
+        state.stageConfig.timeLimitSeconds - state.remainingSeconds, attemptId)
+        .then(() => setRecordStatus('saved'))
+        .catch(() => setRecordStatus('error'))
     }
-  }, [state.status, state.stageConfig, state.remainingSeconds, onStageComplete])
+  }, [state.status, state.stageConfig, state.remainingSeconds, onStageComplete, attemptId])
+
+  const retryRecord = useCallback(async () => {
+    if (!onStageComplete || !attemptId || recordStatus === 'saving') return
+    setRecordStatus('saving')
+    try {
+      await onStageComplete(state.stageConfig.stage,
+        state.stageConfig.timeLimitSeconds - state.remainingSeconds, attemptId)
+      setRecordStatus('saved')
+    } catch {
+      setRecordStatus('error')
+    }
+  }, [attemptId, onStageComplete, recordStatus, state])
+
+  const beginResultRun = useCallback(async (kind: 'same' | 'new' | 'next') => {
+    if (startingResultRun.current) return
+    startingResultRun.current = true
+    setResultBusy(true)
+    setResultError(null)
+    try {
+      if (kind === 'next') {
+        if (!onNextStage) return
+        await onNextStage(state.stageConfig.stage + 1)
+      } else {
+        if (!onRetryStage) return
+        await onRetryStage(state.stageConfig.stage, kind === 'same' ? state.maze : undefined)
+      }
+    } catch {
+      setResultError('새 도전을 시작하지 못했어요. 다시 시도해주세요.')
+    } finally {
+      startingResultRun.current = false
+      setResultBusy(false)
+    }
+  }, [onNextStage, onRetryStage, state.maze, state.stageConfig.stage])
 
   return (
     <div className={styles.screen} ref={screenRef}>
@@ -262,18 +312,13 @@ export function GameScreen({
                 status={state.status}
                 stage={state.stageConfig.stage}
                 clearTimeSeconds={state.stageConfig.timeLimitSeconds - state.remainingSeconds}
-                onRetrySameMaze={() => {
-                  dispatch({ type: 'RETRY_SAME_MAZE' })
-                  setIntroStep(3)
-                }}
-                onRestartNewMaze={() => {
-                  dispatch({
-                    type: 'RESTART_NEW_MAZE',
-                    maze: generateMaze(state.stageConfig.size),
-                  })
-                  setIntroStep(3)
-                }}
-                onNextStage={onNextStage ? () => onNextStage(state.stageConfig.stage + 1) : undefined}
+                recordStatus={recordStatus}
+                resultBusy={resultBusy}
+                resultError={resultError}
+                onRetryRecord={() => { void retryRecord() }}
+                onRetrySameMaze={() => { void beginResultRun('same') }}
+                onRestartNewMaze={() => { void beginResultRun('new') }}
+                onNextStage={onNextStage ? () => { void beginResultRun('next') } : undefined}
                 onCampaign={onCampaign}
               />
             )}

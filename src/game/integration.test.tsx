@@ -1,12 +1,11 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
-
-import { App } from '../App'
 import { completeStage, createCampaignProgress } from './campaignProgress'
 import { createGameState, gameReducer } from './gameState'
 import type { GameState } from './gameState'
 import { createSeededRandom, generateMaze } from './mazeGenerator'
 import { isWalkableGridPosition } from './mazeGrid'
 import { loadSave, mergeSaveData, saveSave } from '../persistence/saveStore'
+import { makeSavedSession } from '../persistence/saveStore'
+import { loadAccountSave, saveAccountSave } from '../persistence/accountSaveStore'
 import { SAVE_VERSION } from '../persistence/saveSchema'
 import type { Direction, Maze, Position } from './types'
 
@@ -96,30 +95,24 @@ describe('gameplay integration', () => {
     expect(fresh.status).toBe('ready')
   })
 
-  it('saves a moving game, restores it paused, and resumes explicitly', () => {
-    vi.useFakeTimers()
-    const { unmount } = render(<App />)
-    expect(screen.getByRole('button', { name: '20단계 잠김' })).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    act(() => vi.advanceTimersByTime(3000))
-    for (let count = 0; count < 3; count += 1) {
-      act(() => vi.advanceTimersByTime(1000))
-    }
-
-    const startCell = document.querySelector('[data-row="0"][data-col="0"]')
-    fireEvent.click(screen.getByRole('button', {
-      name: startCell?.className.includes('wallRight') ? '아래로 이동' : '오른쪽으로 이동',
-    }))
-    fireEvent(window, new Event('pagehide'))
-    const saved = loadSave().currentSession
+  it('saves a moving account game, restores it paused, and resumes explicitly', () => {
+    const progress = createCampaignProgress()
+    const attemptId = '01234567-89ab-4cde-8fab-0123456789ab'
+    const maze = generateMaze(15, createSeededRandom(42))
+    let state = gameReducer(createGameState(1, maze), { type: 'START', now: 1000 })
+    state = walkTo(state, state.rescues[0])
+    const saved = makeSavedSession(state, 2000)
     expect(saved?.state.status).toBe('paused')
-    unmount()
+    saveAccountSave({ version: 1, userId: 'player-1', currentSession: saved,
+      attemptId, pendingResult: null })
 
-    render(<App />)
-    expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
-    expect(loadSave().currentSession?.state.maze).toEqual(saved?.state.maze)
-    fireEvent.click(screen.getByRole('button', { name: '이어하기' }))
-    expect(screen.queryByRole('dialog', { name: '일시정지' })).not.toBeInTheDocument()
+    const restored = loadAccountSave('player-1', progress)
+    expect(restored.attemptId).toBe(attemptId)
+    expect(restored.currentSession?.state.maze).toEqual(maze)
+    expect(loadAccountSave('player-2', progress).currentSession).toBeNull()
+    const resumed = gameReducer(restored.currentSession!.state, { type: 'RESUME', now: 3000 })
+    expect(resumed.status).toBe('playing')
+    expect(resumed.player).toEqual(state.player)
   })
 
   it('rescues five animals on stage 20 and keeps the best merged records', () => {

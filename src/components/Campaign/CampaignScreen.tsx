@@ -1,11 +1,8 @@
-import type { CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 
 import type { PlayerAppearance } from '../../assets/assetManifest'
-import type { GameState } from '../../game/gameState'
-import { createGameState } from '../../game/gameState'
 import type { CampaignProgress } from '../../game/campaignProgress'
-import { generateMaze } from '../../game/mazeGenerator'
-import { getMazeSize, MAX_STAGE } from '../../game/stageConfig'
+import { MAX_STAGE } from '../../game/stageConfig'
 import { StickerIcon } from '../Decorations/StickerIcon'
 import { formatTime } from '../Hud/GameHud'
 import { PlayerAppearancePicker } from '../Player/PlayerAppearancePicker'
@@ -15,7 +12,7 @@ interface CampaignScreenProps {
   progress: CampaignProgress
   appearance: PlayerAppearance
   onAppearanceChange: (appearance: PlayerAppearance) => void
-  onStartSession: (session: GameState) => void
+  onStartStage: (stage: number) => Promise<void>
 }
 
 type RouteDirection = 'left' | 'right' | 'down' | 'end'
@@ -41,14 +38,25 @@ export function CampaignScreen({
   progress,
   appearance,
   onAppearanceChange,
-  onStartSession,
+  onStartStage,
 }: CampaignScreenProps) {
+  const [startingStage, setStartingStage] = useState<number | null>(null)
+  const starting = useRef(false)
   const completedCount = Object.keys(progress.stageRecords).length
   const campaignComplete = Boolean(progress.stageRecords[MAX_STAGE])
 
-  const startStage = (stage: number) => {
-    if (stage > progress.unlockedStage) return
-    onStartSession(createGameState(stage, generateMaze(getMazeSize(stage))))
+  const startStage = async (stage: number) => {
+    if (stage > progress.unlockedStage || starting.current) return
+    starting.current = true
+    setStartingStage(stage)
+    try {
+      await onStartStage(stage)
+    } catch {
+      // The parent keeps the stage selection visible and displays the request error.
+    } finally {
+      starting.current = false
+      setStartingStage(null)
+    }
   }
 
   return (
@@ -94,8 +102,8 @@ export function CampaignScreen({
                 type="button"
                 className={`${styles.stage} ${record ? styles.completed : ''}`}
                 aria-label={`${stage}단계 ${locked ? '잠김' : record ? '완료, 재플레이 가능' : '도전 가능'}`}
-                disabled={locked}
-                onClick={() => startStage(stage)}
+                disabled={locked || startingStage !== null}
+                onClick={() => { void startStage(stage) }}
               >
                 <StickerIcon kind={stage % 3 === 0 ? 'leaf' : stage % 3 === 1 ? 'mushroom' : 'footprint'} className={styles.stageIcon} />
                 <strong>{stage}단계</strong>
@@ -104,7 +112,7 @@ export function CampaignScreen({
                 ) : record ? (
                   <span>최고 {formatTime(record.bestTimeSeconds)}</span>
                 ) : (
-                  <span>시작하기</span>
+                  <span>{startingStage === stage ? '준비 중…' : '시작하기'}</span>
                 )}
               </button>
             </div>

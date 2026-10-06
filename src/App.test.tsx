@@ -1,172 +1,141 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
+import { ApiClientError, getSession, startRun } from './api/client'
+import type { SessionDto } from './api/contracts'
 import { App } from './App'
-import { formatTime } from './components/Hud/GameHud'
-import { loadSave, saveSave } from './persistence/saveStore'
+import { accountSaveKey, loadAccountSave } from './persistence/accountSaveStore'
+import { saveSave } from './persistence/saveStore'
 import { SAVE_VERSION } from './persistence/saveSchema'
 
-function advanceIntro() {
-  act(() => vi.advanceTimersByTime(3000))
-  for (let count = 0; count < 3; count += 1) {
-    act(() => vi.advanceTimersByTime(1000))
-  }
+vi.mock('./api/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./api/client')>()
+  return { ...actual, getSession: vi.fn(), startRun: vi.fn(), logout: vi.fn() }
+})
+
+const account: SessionDto = {
+  user: { id: 'user-1', authType: 'simple', displayName: '테스터' },
+  progress: { unlockedStage: 1, stageRecords: {} },
+}
+const attemptId = '01234567-89ab-4cde-8fab-0123456789ab'
+const mockedGetSession = vi.mocked(getSession)
+const mockedStartRun = vi.mocked(startRun)
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (error: Error) => void
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no })
+  return { promise, resolve, reject }
 }
 
-describe('App', () => {
-  beforeEach(() => window.localStorage.clear())
-  afterEach(() => {
-    vi.useRealTimers()
+async function renderAccount(session: SessionDto = account) {
+  window.history.replaceState({}, '', '/simple')
+  mockedGetSession.mockResolvedValue(session)
+  render(<App />)
+  await screen.findByRole('heading', { name: '단계 선택' })
+}
+
+describe('App authentication and account game', () => {
+  beforeEach(() => {
     window.localStorage.clear()
+    window.history.replaceState({}, '', '/')
+    vi.clearAllMocks()
+    mockedStartRun.mockResolvedValue({ attemptId, stage: 1, startedAtMs: Date.now() })
   })
 
-  it('renders the game shell', () => {
-    render(<App />)
-    expect(document.querySelector('main')).not.toHaveAttribute('data-game-active')
-
-    expect(
-      screen.getByRole('heading', { name: '동물 구출 대작전' }),
-    ).toBeInTheDocument()
-    expect(screen.getByTestId('game-container')).toBeInTheDocument()
-    expect(screen.getByText('동물들을 구하러 탐험을 떠나자!')).toBeInTheDocument()
-    expect(screen.getByText('동물 친구를 구출하고 탈출구를 찾으면 다음 단계가 열려요.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '2단계 잠김' })).toBeDisabled()
-
-    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    expect(document.querySelector('main')).toHaveAttribute('data-game-active', 'true')
-    expect(screen.queryByRole('heading', { name: '동물 구출 대작전' })).toBeNull()
-    expect(screen.getByTestId('intro-overlay')).toHaveTextContent('동물을 구출해서 탈출해줘!')
-    expect(screen.queryByRole('button', { name: '시작하기' })).not.toBeInTheDocument()
+  afterEach(() => {
+    window.localStorage.clear()
+    window.history.replaceState({}, '', '/')
   })
 
-  it('sets the explorer on stage selection and hides the picker during a game', () => {
-    const { unmount } = render(<App />)
-    const girl = screen.getByRole('button', { name: '여자 탐험가' })
-    const boy = screen.getByRole('button', { name: '남자 탐험가' })
-    expect(girl).toHaveAttribute('aria-pressed', 'true')
-
-    fireEvent.click(boy)
-    expect(boy).toHaveAttribute('aria-pressed', 'true')
-    expect(window.localStorage.getItem('maze-rescue-game.appearance.v1')).toBe('boy')
-
-    unmount()
+  it('shows only route selection at the root address', () => {
     render(<App />)
-    expect(screen.getByRole('button', { name: '남자 탐험가' })).toHaveAttribute('aria-pressed', 'true')
-
-    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    expect(screen.queryByRole('button', { name: '여자 탐험가' })).toBeNull()
-    expect(screen.queryByRole('button', { name: '남자 탐험가' })).toBeNull()
-    expect(document.querySelector('[data-asset-slot="player"] img'))
-      .toHaveAttribute('src', '/assets/players/player-boy-front.png')
+    expect(screen.getByRole('link', { name: /Microsoft 계정/ })).toHaveAttribute('href', '/microsoft')
+    expect(screen.getByRole('link', { name: /닉네임과 PIN/ })).toHaveAttribute('href', '/simple')
+    expect(mockedGetSession).not.toHaveBeenCalled()
+    expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
   })
 
-  it('restores the same maze and position in a paused state after leaving', () => {
-    vi.useFakeTimers()
-    const { unmount } = render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    advanceIntro()
-
-    const startCell = document.querySelector('[data-row="0"][data-col="0"]')
-    const direction = startCell?.className.includes('wallRight') ? 'ArrowDown' : 'ArrowRight'
-    fireEvent.keyDown(window, { key: direction })
-
-    fireEvent(window, new Event('pagehide'))
-    const saved = loadSave().currentSession
-    expect(saved?.state.status).toBe('paused')
-    expect(saved?.state.player).not.toEqual({ row: 0, col: 0 })
-    const savedMaze = saved?.state.maze
-    const remaining = saved?.state.remainingSeconds
-    unmount()
-
+  it('does not show the game to an anonymous visitor', async () => {
+    window.history.replaceState({}, '', '/simple')
+    mockedGetSession.mockRejectedValue(new ApiClientError(401, 'unauthorized', '로그인 필요'))
     render(<App />)
-    expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '간편 로그인' })).toBeInTheDocument()
+    expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
+  })
+
+  it('blocks a session from the other login route', async () => {
+    window.history.replaceState({}, '', '/microsoft')
+    mockedGetSession.mockResolvedValue(account)
+    render(<App />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('다른 로그인 방식')
+    expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
+  })
+
+  it('keeps the gate closed on a session API failure', async () => {
+    window.history.replaceState({}, '', '/simple')
+    mockedGetSession.mockRejectedValue(new ApiClientError(503, 'unavailable', '서버 오류'))
+    render(<App />)
+    expect(await screen.findByRole('button', { name: '다시 시도' })).toBeInTheDocument()
+    expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
+  })
+
+  it('starts gameplay only after a server attempt is issued', async () => {
+    const request = deferred<Awaited<ReturnType<typeof startRun>>>()
+    mockedStartRun.mockReturnValue(request.promise)
+    await renderAccount()
+    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
+    expect(mockedStartRun).toHaveBeenCalledWith(1)
     expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: '동물 구출 대작전' })).toBeNull()
-    expect(screen.getByRole('img', { name: '탐험가' })).toHaveAttribute(
-      'data-grid-row',
-      String(saved?.state.player.row),
-    )
-    expect(screen.getByRole('img', { name: '탐험가' })).toHaveAttribute(
-      'data-grid-col',
-      String(saved?.state.player.col),
-    )
-    expect(loadSave().currentSession?.state.maze).toEqual(savedMaze)
-    expect(loadSave().currentSession?.state.remainingSeconds).toBe(remaining)
-
-    fireEvent.click(screen.getByRole('button', { name: '이어하기' }))
-    expect(screen.queryByRole('dialog', { name: '일시정지' })).toBeNull()
+    await act(async () => request.resolve({ attemptId, stage: 1, startedAtMs: Date.now() }))
+    expect(await screen.findByTestId('intro-overlay')).toBeInTheDocument()
   })
 
-  it('can discard a restored session without losing campaign records', () => {
-    const { unmount } = render(<App />)
+  it('keeps stage selection open when the start request fails', async () => {
+    mockedStartRun.mockRejectedValue(new ApiClientError(503, 'unavailable', '서버 오류'))
+    await renderAccount()
     fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-    fireEvent(window, new Event('pagehide'))
-    unmount()
-
-    render(<App />)
-    expect(screen.getByRole('button', { name: '게임 버리고 단계 선택' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '게임 버리고 단계 선택' }))
-    expect(document.querySelector('main')).not.toHaveAttribute('data-game-active')
-    expect(screen.getByRole('heading', { name: '동물 구출 대작전' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '1단계 도전 가능' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '여자 탐험가' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '남자 탐험가' })).toBeInTheDocument()
-    expect(loadSave().currentSession).toBeNull()
+    expect(await screen.findByRole('alert')).toHaveTextContent('새 도전을 시작하지 못했어요')
+    expect(screen.getByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
+    expect(screen.queryByTestId('intro-overlay')).not.toBeInTheDocument()
   })
 
-  it('saves a new session after the debounce interval', () => {
-    vi.useFakeTimers()
-    render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-
-    expect(loadSave().currentSession).toBeNull()
-    act(() => vi.advanceTimersByTime(250))
-    expect(loadSave().currentSession?.state.status).toBe('paused')
-    expect(loadSave().currentSession?.state.stageConfig.stage).toBe(1)
-  })
-
-  it('restores unlocked stages and best records on startup', () => {
+  it('uses server progress and ignores the old shared browser save', async () => {
     saveSave({
       version: SAVE_VERSION,
-      unlockedStage: 2,
-      stageRecords: { 1: { bestTimeSeconds: 80 } },
+      unlockedStage: 3,
+      stageRecords: { 1: { bestTimeSeconds: 20 }, 2: { bestTimeSeconds: 50 } },
       currentSession: null,
     })
-    render(<App />)
-
-    expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled()
-    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
+    await renderAccount()
+    expect(screen.getByRole('button', { name: '2단계 잠김' })).toBeDisabled()
+    expect(screen.queryByText('최고 00:20')).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(accountSaveKey(account.user.id))).toBeNull()
   })
 
-  it('pauses on a hidden tab and waits for an explicit resume', () => {
-    vi.useFakeTimers()
-    const original = Object.getOwnPropertyDescriptor(document, 'visibilityState')
-    let visibility = 'visible'
-    Object.defineProperty(document, 'visibilityState', {
-      configurable: true,
-      get: () => visibility,
-    })
+  it('restores the account paused maze without exposing it to another account', async () => {
+    await renderAccount()
+    fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
+    await screen.findByTestId('intro-overlay')
+    fireEvent(window, new Event('pagehide'))
+    const saved = loadAccountSave(account.user.id, account.progress)
+    expect(saved.currentSession?.state.status).toBe('paused')
+    expect(saved.attemptId).toBe(attemptId)
 
-    try {
-      render(<App />)
-      fireEvent.click(screen.getByRole('button', { name: '1단계 도전 가능' }))
-      advanceIntro()
-      act(() => vi.advanceTimersByTime(1000))
-
-      visibility = 'hidden'
-      fireEvent(document, new Event('visibilitychange'))
-      const savedTime = loadSave().currentSession?.state.remainingSeconds
-      expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
-      act(() => vi.advanceTimersByTime(5000))
-      expect(screen.getByText(`남은 시간: ${formatTime(savedTime ?? 0)}`)).toBeInTheDocument()
-
-      visibility = 'visible'
-      fireEvent(document, new Event('visibilitychange'))
-      expect(screen.getByRole('dialog', { name: '일시정지' })).toBeInTheDocument()
-      fireEvent.click(screen.getByRole('button', { name: '이어하기' }))
-      expect(screen.queryByRole('dialog')).toBeNull()
-    } finally {
-      if (original) Object.defineProperty(document, 'visibilityState', original)
-      else Reflect.deleteProperty(document, 'visibilityState')
+    const other: SessionDto = {
+      user: { id: 'user-2', authType: 'simple', displayName: '다른 사람' },
+      progress: { unlockedStage: 1, stageRecords: {} },
     }
+    expect(loadAccountSave(other.user.id, other.progress).currentSession).toBeNull()
+  })
+
+  it('refreshes unlocked stages and best times from the server', async () => {
+    await renderAccount()
+    mockedGetSession.mockResolvedValue({
+      ...account,
+      progress: { unlockedStage: 2, stageRecords: { 1: { bestTimeSeconds: 80 } } },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '진행 새로고침' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled())
+    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
   })
 })
