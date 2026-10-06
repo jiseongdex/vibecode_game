@@ -84,6 +84,9 @@ describe('server sessions', () => {
       headers: { Cookie: sessionCookie(login) },
     }))
     expect(expired.status).toBe(401)
+    const remaining = await testEnv.env.DB.prepare('SELECT count(*) AS total FROM sessions')
+      .first<{ total: number }>()
+    expect(remaining!.total).toBe(0)
   })
 
   it('rejects cross-origin POST and non-JSON writes before creating accounts', async () => {
@@ -118,5 +121,32 @@ describe('server sessions', () => {
       authType: 'microsoft',
       displayName: 'Microsoft Player',
     })
+  })
+
+  it('purges all expired sessions on the daily scheduled event', async () => {
+    const testEnv = await setup()
+    const registration = await testEnv.fetch(registerRequest())
+    const userId = (await registration.json() as { user: { id: string } }).user.id
+    const nowMs = Date.now()
+    for (const [tokenHash, expiresAt] of [
+      ['expired', nowMs - 1],
+      ['boundary', nowMs],
+      ['future', nowMs + 10_000],
+    ] as const) {
+      await testEnv.env.DB.prepare(
+        'INSERT INTO sessions (token_hash, user_id, created_at_ms, expires_at_ms) VALUES (?, ?, ?, ?)',
+      ).bind(tokenHash, userId, nowMs - 20_000, expiresAt).run()
+    }
+
+    const scheduled = await testEnv.scheduled(nowMs)
+    expect(scheduled.outcome).toBe('ok')
+
+    const { results } = await testEnv.env.DB.prepare(
+      "SELECT token_hash FROM sessions WHERE token_hash IN ('expired', 'boundary', 'future')",
+    ).all<{ token_hash: string }>()
+    expect(results.map(({ token_hash }) => token_hash)).toEqual(['future'])
+    const indexes = await testEnv.env.DB.prepare("PRAGMA index_list('sessions')")
+      .all<{ name: string }>()
+    expect(indexes.results.map(({ name }) => name)).toContain('sessions_expiry_idx')
   })
 })

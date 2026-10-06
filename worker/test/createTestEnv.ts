@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare'
@@ -7,12 +8,13 @@ import type { Env } from '../types'
 export interface TestEnv {
   env: Env
   fetch: (request: Request) => Promise<Response>
+  scheduled: (scheduledTimeMs: number) => Promise<{ outcome: string; noRetry: boolean }>
   dispose: () => Promise<void>
 }
 
 export async function createTestEnv(options: { pinPepper?: string | null } = {}): Promise<TestEnv> {
   const entryPoint = fileURLToPath(new URL('../index.ts', import.meta.url))
-  const migrationPath = fileURLToPath(new URL('../../migrations/0001_initial.sql', import.meta.url))
+  const migrationDirectory = fileURLToPath(new URL('../../migrations/', import.meta.url))
   const bundle = await build({
     entryPoints: [entryPoint],
     bundle: true,
@@ -27,6 +29,7 @@ export async function createTestEnv(options: { pinPepper?: string | null } = {})
     modules: true,
     compatibilityDate: '2026-10-02',
     d1Databases: { DB: crypto.randomUUID() },
+    cronTriggers: ['0 0 * * *'],
     bindings: options.pinPepper === null
       ? {}
       : { PIN_PEPPER: options.pinPepper ?? 'test-only-pepper-never-use-in-production' },
@@ -34,9 +37,14 @@ export async function createTestEnv(options: { pinPepper?: string | null } = {})
 
   try {
     const db = await mf.getD1Database('DB')
-    const migration = await readFile(migrationPath, 'utf8')
-    for (const statement of migration.split(';').map((part) => part.trim()).filter(Boolean)) {
-      await db.prepare(statement).run()
+    const migrationFiles = (await readdir(migrationDirectory))
+      .filter((file) => /^\d+_.*\.sql$/.test(file))
+      .sort()
+    for (const file of migrationFiles) {
+      const migration = await readFile(join(migrationDirectory, file), 'utf8')
+      for (const statement of migration.split(';').map((part) => part.trim()).filter(Boolean)) {
+        await db.prepare(statement).run()
+      }
     }
 
     return {
@@ -56,6 +64,10 @@ export async function createTestEnv(options: { pinPepper?: string | null } = {})
         })
         // Miniflare returns a Node fetch Response with the same API surface used here.
         return response as unknown as Response
+      },
+      scheduled: async (scheduledTimeMs) => {
+        const worker = await mf.getWorker()
+        return worker.scheduled({ scheduledTime: new Date(scheduledTimeMs), cron: '0 0 * * *' })
       },
       dispose: () => mf.dispose(),
     }

@@ -56,6 +56,12 @@ export async function issueSession(
   }
 }
 
+export async function purgeExpiredSessions(env: Env, nowMs: number): Promise<number> {
+  const result = await env.DB.prepare('DELETE FROM sessions WHERE expires_at_ms <= ?')
+    .bind(nowMs).run()
+  return result.meta.changes
+}
+
 export async function readSession(
   request: Request,
   env: Env,
@@ -64,18 +70,24 @@ export async function readSession(
   const token = readToken(request)
   if (!token) return null
 
+  const tokenHash = await hashToken(token)
   const row = await env.DB.prepare(
     `SELECT u.id AS user_id, u.auth_type, u.display_name, s.expires_at_ms
      FROM sessions AS s JOIN users AS u ON u.id = s.user_id
      WHERE s.token_hash = ?`,
-  ).bind(await hashToken(token)).first<{
+  ).bind(tokenHash).first<{
     user_id: string
     auth_type: SessionPrincipal['authType']
     display_name: string
     expires_at_ms: number
   }>()
 
-  if (!row || row.expires_at_ms <= nowMs) return null
+  if (!row) return null
+  if (row.expires_at_ms <= nowMs) {
+    await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ? AND expires_at_ms <= ?')
+      .bind(tokenHash, nowMs).run()
+    return null
+  }
   return { userId: row.user_id, authType: row.auth_type, displayName: row.display_name }
 }
 

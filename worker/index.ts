@@ -5,6 +5,7 @@ import {
   assertSameOriginJson,
   clearSession,
   getSessionDto,
+  purgeExpiredSessions,
   requireSession,
 } from './auth/session'
 import type { Env } from './types'
@@ -61,5 +62,8 @@ export default {
       }
       throw error
     }
+  },
+  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
+    await purgeExpiredSessions(env, controller.scheduledTime)
   },
 } satisfies ExportedHandler<Env>
