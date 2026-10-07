@@ -78,11 +78,7 @@ main[data-campaign-active='true'] .account-pending { flex: none; }
 body > #root > main > header {
   width: min(calc(100% - 32px), 1240px);
   margin: 14px auto 0;
-  padding: 10px 20px 12px;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-paper);
-  box-shadow: var(--shadow-sticker);
+  padding: 6px 20px 8px;
   text-align: center;
 }
 
