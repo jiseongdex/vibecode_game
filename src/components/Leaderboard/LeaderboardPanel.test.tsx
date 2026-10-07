@@ -17,6 +17,13 @@ const other: LeaderboardEntry = {
   rank: 1, userId: 'other', displayName: '친구', highestStage: 8, bestTimeSeconds: 75,
 }
 const callbacks = { onUnauthorized: vi.fn().mockResolvedValue(undefined) }
+const topEntries = (count: number): LeaderboardEntry[] => Array.from({ length: count }, (_, index) => ({
+  rank: index === 10 ? 10 : index + 1,
+  userId: `user-${index}`,
+  displayName: `사용자 ${index + 1}`,
+  highestStage: 20,
+  bestTimeSeconds: 30 + index,
+}))
 
 describe('LeaderboardPanel', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -33,26 +40,58 @@ describe('LeaderboardPanel', () => {
     expect(rows[1]).toHaveTextContent('1위나최고 8단계최단 01:15내 기록')
     expect(rows[1]).toHaveAttribute('data-current-user', 'true')
     expect(screen.queryByRole('heading', { name: '내 순위' })).not.toBeInTheDocument()
+    expect(screen.getByText('1/1 페이지')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '이전 페이지' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '다음 페이지' })).toBeDisabled()
     expect(mockedGetLeaderboard).toHaveBeenCalledExactlyOnceWith()
   })
 
-  it('shows an outside-top current rank separately without reordering the top 100', async () => {
-    const top = Array.from({ length: 100 }, (_, index): LeaderboardEntry => ({
-      rank: index + 1, userId: `user-${index}`, displayName: `사용자 ${index + 1}`,
-      highestStage: 20, bestTimeSeconds: 30 + index,
-    }))
+  it('pages through 100 server-ordered entries without changing tied ranks or refetching', async () => {
+    const top = topEntries(100)
     const outside = { ...current, rank: 101, highestStage: 4, bestTimeSeconds: 93 }
     mockedGetLeaderboard.mockResolvedValue({ top, current: outside })
     render(<LeaderboardPanel authType="simple" currentUserId="current" {...callbacks} />)
     expect(screen.getByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
     const topList = await screen.findByRole('list', { name: '상위 100명 랭킹' })
-    const topRows = within(topList).getAllByRole('listitem')
-    expect(topRows).toHaveLength(100)
-    expect(topRows[0]).toHaveTextContent('1위사용자 1')
+    expect(within(topList).getAllByRole('listitem')).toHaveLength(10)
+    expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('1위사용자 1')
+    expect(screen.getByText('1/10 페이지')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '이전 페이지' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
+    expect(screen.getByText('2/10 페이지')).toBeInTheDocument()
+    expect(within(topList).getAllByRole('listitem')).toHaveLength(10)
+    expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('10위사용자 11')
+    expect(screen.getByRole('button', { name: '이전 페이지' })).toBeEnabled()
+
+    for (let page = 3; page <= 10; page += 1) {
+      fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
+    }
+    expect(screen.getByText('10/10 페이지')).toBeInTheDocument()
+    expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('91위사용자 91')
+    expect(within(topList).getAllByRole('listitem')[9]).toHaveTextContent('100위사용자 100')
+    expect(screen.getByRole('button', { name: '다음 페이지' })).toBeDisabled()
     const mine = within(screen.getByRole('list', { name: '내 순위' })).getByRole('listitem')
     expect(mine).toHaveTextContent('101위나최고 4단계최단 01:33')
     expect(mine).toHaveAttribute('data-current-user', 'true')
     expect(screen.queryByText(/실명일 수 있어요/)).not.toBeInTheDocument()
+    expect(mockedGetLeaderboard).toHaveBeenCalledExactlyOnceWith()
+  })
+
+  it('shows own rank outside the visible page and removes the duplicate on that page', async () => {
+    const top = topEntries(21)
+    const mine = { ...top[15], userId: 'current', displayName: '나' }
+    top[15] = mine
+    mockedGetLeaderboard.mockResolvedValue({ top, current: mine })
+    render(<LeaderboardPanel authType="simple" currentUserId="current" {...callbacks} />)
+    const topList = await screen.findByRole('list', { name: '상위 100명 랭킹' })
+    expect(screen.getByRole('list', { name: '내 순위' })).toHaveTextContent('16위나')
+    fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
+    expect(screen.getByText('2/3 페이지')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: '내 순위' })).not.toBeInTheDocument()
+    expect(within(topList).getAllByRole('listitem')[5]).toHaveTextContent('16위나')
+    fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
+    expect(screen.getByRole('list', { name: '내 순위' })).toHaveTextContent('16위나')
   })
 
   it('shows empty and unranked states without a return button', async () => {
@@ -60,6 +99,8 @@ describe('LeaderboardPanel', () => {
     render(<LeaderboardPanel authType="simple" currentUserId="current" {...callbacks} />)
     expect(await screen.findByText(/아직 랭킹 기록이 없어요/)).toBeInTheDocument()
     expect(screen.getByText('아직 완료한 단계가 없어 순위가 없습니다.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '이전 페이지' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '다음 페이지' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '단계 선택으로 돌아가기' })).not.toBeInTheDocument()
   })
 
@@ -84,18 +125,21 @@ describe('LeaderboardPanel', () => {
 
   it('clears the previous account type list while loading another type', async () => {
     let resolveNext!: (data: LeaderboardDto) => void
-    mockedGetLeaderboard.mockResolvedValueOnce({ top: [current], current })
+    mockedGetLeaderboard.mockResolvedValueOnce({ top: topEntries(12), current })
       .mockReturnValueOnce(new Promise<LeaderboardDto>((resolve) => { resolveNext = resolve }))
     const { rerender } = render(
       <LeaderboardPanel authType="simple" currentUserId="current" {...callbacks} />,
     )
     expect(await screen.findByRole('list', { name: '상위 100명 랭킹' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
+    expect(screen.getByText('2/2 페이지')).toBeInTheDocument()
 
     rerender(<LeaderboardPanel authType="microsoft" currentUserId="microsoft-user" {...callbacks} />)
     expect(screen.getByRole('heading', { name: 'Microsoft 랭킹' })).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('랭킹을 불러오는 중')
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
-    await act(async () => resolveNext({ top: [], current: null }))
-    expect(await screen.findByText(/아직 랭킹 기록이 없어요/)).toBeInTheDocument()
+    await act(async () => resolveNext({ top: topEntries(12), current: null }))
+    expect(await screen.findByText('1/2 페이지')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: '상위 100명 랭킹' })).getAllByRole('listitem')[0]).toHaveTextContent('1위사용자 1')
   })
 })

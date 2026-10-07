@@ -2,7 +2,7 @@
   width: 100%;
   min-height: 100%;
   margin: 0;
-  padding: 18px 20px 24px;
+  padding: 12px 14px 14px;
   border: 2px solid rgb(70 102 81 / 54%);
   border-radius: 32px;
   background: var(--color-paper);
@@ -18,8 +18,8 @@
   gap: 12px 20px;
 }
 
-.header h2 { margin: 0; font-size: clamp(30px, 5vw, 44px); font-weight: 400; }
-.header p { margin: 4px 0 0; font-size: clamp(17px, 2vw, 21px); }
+.header h2 { margin: 0; font-size: clamp(25px, 3vw, 34px); font-weight: 400; line-height: 1.1; }
+.header p { margin: 3px 0 0; font-size: clamp(14px, 1.2vw, 16px); line-height: 1.25; }
 .message button {
   min-height: 44px;
   padding: 6px 16px;
@@ -31,50 +31,70 @@
 }
 
 .privacy {
-  margin: 18px 0 0;
-  padding: 10px 14px;
+  margin: 8px 0 0;
+  padding: 6px 10px;
   border-radius: 14px;
   background: #fff0dc;
-  font-size: 18px;
+  font-size: 15px;
+  line-height: 1.25;
 }
 
 .message {
-  margin: 20px 0 0;
-  padding: 16px;
+  margin: 10px 0 0;
+  padding: 10px;
   border-radius: 16px;
   background: var(--color-mint);
-  font-size: 20px;
+  font-size: 16px;
 }
 .message p { margin: 0 0 10px; }
 
-.list { display: grid; gap: 9px; margin: 20px 0 0; padding: 0; list-style: none; }
+.list { display: grid; gap: 4px; margin: 10px 0 0; padding: 0; list-style: none; }
 .row {
   display: grid;
-  grid-template-columns: 54px minmax(0, 1fr) auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: 5px 10px;
+  gap: 4px 6px;
   min-width: 0;
-  padding: 10px 14px;
+  padding: 5px 7px;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 10px;
   background: #fffaf0;
-  font-size: 18px;
+  font-size: 15px;
+  line-height: 1.2;
 }
 .currentUser { border: 2px solid var(--color-success); background: var(--color-mint); }
-.rank { grid-row: span 2; font-weight: 700; }
-.name { grid-column: 2 / -1; min-width: 0; overflow-wrap: anywhere; }
-.stage { grid-column: 2; white-space: nowrap; }
-.time { grid-column: 3; white-space: nowrap; }
-.myBadge { grid-column: 2 / -1; justify-self: start; padding: 2px 8px; border-radius: 999px; background: var(--color-paper); font-size: 16px; white-space: nowrap; }
-.outsideTop { margin-top: 26px; padding-top: 15px; border-top: 2px dashed var(--color-border); }
-.outsideTop h3 { margin: 0; font-size: 27px; font-weight: 400; }
-.outsideTop .list { margin-top: 10px; }
+.rank { font-weight: 700; white-space: nowrap; }
+.name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage, .time { white-space: nowrap; }
+.myBadge { justify-self: start; padding: 2px 6px; border-radius: 999px; background: var(--color-paper); font-size: 13px; white-space: nowrap; }
+.pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; margin-top: 10px; font-size: 16px; }
+.pagination button {
+  min-height: 40px;
+  padding: 5px 12px;
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-mint);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.pagination button:disabled { opacity: 0.5; cursor: default; }
+.pagination button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.outsideTop { margin-top: 10px; padding-top: 7px; border-top: 2px dashed var(--color-border); }
+.outsideTop h3 { margin: 0; font-size: 20px; font-weight: 400; }
+.outsideTop .list { margin-top: 5px; }
 
 @media (max-width: 700px) {
-  .panel { padding: 18px 14px 24px; border-radius: 26px; }
+  .panel { padding: 14px; border-radius: 26px; }
+  .row { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 4px 8px; font-size: 16px; }
+  .rank { grid-row: span 2; }
+  .name { grid-column: 2 / -1; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
+  .stage { grid-column: 2; }
+  .time { grid-column: 3; }
+  .myBadge { grid-column: 2 / -1; }
 }
 
 @media (max-width: 360px) {
   .row { grid-template-columns: 48px minmax(0, 1fr); }
+  .rank { grid-row: span 3; }
   .name, .stage, .time, .myBadge { grid-column: 2; }
 }

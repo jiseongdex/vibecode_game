@@ -17,7 +17,6 @@
 }
 
 .leaderboardPane {
-  overflow-y: auto;
   border-radius: 28px;
 }
 
@@ -39,8 +38,6 @@
   .stagesPane { order: 0; }
   .leaderboardPane {
     order: 1;
-    max-height: min(75dvh, 780px);
-    overflow-y: auto;
   }
 }
 
