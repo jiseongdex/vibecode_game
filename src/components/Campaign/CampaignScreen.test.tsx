@@ -12,6 +12,14 @@ describe('CampaignScreen', () => {
     expect(stages.map((button) => button.getAttribute('aria-label')?.split('단계')[0])).toEqual(
       Array.from({ length: 20 }, (_, index) => String(index + 1)),
     )
+    stages.forEach((button, index) => {
+      expect(button).toHaveTextContent(`${index + 1}단계`)
+      expect(button.textContent).toBe(`${index + 1}단계`)
+      expect(button.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    })
+    expect(stages.slice(0, 3).map((button) => button.getAttribute('data-sticker'))).toEqual([
+      'mushroom', 'footprint', 'leaf',
+    ])
 
     const routeNode = (stage: number) => stages[stage - 1].parentElement!
     expect(routeNode(1).style.getPropertyValue('--desktop-col')).toBe('1')
@@ -59,7 +67,7 @@ describe('CampaignScreen', () => {
 
     expect(initial.unlockedStage).toBe(1)
     expect(progress.unlockedStage).toBe(2)
-    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1단계 완료, 재플레이 가능' }).textContent).toBe('1단계')
     fireEvent.click(screen.getByRole('button', { name: '1단계 완료, 재플레이 가능' }))
     await waitFor(() => expect(screen.getByRole('button', { name: '2단계 도전 가능' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: '2단계 도전 가능' }))
@@ -69,7 +77,7 @@ describe('CampaignScreen', () => {
     const improved = completeStage(progress, 1, 95)
     rerender(<CampaignScreen progress={improved} appearance="girl" onAppearanceChange={vi.fn()} onStartStage={onStartStage} />)
     expect(improved.stageRecords[1]).toEqual({ bestTimeSeconds: 80 })
-    expect(screen.getByText('최고 01:20')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1단계 완료, 재플레이 가능' }).textContent).toBe('1단계')
   })
 
   it('shows the final campaign result after all twenty stages', () => {

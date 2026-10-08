@@ -4,7 +4,6 @@ import type { PlayerAppearance } from '../../assets/assetManifest'
 import type { CampaignProgress } from '../../game/campaignProgress'
 import { MAX_STAGE } from '../../game/stageConfig'
 import { StickerIcon } from '../Decorations/StickerIcon'
-import { formatTime } from '../Hud/GameHud'
 import { PlayerAppearancePicker } from '../Player/PlayerAppearancePicker'
 import styles from './CampaignScreen.module.css'
 
@@ -79,6 +78,7 @@ export function CampaignScreen({
         {Array.from({ length: MAX_STAGE }, (_, index) => index + 1).map((stage) => {
           const record = progress.stageRecords[stage]
           const locked = stage > progress.unlockedStage
+          const stickerKind = stage % 3 === 0 ? 'leaf' : stage % 3 === 1 ? 'mushroom' : 'footprint'
           const desktop = routePosition(stage, 5)
           const mobile = routePosition(stage, 2)
           const positionStyle = {
@@ -98,19 +98,13 @@ export function CampaignScreen({
               <button
                 type="button"
                 className={`${styles.stage} ${record ? styles.completed : ''}`}
+                data-sticker={stickerKind}
                 aria-label={`${stage}단계 ${locked ? '잠김' : record ? '완료, 재플레이 가능' : '도전 가능'}`}
                 disabled={locked || startingStage !== null}
                 onClick={() => { void startStage(stage) }}
               >
-                <StickerIcon kind={stage % 3 === 0 ? 'leaf' : stage % 3 === 1 ? 'mushroom' : 'footprint'} className={styles.stageIcon} />
+                <StickerIcon kind={stickerKind} className={styles.stageIcon} />
                 <strong>{stage}단계</strong>
-                {locked ? (
-                  <span>잠김</span>
-                ) : record ? (
-                  <span>최고 {formatTime(record.bestTimeSeconds)}</span>
-                ) : (
-                  <span>{startingStage === stage ? '준비 중…' : '시작하기'}</span>
-                )}
               </button>
             </div>
           )

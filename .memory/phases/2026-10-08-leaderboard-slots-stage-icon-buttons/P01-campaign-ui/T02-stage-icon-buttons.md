@@ -1,6 +1,6 @@
 # Task: T02 그림 위 단계 글자 버튼
 
-## Status: pending
+## Status: done
 
 ## Goal
 
@@ -37,6 +37,7 @@
 
 - Related Files:
   - `src/components/Campaign/CampaignScreen.module.css` :: `.stage`, `.stageIcon`, `.stage strong`, `.stage:disabled`, 반응형 규칙 — 버튼 상자 배경·테두리·그림자 제거, 큰 SVG와 글자 겹치기, 잠금 회색; modify
+  - `src/components/Leaderboard/LeaderboardPanel.module.css` :: `.row`, `.myRecord h3`, `.pagination` — T01의 10칸 실제 화면 확인에서 작은 필기체 글자가 읽기 어려운 문제를 발견해 데이터 글꼴을 기존 `--font-message`로 바꿈; modify
 
 #### Details
 
@@ -45,6 +46,7 @@
   2. SVG는 버튼 안에서 시각적 그림으로 크게 중앙 배치한다. 단계 글자는 절대 또는 grid 겹침으로 그림 중앙에 올리고 대비를 확보한다. 그림과 글자의 pointer event는 버튼에 전달한다.
   3. 잠긴 단계는 SVG의 색·포화도를 회색으로 바꾸고 글자도 회색 계열로 표시한다. `disabled`와 `cursor:not-allowed`를 유지한다. 완료 단계는 잠금과 구분되는 색을 쓰되 사각형 배경은 만들지 않는다.
   4. hover·active·focus-visible, 901px 이상 4×5, 900px 이하 2열·320px에서 겹침과 터치 대상 크기를 확인한다. `prefers-reduced-motion` 규칙은 유지한다.
+  5. 랭킹 10칸의 행·내 기록 제목·페이지 이동 글꼴을 `--font-message`로 통일해 읽기 쉽게 하되 1440×900 무스크롤과 320px 가로 무스크롤을 유지한다.
 
 ### I03. 회귀 테스트와 실제 화면 확인
 
@@ -58,10 +60,10 @@
 
 ## Acceptance Criteria
 
-- [ ] 20개 단계 버튼은 버섯·발자국·나뭇잎 그림과 `N단계`만 화면에 보인다.
-- [ ] 사각형 칸 배경·테두리가 없고 잠긴 그림은 회색이며 클릭할 수 없다.
-- [ ] 완료·해금·재플레이 동작과 상태 `aria-label`은 유지된다.
-- [ ] 1440×900 무스크롤, 낮은 데스크톱 좌우 배치, 320px 모바일 탭과 가로 무스크롤을 유지한다.
+- [x] 20개 단계 버튼은 버섯·발자국·나뭇잎 그림과 `N단계`만 화면에 보인다.
+- [x] 사각형 칸 배경·테두리가 없고 잠긴 그림은 회색이며 클릭할 수 없다.
+- [x] 완료·해금·재플레이 동작과 상태 `aria-label`은 유지된다.
+- [x] 1440×900 무스크롤, 낮은 데스크톱 좌우 배치, 320px 모바일 탭과 가로 무스크롤을 유지한다.
 
 ## Validation
 
@@ -86,6 +88,6 @@ Task: T02-stage-icon-buttons
 
 ## Progress
 
-- [ ] 구현 완료
-- [ ] 검증 통과
+- [x] 구현 완료
+- [x] 검증 통과
 - commit: pending
