@@ -9,10 +9,9 @@
   border: 0;
   border-radius: 8px 28px 28px 8px;
   background:
-    radial-gradient(circle at 92% 10%, rgb(246 206 188 / 54%), transparent 28%),
-    radial-gradient(circle at 15% 85%, rgb(206 226 240 / 46%), transparent 36%),
-    linear-gradient(155deg, #f6fbf2, #edf7ee 62%, #fff1e7);
-  box-shadow: inset 14px 0 20px -19px rgb(43 68 53 / 46%), inset 0 0 0 1px rgb(82 118 87 / 20%);
+    radial-gradient(circle at 92% 10%, rgb(246 206 188 / 30%), transparent 28%),
+    linear-gradient(155deg, rgb(246 251 242 / 79%), rgb(237 247 238 / 73%) 62%, rgb(255 241 231 / 76%));
+  box-shadow: inset 14px 0 20px -19px rgb(43 68 53 / 28%);
   color: var(--color-ink);
 }
 
@@ -186,6 +185,7 @@
     min-height: auto;
     padding: 18px 16px 24px;
     border-radius: 26px;
+    background: linear-gradient(155deg, #f6fbf2, #edf7ee 62%, #fff1e7);
     box-shadow: var(--shadow-panel);
   }
 

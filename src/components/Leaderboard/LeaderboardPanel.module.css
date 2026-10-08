@@ -8,8 +8,8 @@
   padding: 12px 14px 14px;
   border: 0;
   border-radius: 28px 8px 8px 28px;
-  background: linear-gradient(155deg, #fffdf5, #fff7e8 68%, #fcefe4);
-  box-shadow: inset -14px 0 20px -19px rgb(75 59 48 / 45%), inset 0 0 0 1px rgb(141 117 86 / 17%);
+  background: linear-gradient(155deg, rgb(255 253 245 / 83%), rgb(255 247 232 / 74%) 68%, rgb(252 239 228 / 76%));
+  box-shadow: inset -14px 0 20px -19px rgb(75 59 48 / 29%);
   color: var(--color-ink);
 }
 
@@ -154,7 +154,7 @@
 }
 
 @media (max-width: 700px) {
-  .panel { padding: 14px; border-radius: 26px; box-shadow: var(--shadow-panel); }
+  .panel { padding: 14px; border-radius: 26px; background: var(--color-paper); box-shadow: var(--shadow-panel); }
   .row { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 4px 8px; font-size: 16px; }
   .rank { grid-row: span 2; }
   .name { grid-column: 2 / -1; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
