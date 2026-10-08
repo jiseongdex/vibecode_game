@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 
 import { ApiClientError, getLeaderboard } from '../../api/client'
 import type { AuthType, LeaderboardDto, LeaderboardEntry } from '../../api/contracts'
@@ -10,7 +10,7 @@ type LoadState =
   | { status: 'error'; message: string }
   | { status: 'ready'; data: LeaderboardDto }
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 20
 
 function RankingRow({ entry, currentUserId, showBadge = true }: {
   entry: LeaderboardEntry
@@ -59,6 +59,7 @@ export function LeaderboardPanel({
   })
   const [requestNumber, setRequestNumber] = useState(0)
   const [page, setPage] = useState(1)
+  const listRef = useRef<HTMLOListElement>(null)
 
   useEffect(() => {
     let active = true
@@ -88,6 +89,11 @@ export function LeaderboardPanel({
     setPage(1)
     setResponse({ identity, state: { status: 'loading' } })
     setRequestNumber((value) => value + 1)
+  }
+
+  const changePage = (nextPage: number) => {
+    setPage(nextPage)
+    if (listRef.current) listRef.current.scrollTop = 0
   }
 
   return (
@@ -124,7 +130,7 @@ export function LeaderboardPanel({
               )}
             </ol>
           </div>
-          <ol className={styles.list} aria-label="상위 100명 랭킹">
+          <ol ref={listRef} className={`${styles.list} ${styles.topList}`} aria-label="상위 100명 랭킹" tabIndex={0}>
             {Array.from({ length: PAGE_SIZE }, (_, index) => {
               const entry = visibleEntries[index]
               const slotRank = (currentPage - 1) * PAGE_SIZE + index + 1
@@ -135,10 +141,10 @@ export function LeaderboardPanel({
           </ol>
           <div className={styles.pagination} aria-label="랭킹 페이지">
             <button type="button" disabled={currentPage === 1}
-              onClick={() => setPage((value) => Math.max(1, value - 1))}>이전 페이지</button>
+              onClick={() => changePage(Math.max(1, currentPage - 1))}>이전 페이지</button>
             <span aria-live="polite">{currentPage}/{pageCount} 페이지</span>
             <button type="button" disabled={currentPage === pageCount}
-              onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>다음 페이지</button>
+              onClick={() => changePage(Math.min(pageCount, currentPage + 1))}>다음 페이지</button>
           </div>
         </>
       )}

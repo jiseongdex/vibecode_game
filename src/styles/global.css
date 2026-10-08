@@ -76,17 +76,17 @@ main[data-campaign-active='true'] .account-pending { flex: none; }
 }
 
 body > #root > main > header {
-  display: flex;
+  display: grid;
   width: min(calc(100% - 32px), 1240px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   margin: 14px auto 0;
   padding: 6px 20px 8px;
-  text-align: left;
+  text-align: center;
 }
 
-body > #root > main > header .header-title { min-width: 0; }
+body > #root > main > header .header-title { grid-column: 2; min-width: 0; }
 
 body > #root > main > header p {
   margin: 0;
@@ -99,7 +99,7 @@ body > #root > main > header p {
 body > #root > main > header h1 {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 12px;
   margin: 0 0 2px;
   color: var(--color-ink);
@@ -144,14 +144,18 @@ button:focus-visible {
 .account-toolbar {
   display: flex;
   flex: none;
+  grid-column: 3;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   justify-content: flex-end;
+  justify-self: end;
   gap: 8px 12px;
   text-align: right;
   font-size: clamp(16px, 2vw, 20px);
 }
 
-.account-toolbar span { overflow-wrap: anywhere; }
+.account-toolbar span { min-width: 0; overflow-wrap: anywhere; }
 
 .account-toolbar button,
 .account-pending button,
@@ -187,6 +191,7 @@ button:focus-visible {
 
 @media (max-width: 900px) {
   body > #root > main > header {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 6px;

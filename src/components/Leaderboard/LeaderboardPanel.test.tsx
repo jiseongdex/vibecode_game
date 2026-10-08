@@ -36,12 +36,13 @@ describe('LeaderboardPanel', () => {
     expect(screen.getByText(/표시 이름이 랭킹에 공개됩니다/)).toBeInTheDocument()
     const topList = await screen.findByRole('list', { name: '상위 100명 랭킹' })
     const rows = within(topList).getAllByRole('listitem')
-    expect(rows).toHaveLength(10)
+    expect(rows).toHaveLength(20)
     expect(rows[0]).toHaveTextContent('1위친구최고 8단계최단 01:15')
     expect(rows[1]).toHaveTextContent('1위나최고 8단계최단 01:15내 기록')
     expect(rows[1]).toHaveAttribute('data-current-user', 'true')
     expect(rows[2]).toHaveTextContent('3위')
     expect(rows[2].querySelector('strong')).toBeEmptyDOMElement()
+    expect(rows[19]).toHaveAttribute('aria-label', '20위 기록 없음')
     expect(screen.getByRole('list', { name: '내 기록' })).toHaveTextContent('1위나최고 8단계최단 01:15')
     expect(screen.queryByText('전체 기간 · 최고 완료 단계 우선, 같은 단계에서는 최단 시간 우선')).not.toBeInTheDocument()
     expect(screen.getByText('1/1 페이지')).toBeInTheDocument()
@@ -57,23 +58,26 @@ describe('LeaderboardPanel', () => {
     render(<LeaderboardPanel authType="simple" currentUserId="current" currentDisplayName={currentDisplayName} {...callbacks} />)
     expect(screen.getByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
     const topList = await screen.findByRole('list', { name: '상위 100명 랭킹' })
-    expect(within(topList).getAllByRole('listitem')).toHaveLength(10)
+    expect(topList).toHaveAttribute('tabindex', '0')
+    expect(within(topList).getAllByRole('listitem')).toHaveLength(20)
     expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('1위사용자 1')
-    expect(screen.getByText('1/10 페이지')).toBeInTheDocument()
+    expect(screen.getByText('1/5 페이지')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '이전 페이지' })).toBeDisabled()
 
+    topList.scrollTop = 120
     fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
-    expect(screen.getByText('2/10 페이지')).toBeInTheDocument()
-    expect(within(topList).getAllByRole('listitem')).toHaveLength(10)
-    expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('10위사용자 11')
+    expect(topList.scrollTop).toBe(0)
+    expect(screen.getByText('2/5 페이지')).toBeInTheDocument()
+    expect(within(topList).getAllByRole('listitem')).toHaveLength(20)
+    expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('21위사용자 21')
     expect(screen.getByRole('button', { name: '이전 페이지' })).toBeEnabled()
 
-    for (let page = 3; page <= 10; page += 1) {
+    for (let page = 3; page <= 5; page += 1) {
       fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
     }
-    expect(screen.getByText('10/10 페이지')).toBeInTheDocument()
-    expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('91위사용자 91')
-    expect(within(topList).getAllByRole('listitem')[9]).toHaveTextContent('100위사용자 100')
+    expect(screen.getByText('5/5 페이지')).toBeInTheDocument()
+    expect(within(topList).getAllByRole('listitem')[0]).toHaveTextContent('81위사용자 81')
+    expect(within(topList).getAllByRole('listitem')[19]).toHaveTextContent('100위사용자 100')
     expect(screen.getByRole('button', { name: '다음 페이지' })).toBeDisabled()
     const mine = within(screen.getByRole('list', { name: '내 기록' })).getByRole('listitem')
     expect(mine).toHaveTextContent('101위나최고 4단계최단 01:33')
@@ -83,19 +87,19 @@ describe('LeaderboardPanel', () => {
   })
 
   it('keeps own rank above the list even when the same player is on the visible page', async () => {
-    const top = topEntries(21)
-    const mine = { ...top[15], userId: 'current', displayName: '나' }
-    top[15] = mine
+    const top = topEntries(41)
+    const mine = { ...top[25], userId: 'current', displayName: '나' }
+    top[25] = mine
     mockedGetLeaderboard.mockResolvedValue({ top, current: mine })
     render(<LeaderboardPanel authType="simple" currentUserId="current" currentDisplayName={currentDisplayName} {...callbacks} />)
     const topList = await screen.findByRole('list', { name: '상위 100명 랭킹' })
-    expect(screen.getByRole('list', { name: '내 기록' })).toHaveTextContent('16위나')
+    expect(screen.getByRole('list', { name: '내 기록' })).toHaveTextContent('26위나')
     fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
     expect(screen.getByText('2/3 페이지')).toBeInTheDocument()
-    expect(screen.getByRole('list', { name: '내 기록' })).toHaveTextContent('16위나')
-    expect(within(topList).getAllByRole('listitem')[5]).toHaveTextContent('16위나')
+    expect(screen.getByRole('list', { name: '내 기록' })).toHaveTextContent('26위나')
+    expect(within(topList).getAllByRole('listitem')[5]).toHaveTextContent('26위나')
     fireEvent.click(screen.getByRole('button', { name: '다음 페이지' }))
-    expect(screen.getByRole('list', { name: '내 기록' })).toHaveTextContent('16위나')
+    expect(screen.getByRole('list', { name: '내 기록' })).toHaveTextContent('26위나')
   })
 
   it('shows empty and unranked states without a return button', async () => {
@@ -103,7 +107,7 @@ describe('LeaderboardPanel', () => {
     render(<LeaderboardPanel authType="simple" currentUserId="current" currentDisplayName={currentDisplayName} {...callbacks} />)
     const topList = await screen.findByRole('list', { name: '상위 100명 랭킹' })
     const rows = within(topList).getAllByRole('listitem')
-    expect(rows).toHaveLength(10)
+    expect(rows).toHaveLength(20)
     rows.forEach((row, index) => {
       expect(row).toHaveAttribute('aria-label', `${index + 1}위 기록 없음`)
       expect(row.querySelector('strong')).toBeEmptyDOMElement()
@@ -136,7 +140,7 @@ describe('LeaderboardPanel', () => {
 
   it('clears the previous account type list while loading another type', async () => {
     let resolveNext!: (data: LeaderboardDto) => void
-    mockedGetLeaderboard.mockResolvedValueOnce({ top: topEntries(12), current })
+    mockedGetLeaderboard.mockResolvedValueOnce({ top: topEntries(24), current })
       .mockReturnValueOnce(new Promise<LeaderboardDto>((resolve) => { resolveNext = resolve }))
     const { rerender } = render(
       <LeaderboardPanel authType="simple" currentUserId="current" currentDisplayName={currentDisplayName} {...callbacks} />,
@@ -149,7 +153,7 @@ describe('LeaderboardPanel', () => {
     expect(screen.getByRole('heading', { name: 'Microsoft 랭킹' })).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('랭킹을 불러오는 중')
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
-    await act(async () => resolveNext({ top: topEntries(12), current: null }))
+    await act(async () => resolveNext({ top: topEntries(24), current: null }))
     expect(await screen.findByText('1/2 페이지')).toBeInTheDocument()
     expect(within(screen.getByRole('list', { name: '상위 100명 랭킹' })).getAllByRole('listitem')[0]).toHaveTextContent('1위사용자 1')
   })
