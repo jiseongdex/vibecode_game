@@ -23,7 +23,7 @@ function RankingRow({ entry, currentUserId, showBadge = true }: {
       data-current-user={isCurrentUser ? 'true' : undefined}>
       <span className={styles.rank}>{entry.rank}위</span>
       <strong className={styles.name} title={entry.displayName}>{entry.displayName}</strong>
-      <span className={styles.stage}>최고 {entry.highestStage}단계</span>
+      <span className={styles.stage}>{entry.highestStage}단계</span>
       <span className={styles.time}>
         {entry.bestTimeSeconds === null ? '기록 없음' : `최단 ${formatTime(entry.bestTimeSeconds)}`}
       </span>
@@ -118,8 +118,8 @@ export function LeaderboardPanel({
       )}
       {data && (
         <>
-          <div className={styles.myRecord}>
-            <h3>내 기록</h3>
+          <section className={styles.myRecord} aria-labelledby="my-record-heading">
+            <h3 id="my-record-heading">내 기록</h3>
             <ol className={styles.list} aria-label="내 기록">
               {data.current ? (
                 <RankingRow entry={data.current} currentUserId={currentUserId} showBadge={false} />
@@ -131,23 +131,26 @@ export function LeaderboardPanel({
                 </li>
               )}
             </ol>
-          </div>
-          <ol ref={listRef} className={`${styles.list} ${styles.topList}`} aria-label="상위 100명 랭킹" tabIndex={0}>
-            {Array.from({ length: PAGE_SIZE }, (_, index) => {
-              const entry = visibleEntries[index]
-              const slotRank = (currentPage - 1) * PAGE_SIZE + index + 1
-              return entry
-                ? <RankingRow key={entry.userId} entry={entry} currentUserId={currentUserId} />
-                : <EmptyRankingRow key={`empty-${slotRank}`} rank={slotRank} />
-            })}
-          </ol>
-          <div className={styles.pagination} aria-label="랭킹 페이지">
-            <button type="button" disabled={currentPage === 1}
-              onClick={() => changePage(Math.max(1, currentPage - 1))}>이전 페이지</button>
-            <span aria-live="polite">{currentPage}/{pageCount} 페이지</span>
-            <button type="button" disabled={currentPage === pageCount}
-              onClick={() => changePage(Math.min(pageCount, currentPage + 1))}>다음 페이지</button>
-          </div>
+          </section>
+          <section className={styles.rankings} aria-labelledby="ranking-list-heading">
+            <h3 id="ranking-list-heading">전체 순위</h3>
+            <ol ref={listRef} className={`${styles.list} ${styles.topList}`} aria-label="상위 100명 랭킹" tabIndex={0}>
+              {Array.from({ length: PAGE_SIZE }, (_, index) => {
+                const entry = visibleEntries[index]
+                const slotRank = (currentPage - 1) * PAGE_SIZE + index + 1
+                return entry
+                  ? <RankingRow key={entry.userId} entry={entry} currentUserId={currentUserId} />
+                  : <EmptyRankingRow key={`empty-${slotRank}`} rank={slotRank} />
+              })}
+            </ol>
+            <div className={styles.pagination} aria-label="랭킹 페이지">
+              <button type="button" disabled={currentPage === 1}
+                onClick={() => changePage(Math.max(1, currentPage - 1))}>이전 페이지</button>
+              <span aria-live="polite">{currentPage}/{pageCount} 페이지</span>
+              <button type="button" disabled={currentPage === pageCount}
+                onClick={() => changePage(Math.min(pageCount, currentPage + 1))}>다음 페이지</button>
+            </div>
+          </section>
         </>
       )}
     </section>

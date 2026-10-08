@@ -159,7 +159,7 @@ describe('App authentication and account game', () => {
     await renderAccount()
     expect(await screen.findByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
     const myRecord = await screen.findByRole('list', { name: '내 기록' })
-    expect(myRecord).toHaveTextContent('2위테스터최고 3단계최단 01:20')
+    expect(myRecord).toHaveTextContent('2위테스터3단계최단 01:20')
     expect(screen.getByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '랭킹 보기' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '단계 선택으로 돌아가기' })).not.toBeInTheDocument()

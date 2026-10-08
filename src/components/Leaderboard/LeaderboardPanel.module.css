@@ -59,6 +59,17 @@
   overscroll-behavior: contain;
   padding-right: 4px;
 }
+.rankings {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 2px solid var(--color-border);
+}
+.rankings h3 { margin: 0; font-family: var(--font-message); font-size: 18px; font-weight: 400; }
+.rankings .topList { margin-top: 8px; }
 .topList:focus-visible { outline: 3px solid var(--color-focus); outline-offset: -3px; }
 .row {
   display: grid;
@@ -92,13 +103,26 @@
 }
 .pagination button:disabled { opacity: 0.5; cursor: default; }
 .pagination button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
-.myRecord { margin-top: 10px; }
+.myRecord {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 2px solid var(--color-border);
+  border-left: 6px solid var(--color-success);
+  border-radius: 18px;
+  background: var(--color-mint);
+}
 .myRecord h3 { margin: 0; font-family: var(--font-message); font-size: 18px; font-weight: 400; }
 .myRecord .list { margin-top: 5px; }
-.myRecord .row { grid-template-columns: 74px minmax(0, 1fr) auto auto auto; }
+.myRecord .row {
+  grid-template-columns: 74px minmax(0, 1fr) auto auto auto;
+  padding: 4px 0 0;
+  border: 0;
+  background: transparent;
+}
 
 @media (max-width: 900px), (max-height: 650px) {
   .panel { height: auto; min-height: 0; }
+  .rankings { flex: none; }
   .topList { flex: none; overflow-y: visible; padding-right: 0; }
 }
 
