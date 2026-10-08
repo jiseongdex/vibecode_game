@@ -167,6 +167,7 @@ function AuthenticatedGame({
             <CampaignWorkspace
               authType={account.user.authType}
               currentUserId={account.user.id}
+              currentDisplayName={account.user.displayName}
               progress={progress}
               appearance={appearance}
               onAppearanceChange={chooseAppearance}

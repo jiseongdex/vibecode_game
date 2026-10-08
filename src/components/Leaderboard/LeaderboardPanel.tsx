@@ -12,9 +12,10 @@ type LoadState =
 
 const PAGE_SIZE = 10
 
-function RankingRow({ entry, currentUserId }: {
+function RankingRow({ entry, currentUserId, showBadge = true }: {
   entry: LeaderboardEntry
   currentUserId: string
+  showBadge?: boolean
 }): ReactElement {
   const isCurrentUser = entry.userId === currentUserId
   return (
@@ -24,7 +25,18 @@ function RankingRow({ entry, currentUserId }: {
       <strong className={styles.name} title={entry.displayName}>{entry.displayName}</strong>
       <span className={styles.stage}>최고 {entry.highestStage}단계</span>
       <span className={styles.time}>최단 {formatTime(entry.bestTimeSeconds)}</span>
-      {isCurrentUser && <span className={styles.myBadge}>내 기록</span>}
+      {isCurrentUser && showBadge && <span className={styles.myBadge}>내 기록</span>}
+    </li>
+  )
+}
+
+function EmptyRankingRow({ rank }: { rank: number }): ReactElement {
+  return (
+    <li className={`${styles.row} ${styles.emptyRow}`} aria-label={`${rank}위 기록 없음`}>
+      <span className={styles.rank}>{rank}위</span>
+      <strong className={styles.name} />
+      <span className={styles.stage} />
+      <span className={styles.time} />
     </li>
   )
 }
@@ -32,10 +44,12 @@ function RankingRow({ entry, currentUserId }: {
 export function LeaderboardPanel({
   authType,
   currentUserId,
+  currentDisplayName,
   onUnauthorized,
 }: {
   authType: AuthType
   currentUserId: string
+  currentDisplayName: string
   onUnauthorized: () => Promise<void>
 }): ReactElement {
   const identity = `${authType}:${currentUserId}`
@@ -66,10 +80,9 @@ export function LeaderboardPanel({
 
   const loadState: LoadState = response.identity === identity ? response.state : { status: 'loading' }
   const data = loadState.status === 'ready' ? loadState.data : null
-  const pageCount = data ? Math.ceil(data.top.length / PAGE_SIZE) : 0
-  const currentPage = Math.min(page, Math.max(1, pageCount))
+  const pageCount = data ? Math.max(1, Math.ceil(data.top.length / PAGE_SIZE)) : 1
+  const currentPage = Math.min(page, pageCount)
   const visibleEntries = data?.top.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE) ?? []
-  const currentOnPage = visibleEntries.some((entry) => entry.userId === currentUserId)
 
   const retry = () => {
     setPage(1)
@@ -80,12 +93,9 @@ export function LeaderboardPanel({
   return (
     <section className={styles.panel} aria-labelledby="leaderboard-heading">
       <div className={styles.header}>
-        <div>
-          <h2 id="leaderboard-heading">
-            {authType === 'microsoft' ? 'Microsoft 랭킹' : '간편 계정 랭킹'}
-          </h2>
-          <p>전체 기간 · 최고 완료 단계 우선, 같은 단계에서는 최단 시간 우선</p>
-        </div>
+        <h2 id="leaderboard-heading">
+          {authType === 'microsoft' ? 'Microsoft 랭킹' : '간편 계정 랭킹'}
+        </h2>
       </div>
       {authType === 'microsoft' && (
         <p className={styles.privacy}>Microsoft 계정의 표시 이름이 랭킹에 공개됩니다. 실명일 수 있어요.</p>
@@ -100,35 +110,36 @@ export function LeaderboardPanel({
       )}
       {data && (
         <>
-          {data.top.length === 0 ? (
-            <p className={styles.message}>아직 랭킹 기록이 없어요. 첫 번째로 단계를 완료해보세요!</p>
-          ) : (
-            <>
-              <ol className={styles.list} aria-label="상위 100명 랭킹">
-                {visibleEntries.map((entry) => (
-                  <RankingRow key={entry.userId} entry={entry} currentUserId={currentUserId} />
-                ))}
-              </ol>
-              <div className={styles.pagination} aria-label="랭킹 페이지">
-                <button type="button" disabled={currentPage === 1}
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}>이전 페이지</button>
-                <span aria-live="polite">{currentPage}/{pageCount} 페이지</span>
-                <button type="button" disabled={currentPage === pageCount}
-                  onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>다음 페이지</button>
-              </div>
-            </>
-          )}
-
-          {data.current === null ? (
-            <p className={styles.message}>아직 완료한 단계가 없어 순위가 없습니다.</p>
-          ) : !currentOnPage && (
-            <div className={styles.outsideTop}>
-              <h3>내 순위</h3>
-              <ol className={styles.list} aria-label="내 순위">
-                <RankingRow entry={data.current} currentUserId={currentUserId} />
-              </ol>
-            </div>
-          )}
+          <div className={styles.myRecord}>
+            <h3>내 기록</h3>
+            <ol className={styles.list} aria-label="내 기록">
+              {data.current ? (
+                <RankingRow entry={data.current} currentUserId={currentUserId} showBadge={false} />
+              ) : (
+                <li className={`${styles.row} ${styles.currentUser}`}>
+                  <span className={styles.rank}>순위 없음</span>
+                  <strong className={styles.name} title={currentDisplayName}>{currentDisplayName}</strong>
+                  <span className={styles.stage}>기록 없음</span>
+                </li>
+              )}
+            </ol>
+          </div>
+          <ol className={styles.list} aria-label="상위 100명 랭킹">
+            {Array.from({ length: PAGE_SIZE }, (_, index) => {
+              const entry = visibleEntries[index]
+              const slotRank = (currentPage - 1) * PAGE_SIZE + index + 1
+              return entry
+                ? <RankingRow key={entry.userId} entry={entry} currentUserId={currentUserId} />
+                : <EmptyRankingRow key={`empty-${slotRank}`} rank={slotRank} />
+            })}
+          </ol>
+          <div className={styles.pagination} aria-label="랭킹 페이지">
+            <button type="button" disabled={currentPage === 1}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}>이전 페이지</button>
+            <span aria-live="polite">{currentPage}/{pageCount} 페이지</span>
+            <button type="button" disabled={currentPage === pageCount}
+              onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>다음 페이지</button>
+          </div>
         </>
       )}
     </section>

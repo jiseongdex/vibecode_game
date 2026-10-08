@@ -158,12 +158,23 @@ describe('App authentication and account game', () => {
     })
     await renderAccount()
     expect(await screen.findByRole('heading', { name: '간편 계정 랭킹' })).toBeInTheDocument()
-    expect(await screen.findByText('최단 01:20')).toBeInTheDocument()
+    const myRecord = await screen.findByRole('list', { name: '내 기록' })
+    expect(myRecord).toHaveTextContent('2위테스터최고 3단계최단 01:20')
     expect(screen.getByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '랭킹 보기' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '단계 선택으로 돌아가기' })).not.toBeInTheDocument()
     expect(mockedGetLeaderboard).toHaveBeenCalledExactlyOnceWith()
     expect(screen.getByTestId('leaderboard-pane').compareDocumentPosition(screen.getByTestId('stages-pane')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('shows the signed-in nickname above empty leaderboard slots', async () => {
+    await renderAccount()
+    const myRecord = await screen.findByRole('list', { name: '내 기록' })
+    expect(myRecord).toHaveTextContent('순위 없음테스터기록 없음')
+    const slots = within(screen.getByRole('list', { name: '상위 100명 랭킹' })).getAllByRole('listitem')
+    expect(slots).toHaveLength(10)
+    expect(slots[0]).toHaveAttribute('aria-label', '1위 기록 없음')
+    expect(slots[9]).toHaveAttribute('aria-label', '10위 기록 없음')
   })
 
   it('defaults to stages and switches mobile tabs without refetching the ranking', async () => {

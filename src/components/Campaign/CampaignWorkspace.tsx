@@ -10,6 +10,7 @@ import styles from './CampaignWorkspace.module.css'
 interface CampaignWorkspaceProps {
   authType: AuthType
   currentUserId: string
+  currentDisplayName: string
   progress: CampaignProgress
   appearance: PlayerAppearance
   onAppearanceChange: (appearance: PlayerAppearance) => void
@@ -22,6 +23,7 @@ type CampaignTab = 'stages' | 'leaderboard'
 export function CampaignWorkspace({
   authType,
   currentUserId,
+  currentDisplayName,
   progress,
   appearance,
   onAppearanceChange,
@@ -56,6 +58,7 @@ export function CampaignWorkspace({
         <LeaderboardPanel
           authType={authType}
           currentUserId={currentUserId}
+          currentDisplayName={currentDisplayName}
           onUnauthorized={onUnauthorized}
         />
       </div>

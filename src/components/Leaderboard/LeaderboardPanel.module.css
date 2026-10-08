@@ -19,7 +19,6 @@
 }
 
 .header h2 { margin: 0; font-size: clamp(25px, 3vw, 34px); font-weight: 400; line-height: 1.1; }
-.header p { margin: 3px 0 0; font-size: clamp(14px, 1.2vw, 16px); line-height: 1.25; }
 .message button {
   min-height: 44px;
   padding: 6px 16px;
@@ -63,6 +62,7 @@
   line-height: 1.2;
 }
 .currentUser { border: 2px solid var(--color-success); background: var(--color-mint); }
+.emptyRow { background: rgb(255 250 240 / 60%); }
 .rank { font-weight: 700; white-space: nowrap; }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stage, .time { white-space: nowrap; }
@@ -79,9 +79,10 @@
 }
 .pagination button:disabled { opacity: 0.5; cursor: default; }
 .pagination button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
-.outsideTop { margin-top: 10px; padding-top: 7px; border-top: 2px dashed var(--color-border); }
-.outsideTop h3 { margin: 0; font-size: 20px; font-weight: 400; }
-.outsideTop .list { margin-top: 5px; }
+.myRecord { margin-top: 10px; }
+.myRecord h3 { margin: 0; font-size: 20px; font-weight: 400; }
+.myRecord .list { margin-top: 5px; }
+.myRecord .row { grid-template-columns: 74px minmax(0, 1fr) auto auto auto; }
 
 @media (max-width: 700px) {
   .panel { padding: 14px; border-radius: 26px; }
@@ -91,6 +92,9 @@
   .stage { grid-column: 2; }
   .time { grid-column: 3; }
   .myBadge { grid-column: 2 / -1; }
+  .myRecord .row { grid-template-columns: 78px minmax(0, 1fr); }
+  .myRecord .rank { grid-row: span 2; }
+  .myRecord .name, .myRecord .stage, .myRecord .time { grid-column: 2; }
 }
 
 @media (max-width: 360px) {
