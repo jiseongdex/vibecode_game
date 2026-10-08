@@ -5,13 +5,10 @@
   min-height: 0;
   flex-direction: column;
   margin: 0;
-  padding: 14px 18px 18px;
+  padding: 8px 10px 10px;
   border: 0;
   border-radius: 8px 28px 28px 8px;
-  background:
-    radial-gradient(circle at 92% 10%, rgb(246 206 188 / 30%), transparent 28%),
-    linear-gradient(155deg, rgb(246 251 242 / 79%), rgb(237 247 238 / 73%) 62%, rgb(255 241 231 / 76%));
-  box-shadow: inset 14px 0 20px -19px rgb(43 68 53 / 28%);
+  background: rgb(246 251 242 / 18%);
   color: var(--color-ink);
 }
 
@@ -74,11 +71,15 @@
   display: grid;
   min-height: 0;
   flex: 1;
+  width: 100%;
+  max-width: 590px;
+  max-height: 420px;
+  align-self: center;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   grid-template-rows: repeat(4, minmax(44px, 1fr));
   column-gap: var(--route-column-gap);
   row-gap: var(--route-row-gap);
-  margin-top: 8px;
+  margin: 10px auto auto;
   isolation: isolate;
 }
 
@@ -138,8 +139,8 @@
 
 .stageIcon {
   grid-area: 1 / 1;
-  width: min(82%, 96px);
-  height: min(92%, 96px);
+  width: min(68%, 76px);
+  height: min(76%, 76px);
   color: var(--color-strawberry);
   filter: drop-shadow(0 3px 0 rgb(70 102 81 / 22%));
   pointer-events: none;
@@ -154,7 +155,7 @@
   grid-area: 1 / 1;
   max-width: 100%;
   font-family: var(--font-message);
-  font-size: clamp(18px, 1.8vw, 24px);
+  font-size: clamp(16px, 1.5vw, 20px);
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
@@ -197,6 +198,8 @@
     --route-row-gap: 18px;
     min-height: auto;
     flex: none;
+    max-width: none;
+    max-height: none;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: none;
     grid-auto-rows: 104px;

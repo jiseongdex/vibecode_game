@@ -63,6 +63,12 @@
 
 .picker img[hidden] { display: none; }
 
+@media (min-width: 901px) {
+  .picker { margin-bottom: 4px; }
+  .picker button { min-width: 112px; min-height: 42px; font-size: 18px; }
+  .picker img { width: 30px; height: 30px; }
+}
+
 @media (min-width: 361px) and (max-width: 700px) {
   .picker button {
     flex: 1 1 0;
