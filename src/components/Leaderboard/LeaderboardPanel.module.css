@@ -101,6 +101,9 @@
 .stage, .time { white-space: nowrap; }
 .stage { color: #456a51; }
 .time { color: #7d615b; }
+@media (min-width: 701px) {
+  .time { margin-left: 14px; }
+}
 .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; margin-top: 4px; font-family: var(--font-message); font-size: 15px; }
 .pagination button {
   display: grid;
