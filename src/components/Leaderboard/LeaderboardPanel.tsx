@@ -10,7 +10,7 @@ type LoadState =
   | { status: 'error'; message: string }
   | { status: 'ready'; data: LeaderboardDto }
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 function RankingRow({ entry, currentUserId, showBadge = true }: {
   entry: LeaderboardEntry
@@ -24,7 +24,9 @@ function RankingRow({ entry, currentUserId, showBadge = true }: {
       <span className={styles.rank}>{entry.rank}위</span>
       <strong className={styles.name} title={entry.displayName}>{entry.displayName}</strong>
       <span className={styles.stage}>최고 {entry.highestStage}단계</span>
-      <span className={styles.time}>최단 {formatTime(entry.bestTimeSeconds)}</span>
+      <span className={styles.time}>
+        {entry.bestTimeSeconds === null ? '기록 없음' : `최단 ${formatTime(entry.bestTimeSeconds)}`}
+      </span>
       {isCurrentUser && showBadge && <span className={styles.myBadge}>내 기록</span>}
     </li>
   )

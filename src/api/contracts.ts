@@ -40,7 +40,7 @@ export interface LeaderboardEntry {
   userId: string
   displayName: string
   highestStage: number
-  bestTimeSeconds: number
+  bestTimeSeconds: number | null
 }
 
 export interface LeaderboardDto {

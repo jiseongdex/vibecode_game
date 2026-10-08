@@ -5,7 +5,7 @@ export interface RankedUserRow {
   id: string
   display_name: string
   highest_completed_stage: number
-  highest_stage_best_time_seconds: number
+  highest_stage_best_time_seconds: number | null
   rank: number
 }
 
@@ -28,17 +28,17 @@ export async function getCurrentRank(
   principal: SessionPrincipal,
 ): Promise<LeaderboardEntry | null> {
   const row = await db.prepare(
-    `SELECT u.id, u.display_name, u.highest_completed_stage,
+    `SELECT u.id, u.display_name, COALESCE(u.highest_completed_stage, 0) AS highest_completed_stage,
        u.highest_stage_best_time_seconds,
        1 + (
          SELECT COUNT(*) FROM users AS better
          WHERE better.auth_type = u.auth_type
-           AND (better.highest_completed_stage > u.highest_completed_stage
+           AND (COALESCE(better.highest_completed_stage, 0) > COALESCE(u.highest_completed_stage, 0)
              OR (better.highest_completed_stage = u.highest_completed_stage
                AND better.highest_stage_best_time_seconds < u.highest_stage_best_time_seconds))
        ) AS rank
      FROM users AS u
-     WHERE u.id = ? AND u.auth_type = ? AND u.highest_completed_stage IS NOT NULL`,
+     WHERE u.id = ? AND u.auth_type = ?`,
   ).bind(principal.userId, principal.authType).first<RankedUserRow>()
   return row ? entry(row) : null
 }
@@ -48,13 +48,13 @@ export async function getLeaderboard(
   principal: SessionPrincipal,
 ): Promise<LeaderboardDto> {
   const topRows = await env.DB.prepare(
-    `SELECT id, display_name, highest_completed_stage,
+    `SELECT id, display_name, COALESCE(highest_completed_stage, 0) AS highest_completed_stage,
        highest_stage_best_time_seconds,
        RANK() OVER (
          ORDER BY highest_completed_stage DESC, highest_stage_best_time_seconds ASC
        ) AS rank
      FROM users
-     WHERE auth_type = ? AND highest_completed_stage IS NOT NULL
+     WHERE auth_type = ?
      ORDER BY highest_completed_stage DESC, highest_stage_best_time_seconds ASC, id ASC
      LIMIT 100`,
   ).bind(principal.authType).all<RankedUserRow>()

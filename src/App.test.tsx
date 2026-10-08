@@ -172,9 +172,9 @@ describe('App authentication and account game', () => {
     const myRecord = await screen.findByRole('list', { name: '내 기록' })
     expect(myRecord).toHaveTextContent('순위 없음테스터기록 없음')
     const slots = within(screen.getByRole('list', { name: '상위 100명 랭킹' })).getAllByRole('listitem')
-    expect(slots).toHaveLength(20)
+    expect(slots).toHaveLength(10)
     expect(slots[0]).toHaveAttribute('aria-label', '1위 기록 없음')
-    expect(slots[19]).toHaveAttribute('aria-label', '20위 기록 없음')
+    expect(slots[9]).toHaveAttribute('aria-label', '10위 기록 없음')
   })
 
   it('defaults to stages and switches mobile tabs without refetching the ranking', async () => {

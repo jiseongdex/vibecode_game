@@ -113,19 +113,32 @@ describe('leaderboard', () => {
     })
   })
 
-  it('requires a session and leaves users without completed stages unranked', async () => {
+  it('requires a session and ranks users without completed stages as stage zero', async () => {
     const testEnv = await setup()
     await insertUser(testEnv, 'new-simple', 'simple', 'New Player', null, null)
     await insertUser(testEnv, 'ranked-simple', 'simple', 'Ranked', 1, 50)
+    await insertUser(testEnv, 'another-simple', 'simple', 'Another Player', null, null)
     await insertUser(testEnv, 'new-microsoft', 'microsoft', 'New Microsoft', null, null)
     const anonymous = await testEnv.fetch(new Request(`${ORIGIN}/api/leaderboard`))
     expect(anonymous.status).toBe(401)
 
     const simple = await leaderboard(testEnv, await cookieFor(testEnv, 'new-simple'))
-    expect(simple.body.current).toBeNull()
-    expect(simple.body.top.map(({ userId }) => userId)).toEqual(['ranked-simple'])
+    expect(simple.body.current).toEqual({
+      rank: 2, userId: 'new-simple', displayName: 'New Player', highestStage: 0,
+      bestTimeSeconds: null,
+    })
+    expect(simple.body.top.map(({ userId, rank, highestStage, bestTimeSeconds }) =>
+      [userId, rank, highestStage, bestTimeSeconds])).toEqual([
+      ['ranked-simple', 1, 1, 50],
+      ['another-simple', 2, 0, null],
+      ['new-simple', 2, 0, null],
+    ])
     const microsoft = await leaderboard(testEnv, await cookieFor(testEnv, 'new-microsoft'))
-    expect(microsoft.body).toEqual({ top: [], current: null })
+    const microsoftEntry = {
+      rank: 1, userId: 'new-microsoft', displayName: 'New Microsoft', highestStage: 0,
+      bestTimeSeconds: null,
+    }
+    expect(microsoft.body).toEqual({ top: [microsoftEntry], current: microsoftEntry })
   })
 
   it('returns only the top 100 while calculating the signed-in users rank of 101', async () => {
