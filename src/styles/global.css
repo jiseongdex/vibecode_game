@@ -24,9 +24,10 @@ body {
   min-width: 320px;
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 12% 15%, rgb(216 240 223 / 78%) 0 12%, transparent 37%),
-    radial-gradient(circle at 91% 88%, rgb(243 217 148 / 28%) 0 10%, transparent 36%),
-    #f8f2df;
+    radial-gradient(circle at 8% 12%, rgb(209 229 240 / 72%), transparent 34%),
+    radial-gradient(circle at 91% 86%, rgb(250 212 194 / 55%), transparent 35%),
+    radial-gradient(circle at 55% 52%, rgb(221 239 219 / 42%), transparent 55%),
+    #f8f2e8;
   color: var(--color-ink);
   font-family: var(--font-ui);
   font-size: 24px;
@@ -157,7 +158,6 @@ button:focus-visible {
 
 .account-toolbar span { min-width: 0; overflow-wrap: anywhere; }
 
-.account-toolbar button,
 .account-pending button,
 .auth-gate button {
   min-height: 42px;
@@ -169,7 +169,32 @@ button:focus-visible {
   cursor: pointer;
 }
 
-.account-toolbar button { flex: none; }
+.account-toolbar button {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.account-toolbar button svg { width: 28px; height: 28px; }
+@media (hover: hover) {
+  .account-toolbar button:hover {
+    transform: translateY(-2px);
+    background: #ffe7cd;
+    box-shadow: 0 5px 14px rgb(162 95 71 / 18%);
+  }
+}
+.account-toolbar button:active { transform: translateY(1px); background: #fbd4b4; }
+@media (prefers-reduced-motion: reduce) {
+  .account-toolbar button { transition: none; }
+}
 
 .account-pending button:disabled { opacity: 0.6; cursor: wait; }
 

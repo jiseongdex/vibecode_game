@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
-import { ApiClientError, getLeaderboard, getSession, startRun } from './api/client'
+import { ApiClientError, getLeaderboard, getSession, logout, startRun } from './api/client'
 import type { SessionDto } from './api/contracts'
 import { App } from './App'
 import { accountSaveKey, loadAccountSave } from './persistence/accountSaveStore'
@@ -20,6 +20,7 @@ const attemptId = '01234567-89ab-4cde-8fab-0123456789ab'
 const mockedGetSession = vi.mocked(getSession)
 const mockedGetLeaderboard = vi.mocked(getLeaderboard)
 const mockedStartRun = vi.mocked(startRun)
+const mockedLogout = vi.mocked(logout)
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -144,9 +145,14 @@ describe('App authentication and account game', () => {
     expect(title?.nextElementSibling).toBe(toolbar)
     expect(within(title as HTMLElement).getByText('동물들을 구하러 탐험을 떠나자!')).toBeInTheDocument()
     expect(within(header!).getByText('테스터')).toBeInTheDocument()
-    expect(within(header!).getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+    const logoutButton = within(header!).getByRole('button', { name: '로그아웃' })
+    expect(logoutButton).toHaveAttribute('title', '로그아웃')
+    expect(logoutButton).toHaveTextContent('')
+    expect(logoutButton.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getAllByRole('button', { name: '로그아웃' })).toHaveLength(1)
     expect(screen.queryByRole('button', { name: '진행 새로고침' })).not.toBeInTheDocument()
+    fireEvent.click(logoutButton)
+    await waitFor(() => expect(mockedLogout).toHaveBeenCalledOnce())
   })
 
   it('shows the simple leaderboard beside stage selection without navigation buttons', async () => {

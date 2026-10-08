@@ -6,10 +6,10 @@
   flex-direction: column;
   margin: 0;
   padding: 12px 14px 14px;
-  border: 2px solid rgb(70 102 81 / 54%);
-  border-radius: 32px;
-  background: var(--color-paper);
-  box-shadow: var(--shadow-panel);
+  border: 0;
+  border-radius: 28px 8px 8px 28px;
+  background: linear-gradient(155deg, #fffdf5, #fff7e8 68%, #fcefe4);
+  box-shadow: inset -14px 0 20px -19px rgb(75 59 48 / 45%), inset 0 0 0 1px rgb(141 117 86 / 17%);
   color: var(--color-ink);
 }
 
@@ -66,55 +66,82 @@
   flex-direction: column;
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 2px solid var(--color-border);
+  border-top: 2px solid #ddb887;
 }
 .rankings h3 { margin: 0; font-family: var(--font-message); font-size: 18px; font-weight: 400; }
 .rankings .topList { margin-top: 8px; }
 .topList:focus-visible { outline: 3px solid var(--color-focus); outline-offset: -3px; }
 .row {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 4px 6px;
   min-width: 0;
-  padding: 7px 9px;
-  border: 1px solid var(--color-border);
+  padding: 5px 9px;
+  border: 1px solid #e2d1bf;
   border-radius: 10px;
   background: #fffaf0;
   font-family: var(--font-message);
   font-size: 15px;
   line-height: 1.2;
 }
-.currentUser { border: 2px solid var(--color-success); background: var(--color-mint); }
+.currentUser { border-color: #9eb9ce; background: #edf4fa; }
 .emptyRow { background: rgb(255 250 240 / 60%); }
-.rank { font-weight: 700; white-space: nowrap; }
+.rank {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #efe6f3;
+  color: #6b5278;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stage, .time { white-space: nowrap; }
-.myBadge { justify-self: start; padding: 2px 6px; border-radius: 999px; background: var(--color-paper); font-size: 13px; white-space: nowrap; }
+.stage { color: #456a51; }
+.time { color: #7d615b; }
 .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; margin-top: 10px; font-family: var(--font-message); font-size: 15px; }
 .pagination button {
-  min-height: 40px;
-  padding: 5px 12px;
-  border: 2px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-mint);
-  color: var(--color-ink);
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #536988;
   cursor: pointer;
+  transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
-.pagination button:disabled { opacity: 0.5; cursor: default; }
+.pagination button svg { width: 26px; height: 26px; }
+.pagination button:disabled { opacity: 0.38; cursor: default; }
+@media (hover: hover) {
+  .pagination button:not(:disabled):hover {
+    transform: translateY(-2px);
+    background: #e6eef8;
+    box-shadow: 0 5px 14px rgb(73 102 143 / 18%);
+  }
+}
+.pagination button:not(:disabled):active { transform: translateY(1px); background: #d6e4f5; }
 .pagination button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .pagination button { transition: none; }
+}
 .myRecord {
   margin-top: 14px;
   padding: 10px 12px;
-  border: 2px solid var(--color-border);
-  border-left: 6px solid var(--color-success);
+  border: 1px solid #e2c3ac;
+  border-left: 6px solid var(--color-strawberry);
   border-radius: 18px;
-  background: var(--color-mint);
+  background: #ffeddf;
 }
 .myRecord h3 { margin: 0; font-family: var(--font-message); font-size: 18px; font-weight: 400; }
 .myRecord .list { margin-top: 5px; }
 .myRecord .row {
-  grid-template-columns: 74px minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 74px minmax(0, 1fr) auto auto;
   padding: 4px 0 0;
   border: 0;
   background: transparent;
@@ -127,13 +154,12 @@
 }
 
 @media (max-width: 700px) {
-  .panel { padding: 14px; border-radius: 26px; }
+  .panel { padding: 14px; border-radius: 26px; box-shadow: var(--shadow-panel); }
   .row { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 4px 8px; font-size: 16px; }
   .rank { grid-row: span 2; }
   .name { grid-column: 2 / -1; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
   .stage { grid-column: 2; }
   .time { grid-column: 3; }
-  .myBadge { grid-column: 2 / -1; }
   .myRecord .row { grid-template-columns: 78px minmax(0, 1fr); }
   .myRecord .rank { grid-row: span 2; }
   .myRecord .name, .myRecord .stage, .myRecord .time { grid-column: 2; }
@@ -142,5 +168,5 @@
 @media (max-width: 360px) {
   .row { grid-template-columns: 48px minmax(0, 1fr); }
   .rank { grid-row: span 3; }
-  .name, .stage, .time, .myBadge { grid-column: 2; }
+  .name, .stage, .time { grid-column: 2; }
 }

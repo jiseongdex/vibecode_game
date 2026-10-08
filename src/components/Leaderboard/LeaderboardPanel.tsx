@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react'
 
 import { ApiClientError, getLeaderboard } from '../../api/client'
 import type { AuthType, LeaderboardDto, LeaderboardEntry } from '../../api/contracts'
+import { ActionIcon } from '../Decorations/ActionIcon'
 import { formatTime } from '../Hud/GameHud'
 import styles from './LeaderboardPanel.module.css'
 
@@ -12,10 +13,9 @@ type LoadState =
 
 const PAGE_SIZE = 10
 
-function RankingRow({ entry, currentUserId, showBadge = true }: {
+function RankingRow({ entry, currentUserId }: {
   entry: LeaderboardEntry
   currentUserId: string
-  showBadge?: boolean
 }): ReactElement {
   const isCurrentUser = entry.userId === currentUserId
   return (
@@ -27,7 +27,6 @@ function RankingRow({ entry, currentUserId, showBadge = true }: {
       <span className={styles.time}>
         {entry.bestTimeSeconds === null ? '기록 없음' : `최단 ${formatTime(entry.bestTimeSeconds)}`}
       </span>
-      {isCurrentUser && showBadge && <span className={styles.myBadge}>내 기록</span>}
     </li>
   )
 }
@@ -122,7 +121,7 @@ export function LeaderboardPanel({
             <h3 id="my-record-heading">내 기록</h3>
             <ol className={styles.list} aria-label="내 기록">
               {data.current ? (
-                <RankingRow entry={data.current} currentUserId={currentUserId} showBadge={false} />
+                <RankingRow entry={data.current} currentUserId={currentUserId} />
               ) : (
                 <li className={`${styles.row} ${styles.currentUser}`}>
                   <span className={styles.rank}>순위 없음</span>
@@ -144,11 +143,11 @@ export function LeaderboardPanel({
               })}
             </ol>
             <div className={styles.pagination} aria-label="랭킹 페이지">
-              <button type="button" disabled={currentPage === 1}
-                onClick={() => changePage(Math.max(1, currentPage - 1))}>이전 페이지</button>
+              <button type="button" aria-label="이전 페이지" title="이전 페이지" disabled={currentPage === 1}
+                onClick={() => changePage(Math.max(1, currentPage - 1))}><ActionIcon kind="arrow-left" /></button>
               <span aria-live="polite">{currentPage}/{pageCount} 페이지</span>
-              <button type="button" disabled={currentPage === pageCount}
-                onClick={() => changePage(Math.min(pageCount, currentPage + 1))}>다음 페이지</button>
+              <button type="button" aria-label="다음 페이지" title="다음 페이지" disabled={currentPage === pageCount}
+                onClick={() => changePage(Math.min(pageCount, currentPage + 1))}><ActionIcon kind="arrow-right" /></button>
             </div>
           </section>
         </>

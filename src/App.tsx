@@ -5,6 +5,7 @@ import type { AuthType, SessionDto } from './api/contracts'
 import type { PlayerAppearance } from './assets/assetManifest'
 import { LoginScreen, RouteChoice, getAuthRoute } from './components/Auth/LoginScreen'
 import { CampaignWorkspace } from './components/Campaign/CampaignWorkspace'
+import { ActionIcon } from './components/Decorations/ActionIcon'
 import { StickerIcon } from './components/Decorations/StickerIcon'
 import { GameScreen } from './components/GameScreen/GameScreen'
 import { createGameState } from './game/gameState'
@@ -132,7 +133,8 @@ function AuthenticatedGame({
           </div>
           <div className="account-toolbar">
             <span>{account.user.displayName}</span>
-            <button type="button" onClick={() => { void onSignOut() }}>로그아웃</button>
+            <button type="button" aria-label="로그아웃" title="로그아웃"
+              onClick={() => { void onSignOut() }}><ActionIcon kind="door" /></button>
           </div>
         </header>
       )}
