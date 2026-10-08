@@ -76,11 +76,17 @@ main[data-campaign-active='true'] .account-pending { flex: none; }
 }
 
 body > #root > main > header {
+  display: flex;
   width: min(calc(100% - 32px), 1240px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin: 14px auto 0;
   padding: 6px 20px 8px;
-  text-align: center;
+  text-align: left;
 }
+
+body > #root > main > header .header-title { min-width: 0; }
 
 body > #root > main > header p {
   margin: 0;
@@ -93,7 +99,7 @@ body > #root > main > header p {
 body > #root > main > header h1 {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 12px;
   margin: 0 0 2px;
   color: var(--color-ink);
@@ -137,11 +143,10 @@ button:focus-visible {
 
 .account-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
   justify-content: flex-end;
   gap: 8px 12px;
-  margin-top: 6px;
   text-align: right;
   font-size: clamp(16px, 2vw, 20px);
 }
@@ -179,3 +184,15 @@ button:focus-visible {
 .account-pending p { margin: 0 0 8px; }
 
 .auth-gate { text-align: center; }
+
+@media (max-width: 900px) {
+  body > #root > main > header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  body > #root > main > header .header-title { text-align: center; }
+  body > #root > main > header h1 { justify-content: center; }
+  .account-toolbar { flex-wrap: wrap; }
+}

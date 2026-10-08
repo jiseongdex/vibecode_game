@@ -42,7 +42,6 @@ export function CampaignScreen({
 }: CampaignScreenProps) {
   const [startingStage, setStartingStage] = useState<number | null>(null)
   const starting = useRef(false)
-  const completedCount = Object.keys(progress.stageRecords).length
   const campaignComplete = Boolean(progress.stageRecords[MAX_STAGE])
 
   const startStage = async (stage: number) => {
@@ -73,8 +72,6 @@ export function CampaignScreen({
       ) : (
         <p className={styles.intro}>동물 친구를 구출하고 탈출구를 찾으면 다음 단계가 열려요.</p>
       )}
-      <p className={styles.progress}>완료 {completedCount}/20단계 · 해금 {progress.unlockedStage}/20단계</p>
-
       <p className={styles.pickerLabel}>함께 떠날 탐험가를 골라요</p>
       <PlayerAppearancePicker value={appearance} onChange={onAppearanceChange} />
 

@@ -6,6 +6,7 @@ import { CampaignScreen } from './CampaignScreen'
 describe('CampaignScreen', () => {
   it('keeps stage order while the visual route snakes across desktop and mobile columns', () => {
     render(<CampaignScreen progress={createCampaignProgress()} appearance="girl" onAppearanceChange={vi.fn()} onStartStage={vi.fn().mockResolvedValue(undefined)} />)
+    expect(screen.queryByText('완료 0/20단계 · 해금 1/20단계')).not.toBeInTheDocument()
 
     const stages = screen.getAllByRole('button', { name: /단계/ })
     expect(stages.map((button) => button.getAttribute('aria-label')?.split('단계')[0])).toEqual(
@@ -79,7 +80,7 @@ describe('CampaignScreen', () => {
     render(<CampaignScreen progress={progress} appearance="girl" onAppearanceChange={vi.fn()} onStartStage={vi.fn().mockResolvedValue(undefined)} />)
 
     expect(screen.getByRole('status')).toHaveTextContent('20단계 캠페인 완료!')
-    expect(screen.getByText('완료 20/20단계 · 해금 20/20단계')).toBeInTheDocument()
+    expect(screen.queryByText('완료 20/20단계 · 해금 20/20단계')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '20단계 완료, 재플레이 가능' })).toBeEnabled()
   })
 })

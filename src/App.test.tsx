@@ -133,10 +133,16 @@ describe('App authentication and account game', () => {
     expect(loadAccountSave(other.user.id, other.progress).currentSession).toBeNull()
   })
 
-  it('shows only the display name and logout beneath the title', async () => {
+  it('groups the title beside the display name and logout', async () => {
     await renderAccount()
     const header = screen.getByRole('heading', { name: '동물 구출 대작전' }).closest('header')
     expect(header).not.toBeNull()
+    const title = header!.querySelector('.header-title')
+    const toolbar = header!.querySelector('.account-toolbar')
+    expect(title).not.toBeNull()
+    expect(toolbar).not.toBeNull()
+    expect(title?.nextElementSibling).toBe(toolbar)
+    expect(within(title as HTMLElement).getByText('동물들을 구하러 탐험을 떠나자!')).toBeInTheDocument()
     expect(within(header!).getByText('테스터')).toBeInTheDocument()
     expect(within(header!).getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: '로그아웃' })).toHaveLength(1)
