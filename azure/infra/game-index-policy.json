@@ -1,0 +1,17 @@
+{
+  "automatic": true,
+  "indexingMode": "consistent",
+  "includedPaths": [
+    { "path": "/*" }
+  ],
+  "excludedPaths": [
+    { "path": "/_etag/?" }
+  ],
+  "compositeIndexes": [
+    [
+      { "path": "/highestStage", "order": "descending" },
+      { "path": "/rankTimeSeconds", "order": "ascending" },
+      { "path": "/id", "order": "ascending" }
+    ]
+  ]
+}
