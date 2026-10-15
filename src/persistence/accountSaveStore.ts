@@ -16,7 +16,7 @@ export interface AccountLocalSave {
   pendingResult: PendingResult | null
 }
 
-const ATTEMPT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const ATTEMPT_ID = /^(?:a_)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function accountSaveKey(userId: string): string {
   return `maze-rescue-game.account.${encodeURIComponent(userId)}.session.v1`

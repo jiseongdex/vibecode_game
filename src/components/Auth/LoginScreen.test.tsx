@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiClientError, loginSimple, registerSimple } from '../../api/client'
 import type { SessionDto } from '../../api/contracts'
-import { getAuthRoute, LoginScreen, RouteChoice } from './LoginScreen'
+import { getAuthRoute, getDeploymentTarget, LoginScreen, RouteChoice } from './LoginScreen'
 
 vi.mock('../../api/client', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../api/client')>()
@@ -15,7 +15,10 @@ const session: SessionDto = {
 }
 
 beforeEach(() => vi.resetAllMocks())
-afterEach(() => window.history.replaceState(null, '', '/'))
+afterEach(() => {
+  window.history.replaceState(null, '', '/')
+  vi.unstubAllEnvs()
+})
 
 function fillSimple(nickname = 'Otter', pin = '0042'): void {
   fireEvent.change(screen.getByLabelText('닉네임'), { target: { value: nickname } })
@@ -27,6 +30,30 @@ function submitSimple(): void {
 }
 
 describe('login screens', () => {
+  it('uses Microsoft routes only for the Azure target and defaults other flags to Cloudflare', () => {
+    expect(getAuthRoute('/', 'azure')).toBe('microsoft')
+    expect(getAuthRoute('/microsoft', 'azure')).toBe('microsoft')
+    expect(getAuthRoute('/microsoft/', 'azure')).toBe('microsoft')
+    expect(getAuthRoute('/simple', 'azure')).toBeNull()
+    expect(getAuthRoute('/unknown', 'azure')).toBeNull()
+    vi.stubEnv('VITE_DEPLOY_TARGET', 'azure')
+    expect(getDeploymentTarget()).toBe('azure')
+    expect(getAuthRoute('/')).toBe('microsoft')
+    vi.stubEnv('VITE_DEPLOY_TARGET', 'other')
+    expect(getDeploymentTarget()).toBe('cloudflare')
+    expect(getAuthRoute('/')).toBeNull()
+  })
+
+  it('shows no simple account link or PIN form in Azure route guidance', () => {
+    const { rerender } = render(<RouteChoice target="azure" />)
+    expect(screen.getByRole('link', { name: 'Microsoft 계정' })).toHaveAttribute('href', '/microsoft')
+    expect(screen.queryByRole('link', { name: '닉네임과 PIN' })).not.toBeInTheDocument()
+    rerender(<LoginScreen authType="simple" target="azure" onAuthenticated={vi.fn()} />)
+    expect(screen.queryByLabelText('닉네임')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('숫자 4자리 PIN')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '닉네임과 PIN' })).not.toBeInTheDocument()
+  })
+
   it('matches only the two dedicated paths and offers a route choice elsewhere', () => {
     expect(getAuthRoute('/microsoft')).toBe('microsoft')
     expect(getAuthRoute('/microsoft/')).toBe('microsoft')
@@ -50,6 +77,13 @@ describe('login screens', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Microsoft 로그인에 실패')
     expect(screen.queryByText('do-not-display')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('닉네임')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('숫자 4자리 PIN')).not.toBeInTheDocument()
+  })
+
+  it('labels the Azure Microsoft screen navigation as home', () => {
+    render(<LoginScreen authType="microsoft" target="azure" onAuthenticated={vi.fn()} />)
+    expect(screen.getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/')
+    expect(screen.queryByRole('link', { name: '로그인 방식 선택으로' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('숫자 4자리 PIN')).not.toBeInTheDocument()
   })
 

@@ -4,8 +4,16 @@ import type { AuthType, SessionDto } from '../../api/contracts'
 import styles from './LoginScreen.module.css'
 
 export type AuthRoute = AuthType | null
+export type DeploymentTarget = 'cloudflare' | 'azure'
 
-export function getAuthRoute(pathname: string): AuthRoute {
+export function getDeploymentTarget(): DeploymentTarget {
+  return import.meta.env.VITE_DEPLOY_TARGET === 'azure' ? 'azure' : 'cloudflare'
+}
+
+export function getAuthRoute(pathname: string, target: DeploymentTarget = getDeploymentTarget()): AuthRoute {
+  if (target === 'azure') {
+    return pathname === '/' || /^\/microsoft\/?$/.test(pathname) ? 'microsoft' : null
+  }
   if (/^\/microsoft\/?$/.test(pathname)) return 'microsoft'
   if (/^\/simple\/?$/.test(pathname)) return 'simple'
   return null
@@ -26,9 +34,11 @@ function simpleError(error: unknown, mode: 'login' | 'register'): string {
 export function LoginScreen({
   authType,
   onAuthenticated,
+  target = getDeploymentTarget(),
 }: {
   authType: AuthType
   onAuthenticated: (session: SessionDto) => void
+  target?: DeploymentTarget
 }): ReactElement {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [nickname, setNickname] = useState('')
@@ -36,6 +46,10 @@ export function LoginScreen({
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const pendingRef = useRef(false)
+
+  if (target === 'azure' && authType === 'simple') {
+    return <RouteChoice target="azure" />
+  }
 
   async function submitSimple(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
@@ -104,22 +118,22 @@ export function LoginScreen({
             <p className={styles.note}>PIN을 잊었다면 새 닉네임으로 다시 가입해야 해요. 이전 기록은 복구되지 않아요.</p>
           </>
         )}
-        <a className={styles.back} href="/">로그인 방식 선택으로</a>
+        <a className={styles.back} href="/">{target === 'azure' ? '홈으로' : '로그인 방식 선택으로'}</a>
       </div>
     </section>
   )
 }
 
-export function RouteChoice(): ReactElement {
+export function RouteChoice({ target = getDeploymentTarget() }: { target?: DeploymentTarget }): ReactElement {
   return (
     <section className={styles.page} aria-labelledby="route-heading">
       <div className={styles.card}>
         <span className={styles.eyebrow}>동물구조탐험대</span>
-        <h1 id="route-heading">로그인 방식 선택</h1>
-        <p className={styles.intro}>사용할 주소를 선택하고 모험을 시작해요.</p>
+        <h1 id="route-heading">{target === 'azure' ? 'Microsoft 로그인' : '로그인 방식 선택'}</h1>
+        <p className={styles.intro}>{target === 'azure' ? 'Microsoft 계정으로 로그인해 모험을 시작해요.' : '사용할 주소를 선택하고 모험을 시작해요.'}</p>
         <div className={styles.choices}>
           <a href="/microsoft">Microsoft 계정</a>
-          <a href="/simple">닉네임과 PIN</a>
+          {target === 'cloudflare' && <a href="/simple">닉네임과 PIN</a>}
         </div>
       </div>
     </section>

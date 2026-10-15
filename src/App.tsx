@@ -3,7 +3,7 @@ import { useCallback, useRef, useState, type ReactElement } from 'react'
 import { ApiClientError, startRun } from './api/client'
 import type { AuthType, SessionDto } from './api/contracts'
 import type { PlayerAppearance } from './assets/assetManifest'
-import { LoginScreen, RouteChoice, getAuthRoute } from './components/Auth/LoginScreen'
+import { LoginScreen, RouteChoice, getAuthRoute, getDeploymentTarget } from './components/Auth/LoginScreen'
 import { CampaignWorkspace } from './components/Campaign/CampaignWorkspace'
 import { ActionIcon } from './components/Decorations/ActionIcon'
 import { StickerIcon } from './components/Decorations/StickerIcon'
@@ -218,8 +218,9 @@ function AuthGate({ authType }: { authType: AuthType }): ReactElement {
 }
 
 export function App(): ReactElement {
-  const authType = getAuthRoute(window.location.pathname)
+  const target = getDeploymentTarget()
+  const authType = getAuthRoute(window.location.pathname, target)
   return authType
     ? <AuthGate authType={authType} />
-    : <main><RouteChoice /></main>
+    : <main><RouteChoice target={target} /></main>
 }

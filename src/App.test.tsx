@@ -48,6 +48,7 @@ describe('App authentication and account game', () => {
   afterEach(() => {
     window.localStorage.clear()
     window.history.replaceState({}, '', '/')
+    vi.unstubAllEnvs()
   })
 
   it('shows only route selection at the root address', () => {
@@ -56,6 +57,42 @@ describe('App authentication and account game', () => {
     expect(screen.getByRole('link', { name: /닉네임과 PIN/ })).toHaveAttribute('href', '/simple')
     expect(mockedGetSession).not.toHaveBeenCalled()
     expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
+  })
+
+  it('opens Microsoft login at the Azure root and dedicated path, without game access before login', async () => {
+    vi.stubEnv('VITE_DEPLOY_TARGET', 'azure')
+    mockedGetSession.mockRejectedValue(new ApiClientError(401, 'unauthorized', 'Sign in to continue.'))
+    const view = render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Microsoft 로그인' })).toBeInTheDocument()
+    expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '닉네임과 PIN' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('숫자 4자리 PIN')).not.toBeInTheDocument()
+    view.unmount()
+    window.history.replaceState({}, '', '/microsoft')
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Microsoft 로그인' })).toBeInTheDocument()
+  })
+
+  it('guides Azure /simple to Microsoft without loading a session or rendering a PIN form', () => {
+    vi.stubEnv('VITE_DEPLOY_TARGET', 'azure')
+    window.history.replaceState({}, '', '/simple')
+    render(<App />)
+    expect(screen.getByRole('link', { name: 'Microsoft 계정' })).toHaveAttribute('href', '/microsoft')
+    expect(screen.queryByLabelText('닉네임')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('숫자 4자리 PIN')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
+    expect(mockedGetSession).not.toHaveBeenCalled()
+  })
+
+  it('uses only a Microsoft session for Azure gameplay', async () => {
+    vi.stubEnv('VITE_DEPLOY_TARGET', 'azure')
+    mockedGetSession.mockResolvedValue({ ...account, user: {
+      id: 'azure-user', authType: 'microsoft', displayName: 'Azure Player',
+    } })
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: '단계 선택' })).toBeInTheDocument()
+    expect(screen.getByTestId('game-container')).toBeInTheDocument()
+    expect(screen.queryByLabelText('숫자 4자리 PIN')).not.toBeInTheDocument()
   })
 
   it('does not show the game to an anonymous visitor', async () => {

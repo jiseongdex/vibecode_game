@@ -17,6 +17,15 @@ beforeEach(() => window.localStorage.clear())
 afterEach(() => window.localStorage.clear())
 
 describe('account-scoped local save', () => {
+  it('restores Azure-prefixed attempt IDs without accepting another account save', () => {
+    const azureAttemptId = `a_${attemptId}`
+    const currentSession = makeSavedSession(createGameState(1, generateMaze(15)))!
+    const pendingResult = { attemptId: azureAttemptId, stage: 1, clearTimeSeconds: 30 }
+    saveAccountSave({ version: 1, userId: 'azure-user', currentSession, attemptId: azureAttemptId, pendingResult })
+    expect(loadAccountSave('azure-user', progress)).toMatchObject({ attemptId: azureAttemptId, pendingResult })
+    expect(loadAccountSave('cloudflare-user', progress).attemptId).toBeNull()
+  })
+
   it('stores only a paused maze and attempt under the matching user key', () => {
     const currentSession = makeSavedSession(createGameState(1, generateMaze(15)))!
     saveAccountSave({ version: 1, userId: 'first/user', currentSession, attemptId, pendingResult: null })

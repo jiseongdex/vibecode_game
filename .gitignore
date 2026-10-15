@@ -34,6 +34,7 @@ skills-lock.json
 **/.pnpm-debug.log*
 
 **/.env*
+!/.env.azure
 !**/.env.development
 !**/.env.production
 !**/.env.template
