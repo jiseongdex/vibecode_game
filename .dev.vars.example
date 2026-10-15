@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local Worker development. Never commit real values.
+PIN_PEPPER=
+MICROSOFT_CLIENT_ID=
+MICROSOFT_CLIENT_SECRET=
+PUBLIC_ORIGIN=http://localhost:8787
