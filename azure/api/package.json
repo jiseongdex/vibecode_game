@@ -1,0 +1,23 @@
+{
+  "name": "maze-rescue-azure-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@azure/cosmos": "4.9.3",
+    "@azure/functions": "4.16.5",
+    "jose": "6.2.12"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "5.9.3"
+  }
+}

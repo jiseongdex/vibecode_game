@@ -7,10 +7,12 @@
     "dev": "vite",
     "dev:worker": "npm run build && wrangler dev",
     "build": "tsc -b && vite build",
+    "build:azure-api": "npm --prefix azure/api run build",
     "deploy": "npm run build && wrangler deploy",
     "test": "vitest",
     "test:watch": "vitest",
-    "lint": "tsc -b --pretty false"
+    "lint": "tsc -b --pretty false",
+    "lint:azure-api": "npm --prefix azure/api run lint"
   },
   "dependencies": {
     "jose": "^6.2.12",
