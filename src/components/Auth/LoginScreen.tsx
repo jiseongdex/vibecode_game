@@ -64,7 +64,7 @@ export function LoginScreen({
   return (
     <section className={styles.page} aria-labelledby="auth-heading">
       <div className={styles.card}>
-        <span className={styles.eyebrow}>동물 구출 대작전</span>
+        <span className={styles.eyebrow}>동물구조탐험대</span>
         <h1 id="auth-heading">{authType === 'microsoft' ? 'Microsoft 로그인' : '간편 로그인'}</h1>
         <p className={styles.intro}>로그인하고 동물 친구들을 구하러 떠나요!</p>
 
@@ -114,7 +114,7 @@ export function RouteChoice(): ReactElement {
   return (
     <section className={styles.page} aria-labelledby="route-heading">
       <div className={styles.card}>
-        <span className={styles.eyebrow}>동물 구출 대작전</span>
+        <span className={styles.eyebrow}>동물구조탐험대</span>
         <h1 id="route-heading">로그인 방식 선택</h1>
         <p className={styles.intro}>사용할 주소를 선택하고 모험을 시작해요.</p>
         <div className={styles.choices}>

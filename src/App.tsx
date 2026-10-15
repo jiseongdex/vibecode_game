@@ -128,7 +128,7 @@ function AuthenticatedGame({
       {!session && (
         <header>
           <div className="header-title">
-            <h1><StickerIcon kind="leaf" />동물 구출 대작전<StickerIcon kind="mushroom" /></h1>
+            <h1><StickerIcon kind="leaf" />동물구조탐험대<StickerIcon kind="mushroom" /></h1>
             <p>동물들을 구하러 탐험을 떠나자!</p>
           </div>
           <div className="account-toolbar">

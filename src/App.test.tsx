@@ -136,7 +136,7 @@ describe('App authentication and account game', () => {
 
   it('groups the title beside the display name and logout', async () => {
     await renderAccount()
-    const header = screen.getByRole('heading', { name: '동물 구출 대작전' }).closest('header')
+    const header = screen.getByRole('heading', { name: '동물구조탐험대' }).closest('header')
     expect(header).not.toBeNull()
     const title = header!.querySelector('.header-title')
     const toolbar = header!.querySelector('.account-toolbar')
