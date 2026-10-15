@@ -32,8 +32,8 @@ function submitSimple(): void {
 describe('login screens', () => {
   it('uses Microsoft routes only for the Azure target and defaults other flags to Cloudflare', () => {
     expect(getAuthRoute('/', 'azure')).toBe('microsoft')
-    expect(getAuthRoute('/microsoft', 'azure')).toBe('microsoft')
-    expect(getAuthRoute('/microsoft/', 'azure')).toBe('microsoft')
+    expect(getAuthRoute('/microsoft', 'azure')).toBeNull()
+    expect(getAuthRoute('/microsoft/', 'azure')).toBeNull()
     expect(getAuthRoute('/simple', 'azure')).toBeNull()
     expect(getAuthRoute('/unknown', 'azure')).toBeNull()
     vi.stubEnv('VITE_DEPLOY_TARGET', 'azure')
@@ -46,7 +46,7 @@ describe('login screens', () => {
 
   it('shows no simple account link or PIN form in Azure route guidance', () => {
     const { rerender } = render(<RouteChoice target="azure" />)
-    expect(screen.getByRole('link', { name: 'Microsoft 계정' })).toHaveAttribute('href', '/microsoft')
+    expect(screen.getByRole('link', { name: 'Microsoft 계정' })).toHaveAttribute('href', '/')
     expect(screen.queryByRole('link', { name: '닉네임과 PIN' })).not.toBeInTheDocument()
     rerender(<LoginScreen authType="simple" target="azure" onAuthenticated={vi.fn()} />)
     expect(screen.queryByLabelText('닉네임')).not.toBeInTheDocument()

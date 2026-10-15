@@ -159,7 +159,7 @@ describe('Azure Functions HTTP adapter', () => {
       cookie: `__Host-maze_azure_oauth=${state}`,
     }), context)
     expect(callback.status).toBe(302)
-    expect((callback.headers as Headers).get('Location')).toBe(`${origin}/microsoft`)
+    expect((callback.headers as Headers).get('Location')).toBe(`${origin}/`)
     expect(callback.cookies).toHaveLength(2)
     expect(callback.cookies?.[0]).toMatchObject({ name: '__Host-maze_azure_oauth', maxAge: 0 })
     expect(callback.cookies?.[1]).toMatchObject({ name: '__Host-maze_azure_session', httpOnly: true, secure: true, sameSite: 'Lax' })
@@ -189,7 +189,7 @@ describe('Azure Functions HTTP adapter', () => {
   })
 
   it('maps each Set-Cookie separately to Functions cookies', async () => {
-    const headers = new Headers({ Location: `${origin}/microsoft`, 'Cache-Control': 'no-store' })
+    const headers = new Headers({ Location: `${origin}/`, 'Cache-Control': 'no-store' })
     headers.append('Set-Cookie', '__Host-maze_azure_oauth=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0')
     headers.append('Set-Cookie', '__Host-maze_azure_session=token; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800')
     const result = await toFunctionResponse(new Response(null, { status: 302, headers }))

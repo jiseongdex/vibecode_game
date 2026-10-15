@@ -92,7 +92,7 @@ function redirect(location: string, cookies: string[]): Response {
 }
 
 function failureRedirect(origin: string): Response {
-  return redirect(`${origin}/microsoft?error=login_failed`, [clearedOauthCookie()])
+  return redirect(`${origin}/?error=login_failed`, [clearedOauthCookie()])
 }
 
 export async function startMicrosoftLogin(
@@ -223,7 +223,7 @@ export async function finishMicrosoftLogin(
     const account = await verifyMicrosoftIdToken(tokenBody.id_token, flow.nonce, clientId, fetcher)
     const user = await store.getOrCreateMicrosoftUser(account.tid, account.sub, account.displayName, nowMs)
     const sessionCookie = await issueSession(store, user.id, nowMs)
-    return redirect(`${origin}/microsoft`, [clearedOauthCookie(), sessionCookie])
+    return redirect(`${origin}/`, [clearedOauthCookie(), sessionCookie])
   } catch {
     return failureRedirect(origin)
   }

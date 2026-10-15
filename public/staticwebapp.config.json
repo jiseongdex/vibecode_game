@@ -1,7 +1,10 @@
 {
+  "routes": [
+    { "route": "/microsoft", "redirect": "/", "statusCode": 301 }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/api/*", "/assets/*"]
+    "exclude": ["/api/*", "/assets/*", "/microsoft", "/microsoft/"]
   },
   "platform": {
     "apiRuntime": "node:20"

@@ -141,7 +141,7 @@ describe('Azure Microsoft OIDC', () => {
     }) as typeof fetch
     const response = await finishMicrosoftLogin(callback(state), store, config, now, fetcher)
     expect(response.status).toBe(302)
-    expect(response.headers.get('Location')).toBe('https://game.example/microsoft')
+    expect(response.headers.get('Location')).toBe('https://game.example/')
     expect(response.headers.getSetCookie()).toHaveLength(2)
     expect(response.headers.getSetCookie()[0]).toContain('Max-Age=0')
     expect(response.headers.getSetCookie()[1]).toContain('__Host-maze_azure_session=')

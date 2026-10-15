@@ -12,7 +12,7 @@ export function getDeploymentTarget(): DeploymentTarget {
 
 export function getAuthRoute(pathname: string, target: DeploymentTarget = getDeploymentTarget()): AuthRoute {
   if (target === 'azure') {
-    return pathname === '/' || /^\/microsoft\/?$/.test(pathname) ? 'microsoft' : null
+    return pathname === '/' ? 'microsoft' : null
   }
   if (/^\/microsoft\/?$/.test(pathname)) return 'microsoft'
   if (/^\/simple\/?$/.test(pathname)) return 'simple'
@@ -132,7 +132,7 @@ export function RouteChoice({ target = getDeploymentTarget() }: { target?: Deplo
         <h1 id="route-heading">{target === 'azure' ? 'Microsoft 로그인' : '로그인 방식 선택'}</h1>
         <p className={styles.intro}>{target === 'azure' ? 'Microsoft 계정으로 로그인해 모험을 시작해요.' : '사용할 주소를 선택하고 모험을 시작해요.'}</p>
         <div className={styles.choices}>
-          <a href="/microsoft">Microsoft 계정</a>
+          <a href={target === 'azure' ? '/' : '/microsoft'}>Microsoft 계정</a>
           {target === 'cloudflare' && <a href="/simple">닉네임과 PIN</a>}
         </div>
       </div>

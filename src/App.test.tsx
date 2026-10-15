@@ -59,7 +59,7 @@ describe('App authentication and account game', () => {
     expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
   })
 
-  it('opens Microsoft login at the Azure root and dedicated path, without game access before login', async () => {
+  it('opens Microsoft login at the Azure root without game access before login', async () => {
     vi.stubEnv('VITE_DEPLOY_TARGET', 'azure')
     mockedGetSession.mockRejectedValue(new ApiClientError(401, 'unauthorized', 'Sign in to continue.'))
     const view = render(<App />)
@@ -70,14 +70,14 @@ describe('App authentication and account game', () => {
     view.unmount()
     window.history.replaceState({}, '', '/microsoft')
     render(<App />)
-    expect(await screen.findByRole('heading', { name: 'Microsoft 로그인' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Microsoft 계정' })).toHaveAttribute('href', '/')
   })
 
   it('guides Azure /simple to Microsoft without loading a session or rendering a PIN form', () => {
     vi.stubEnv('VITE_DEPLOY_TARGET', 'azure')
     window.history.replaceState({}, '', '/simple')
     render(<App />)
-    expect(screen.getByRole('link', { name: 'Microsoft 계정' })).toHaveAttribute('href', '/microsoft')
+    expect(screen.getByRole('link', { name: 'Microsoft 계정' })).toHaveAttribute('href', '/')
     expect(screen.queryByLabelText('닉네임')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('숫자 4자리 PIN')).not.toBeInTheDocument()
     expect(screen.queryByTestId('game-container')).not.toBeInTheDocument()
