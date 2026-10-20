@@ -69,5 +69,4 @@ skills-lock.json
 # Worker tests own these local byproducts next to their A3 fixture inputs.
 /apps/worker/tests/fixtures/a3/panel-input/*.normalized.parquet
 # Local project-memory worktree control
-/.memory/
 /.codeburn/
